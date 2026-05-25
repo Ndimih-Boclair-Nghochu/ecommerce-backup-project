@@ -98,10 +98,26 @@ app.use('/uploads', express.static(uploadDir));
 
 function requireJwtSecret() {
   if (!JWT_SECRET || JWT_SECRET.length < 32) {
-    const err = new Error('JWT_SECRET must be configured');
-    err.status = 500;
+    const err = new Error('JWT_SECRET must be configured in the server environment before admin login can issue secure tokens.');
+    err.status = 503;
+    err.expose = true;
     throw err;
   }
+}
+
+function isBcryptHash(value = '') {
+  return /^\$2[aby]\$\d{2}\$/.test(value);
+}
+
+async function verifyStoredPassword(password, admin) {
+  const stored = admin.password_hash || '';
+  if (isBcryptHash(stored)) return bcrypt.compare(password, stored);
+  if (stored && password === stored) {
+    const upgradedHash = await bcrypt.hash(password, 12);
+    await pool.query('UPDATE admins SET password_hash = $1, updated_at = NOW() WHERE id = $2', [upgradedHash, admin.id]);
+    return true;
+  }
+  return false;
 }
 
 function asyncHandler(fn) {
@@ -155,6 +171,7 @@ function productFromRow(row) {
     imageUrl: image,
     image_url: image,
     images,
+    translations: row.translations && typeof row.translations === 'object' ? row.translations : {},
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
@@ -429,7 +446,8 @@ const loginValidation = validate([
 const productValidation = validate([
   body('name').trim().notEmpty().withMessage('Product name is required'),
   body('price').isInt({ min: 1 }).withMessage('Price must be a positive integer'),
-  body('stock').isInt({ min: 0 }).withMessage('Stock must be a non-negative integer')
+  body('stock').isInt({ min: 0 }).withMessage('Stock must be a non-negative integer'),
+  body('translations').optional().isObject().withMessage('Translations must be an object')
 ]);
 
 const orderValidation = validate([
@@ -723,7 +741,7 @@ app.post('/api/admin/login', loginValidation, asyncHandler(async (req, res) => {
   if (result.rowCount === 0) return res.status(401).json({ error: 'Invalid credentials' });
 
   const admin = result.rows[0];
-  const valid = await bcrypt.compare(password, admin.password_hash);
+  const valid = await verifyStoredPassword(password, admin);
   if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
 
   const token = jwt.sign(
@@ -746,7 +764,7 @@ app.post('/api/sub-admin/login', loginValidation, asyncHandler(async (req, res) 
   if (result.rowCount === 0) return res.status(401).json({ error: 'Invalid credentials' });
 
   const admin = result.rows[0];
-  const valid = await bcrypt.compare(password, admin.password_hash);
+  const valid = await verifyStoredPassword(password, admin);
   if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
 
   const token = jwt.sign(
@@ -810,37 +828,10 @@ app.post('/api/admin/products', checkPermission('manageProducts'), productValida
   const images = normalizeArray(req.body.images).filter((image) => image && image.url);
   const imageUrl = req.body.image_url || req.body.image || images[0]?.url || '';
   const regions = normalizeArray(req.body.availableRegions || req.body.available_regions, ['ALL']);
+  const translations = req.body.translations && typeof req.body.translations === 'object' ? req.body.translations : {};
   const result = await pool.query(
-    `INSERT INTO products (name, description, price, stock, category, is_new, most_ordered, available_regions, image_url, images)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb)
-     RETURNING *`,
-    [
-      req.body.name,
-      req.body.description || '',
-      Number(req.body.price),
-      Number(req.body.stock),
-      req.body.category || '',
-      Boolean(req.body.isNew || req.body.is_new),
-      Boolean(req.body.mostOrdered || req.body.most_ordered),
-      regions.length ? regions : ['ALL'],
-      imageUrl,
-      JSON.stringify(images)
-    ]
-  );
-  await logActivity(req, 'create_product', { productId: result.rows[0].id, name: result.rows[0].name });
-  res.status(201).json(productFromRow(result.rows[0]));
-}));
-
-app.put('/api/admin/products/:id', checkPermission('manageProducts'), productValidation, asyncHandler(async (req, res) => {
-  const images = normalizeArray(req.body.images).filter((image) => image && image.url);
-  const imageUrl = req.body.image_url || req.body.image || images[0]?.url || '';
-  const regions = normalizeArray(req.body.availableRegions || req.body.available_regions, ['ALL']);
-  const result = await pool.query(
-    `UPDATE products
-     SET name = $1, description = $2, price = $3, stock = $4, category = $5,
-         is_new = $6, most_ordered = $7, available_regions = $8, image_url = $9,
-         images = $10::jsonb, updated_at = NOW()
-     WHERE id = $11
+    `INSERT INTO products (name, description, price, stock, category, is_new, most_ordered, available_regions, image_url, images, translations)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb)
      RETURNING *`,
     [
       req.body.name,
@@ -853,6 +844,37 @@ app.put('/api/admin/products/:id', checkPermission('manageProducts'), productVal
       regions.length ? regions : ['ALL'],
       imageUrl,
       JSON.stringify(images),
+      JSON.stringify(translations)
+    ]
+  );
+  await logActivity(req, 'create_product', { productId: result.rows[0].id, name: result.rows[0].name });
+  res.status(201).json(productFromRow(result.rows[0]));
+}));
+
+app.put('/api/admin/products/:id', checkPermission('manageProducts'), productValidation, asyncHandler(async (req, res) => {
+  const images = normalizeArray(req.body.images).filter((image) => image && image.url);
+  const imageUrl = req.body.image_url || req.body.image || images[0]?.url || '';
+  const regions = normalizeArray(req.body.availableRegions || req.body.available_regions, ['ALL']);
+  const translations = req.body.translations && typeof req.body.translations === 'object' ? req.body.translations : {};
+  const result = await pool.query(
+    `UPDATE products
+     SET name = $1, description = $2, price = $3, stock = $4, category = $5,
+         is_new = $6, most_ordered = $7, available_regions = $8, image_url = $9,
+         images = $10::jsonb, translations = $11::jsonb, updated_at = NOW()
+     WHERE id = $12
+     RETURNING *`,
+    [
+      req.body.name,
+      req.body.description || '',
+      Number(req.body.price),
+      Number(req.body.stock),
+      req.body.category || '',
+      Boolean(req.body.isNew || req.body.is_new),
+      Boolean(req.body.mostOrdered || req.body.most_ordered),
+      regions.length ? regions : ['ALL'],
+      imageUrl,
+      JSON.stringify(images),
+      JSON.stringify(translations),
       req.params.id
     ]
   );
@@ -1403,7 +1425,7 @@ app.use((err, req, res, next) => {
   console.error(err.stack || err.message);
   const status = err.status || 500;
   res.status(status).json({
-    error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
+    error: err.expose || process.env.NODE_ENV !== 'production' ? err.message : 'Internal server error'
   });
 });
 

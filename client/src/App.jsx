@@ -17,6 +17,7 @@ import NotFound from './pages/NotFound'
 import ChatWidget from './components/ChatWidget'
 import ErrorBoundary from './components/ErrorBoundary'
 import { formatXAF } from './utils/format'
+import { useLanguage } from './i18n/LanguageContext'
 
 function useLocalStorageState(key, initialValue) {
   const [value, setValue] = useState(() => {
@@ -37,6 +38,7 @@ function useLocalStorageState(key, initialValue) {
 
 export default function App() {
   const location = useLocation()
+  const { language, setLanguage, languages, t } = useLanguage()
   const [products, setProducts] = useState([])
   const [settings, setSettings] = useState({
     shopName: 'MyShop',
@@ -149,7 +151,7 @@ export default function App() {
 
       return [...current, { ...product, quantity: Math.min(Number(quantity || 1), Number(product.stock || 1)), selectedVariant }]
     })
-    toast.success('Added to cart')
+    toast.success(t('addedToCart'))
   }
 
   const removeFromCart = (productId) => {
@@ -178,10 +180,10 @@ export default function App() {
   const closeMobileMenu = () => setMobileMenuOpen(false)
 
   const navLinks = [
-    { to: '/', label: 'Home' },
-    { to: '/products', label: 'All Products' },
-    { to: '/track-order', label: 'Track Order' },
-    { to: '/wishlist', label: `Wishlist (${wishlist.length})` }
+    { to: '/', label: t('home') },
+    { to: '/products', label: t('products') },
+    { to: '/track-order', label: t('track') },
+    { to: '/wishlist', label: `${t('wishlist')} (${wishlist.length})` }
   ]
 
   return (
@@ -205,14 +207,27 @@ export default function App() {
               </nav>
 
               <div className="flex items-center gap-2">
+                <label className="hidden sm:flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs font-bold text-gray-700">
+                  <span>{t('language')}</span>
+                  <select
+                    value={language}
+                    onChange={(event) => setLanguage(event.target.value)}
+                    className="bg-transparent text-sm font-bold text-blue-700 focus:outline-none"
+                    aria-label={t('language')}
+                  >
+                    {languages.map((item) => (
+                      <option key={item.code} value={item.code}>{item.label}</option>
+                    ))}
+                  </select>
+                </label>
                 <Link
                   to="/cart"
                   className="inline-flex items-center rounded-lg bg-orange-500 px-3 py-2 text-sm font-bold text-white hover:bg-orange-600 transition"
                 >
-                  Cart ({cartCount}) <span className="hidden sm:inline">&nbsp;- {formatXAF(subtotal)}</span>
+                  {t('cart')} ({cartCount}) <span className="hidden sm:inline">&nbsp;- {formatXAF(subtotal)}</span>
                 </Link>
                 <Link to="/admin" className="hidden md:inline-flex text-sm font-semibold text-gray-700 hover:text-blue-700 transition">
-                  Admin
+                  {t('admin')}
                 </Link>
                 <button
                   type="button"
@@ -221,7 +236,7 @@ export default function App() {
                   aria-label="Open navigation menu"
                   aria-expanded={mobileMenuOpen}
                 >
-                  Menu
+                  {t('menu')}
                 </button>
               </div>
             </div>
@@ -250,16 +265,29 @@ export default function App() {
               </button>
             </div>
             <nav className="p-5 space-y-2">
+              <label className="mb-3 flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3 text-sm font-bold text-gray-700">
+                <span>{t('language')}</span>
+                <select
+                  value={language}
+                  onChange={(event) => setLanguage(event.target.value)}
+                  className="bg-transparent text-sm font-bold text-blue-700 focus:outline-none"
+                  aria-label={t('language')}
+                >
+                  {languages.map((item) => (
+                    <option key={item.code} value={item.code}>{item.label}</option>
+                  ))}
+                </select>
+              </label>
               {navLinks.map((link) => (
                 <Link key={link.to} to={link.to} onClick={closeMobileMenu} className="block rounded-md px-4 py-3 text-lg font-semibold text-gray-800 hover:bg-blue-50">
                   {link.label}
                 </Link>
               ))}
               <Link to="/cart" onClick={closeMobileMenu} className="block rounded-md px-4 py-3 text-lg font-semibold text-gray-800 hover:bg-blue-50">
-                Cart ({cartCount}) - {formatXAF(subtotal)}
+                {t('cart')} ({cartCount}) - {formatXAF(subtotal)}
               </Link>
               <Link to="/admin" onClick={closeMobileMenu} className="block rounded-md px-4 py-3 text-sm font-semibold text-gray-500 hover:bg-gray-50">
-                Admin
+                {t('admin')}
               </Link>
             </nav>
           </aside>
@@ -267,7 +295,7 @@ export default function App() {
 
         {loading && (
           <div className="bg-blue-100 border-b-2 border-blue-500 text-blue-800">
-            <div className="max-w-7xl mx-auto px-4 py-3 text-sm font-semibold text-center">Loading shop data...</div>
+            <div className="max-w-7xl mx-auto px-4 py-3 text-sm font-semibold text-center">{t('loadingShop')}</div>
           </div>
         )}
 
@@ -290,7 +318,7 @@ export default function App() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 grid gap-6 md:grid-cols-3">
             <div>
               <p className="text-xl font-bold bg-gradient-to-r from-blue-700 to-blue-600 bg-clip-text text-transparent">{settings.shopName}</p>
-              <p className="mt-2 text-sm text-gray-500">Premium electronics and accessories in Cameroon.</p>
+              <p className="mt-2 text-sm text-gray-500">{t('footerTagline')}</p>
             </div>
             <div className="text-sm text-gray-600 space-y-1">
               <p>mile 4, Bamenda, Cameroon</p>
@@ -298,14 +326,14 @@ export default function App() {
               <p>{settings.shopEmail}</p>
             </div>
             <div className="flex flex-wrap md:justify-end gap-4 text-sm font-semibold">
-              <Link to="/" className="text-gray-600 hover:text-blue-700 transition">Home</Link>
-              <Link to="/products" className="text-gray-600 hover:text-blue-700 transition">Products</Link>
-              <Link to="/track-order" className="text-gray-600 hover:text-blue-700 transition">Track Order</Link>
-              <Link to="/wishlist" className="text-gray-600 hover:text-blue-700 transition">Wishlist</Link>
+              <Link to="/" className="text-gray-600 hover:text-blue-700 transition">{t('home')}</Link>
+              <Link to="/products" className="text-gray-600 hover:text-blue-700 transition">{t('products')}</Link>
+              <Link to="/track-order" className="text-gray-600 hover:text-blue-700 transition">{t('track')}</Link>
+              <Link to="/wishlist" className="text-gray-600 hover:text-blue-700 transition">{t('wishlist')}</Link>
             </div>
           </div>
           <div className="border-t border-gray-100 py-4 text-center text-xs text-gray-400">
-            (c) {new Date().getFullYear()} {settings.shopName}. All Rights Reserved.
+            (c) {new Date().getFullYear()} {settings.shopName}. {t('rights')}
           </div>
         </footer>
 

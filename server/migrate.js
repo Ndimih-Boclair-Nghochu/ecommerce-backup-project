@@ -1,4 +1,5 @@
 require('dotenv').config({ path: require('path').join(__dirname, '.env') });
+const bcrypt = require('bcryptjs');
 const { pool } = require('./db');
 
 const requiredSettings = [
@@ -23,6 +24,18 @@ const shippingFees = [
   ['Bafang', 2001],
   ['Nkong', 2000]
 ];
+
+function isBcryptHash(value = '') {
+  return /^\$2[aby]\$\d{2}\$/.test(value);
+}
+
+async function resolveAdminPasswordHash() {
+  if (isBcryptHash(process.env.ADMIN_PASSWORD_HASH || '')) return process.env.ADMIN_PASSWORD_HASH;
+  const plainPassword = process.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD_HASH;
+  if (!plainPassword) return '';
+  console.warn('ADMIN password was provided without bcrypt. Hashing it during migration.');
+  return bcrypt.hash(plainPassword, 12);
+}
 
 const starterProducts = [
   {
@@ -117,9 +130,62 @@ const starterProducts = [
   }
 ];
 
+const starterTranslations = {
+  'Samsung Galaxy A15 128GB': {
+    fr: {
+      name: 'Samsung Galaxy A15 128 Go',
+      description: 'Smartphone Android fiable avec ecran lumineux, longue autonomie, double SIM et stockage suffisant pour le travail, les etudes et les loisirs.'
+    }
+  },
+  'HP EliteBook 840 G6 Laptop': {
+    fr: {
+      name: 'Ordinateur portable HP EliteBook 840 G6',
+      description: 'Ordinateur professionnel pour le bureau, les cours en ligne, la gestion de stock et la productivite quotidienne.'
+    }
+  },
+  'Oraimo FreePods Wireless Earbuds': {
+    fr: {
+      name: 'Ecouteurs sans fil Oraimo FreePods',
+      description: 'Ecouteurs compacts avec son clair, boitier de charge, commandes tactiles et port confortable pour appels, musique et voyages.'
+    }
+  },
+  'Smart LED TV 43 Inch': {
+    fr: {
+      name: 'Television Smart LED 43 pouces',
+      description: 'Television intelligente Full HD avec applications de streaming, ports HDMI et USB, haut-parleurs clairs et design fin.'
+    }
+  },
+  'Anker 20000mAh Power Bank': {
+    fr: {
+      name: 'Power bank Anker 20000 mAh',
+      description: 'Batterie externe haute capacite avec charge rapide pour telephones, tablettes, ecouteurs et autres appareils USB.'
+    }
+  },
+  'Logitech Wireless Keyboard and Mouse Combo': {
+    fr: {
+      name: 'Clavier et souris sans fil Logitech',
+      description: 'Ensemble clavier et souris sans fil confortable pour ordinateurs, bureaux POS et travail quotidien.'
+    }
+  }
+};
+
+async function syncStarterProductTranslations(client) {
+  for (const [name, translations] of Object.entries(starterTranslations)) {
+    await client.query(
+      `UPDATE products
+       SET translations = $1::jsonb, updated_at = NOW()
+       WHERE name = $2 AND (translations IS NULL OR translations = '{}'::jsonb)`,
+      [JSON.stringify(translations), name]
+    );
+  }
+}
+
 async function seedStarterProducts(client) {
   const marker = await client.query("SELECT 1 FROM settings WHERE key = 'starter_products_seeded_v1'");
-  if (marker.rowCount > 0) return;
+  if (marker.rowCount > 0) {
+    await syncStarterProductTranslations(client);
+    return;
+  }
 
   for (const product of starterProducts) {
     await client.query(
@@ -130,9 +196,9 @@ async function seedStarterProducts(client) {
     await client.query(
       `INSERT INTO products (
         name, description, price, stock, category, is_new, most_ordered,
-        available_regions, image_url, images
+        available_regions, image_url, images, translations
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb)`,
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb)`,
       [
         product.name,
         product.description,
@@ -143,10 +209,13 @@ async function seedStarterProducts(client) {
         product.mostOrdered,
         product.availableRegions,
         product.imageUrl,
-        JSON.stringify(product.images)
+        JSON.stringify(product.images),
+        JSON.stringify(starterTranslations[product.name] || {})
       ]
     );
   }
+
+  await syncStarterProductTranslations(client);
 
   await client.query(
     `INSERT INTO settings (key, value) VALUES ('starter_products_seeded_v1', 'true')
@@ -190,10 +259,12 @@ async function migrate(options = {}) {
         available_regions TEXT[],
         image_url TEXT,
         images JSONB DEFAULT '[]',
+        translations JSONB DEFAULT '{}',
         created_at TIMESTAMPTZ DEFAULT NOW(),
         updated_at TIMESTAMPTZ DEFAULT NOW()
       )
     `);
+    await client.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS translations JSONB DEFAULT '{}'`);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS categories (
@@ -354,7 +425,8 @@ async function migrate(options = {}) {
 
     await seedStarterProducts(client);
 
-    if (process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD_HASH) {
+    const adminPasswordHash = await resolveAdminPasswordHash();
+    if (process.env.ADMIN_EMAIL && adminPasswordHash) {
       await client.query(
         `INSERT INTO admins (name, email, password_hash, role, permissions)
          VALUES ($1, $2, $3, 'super_admin', $4::jsonb)
@@ -367,7 +439,7 @@ async function migrate(options = {}) {
         [
           'Ndimih Boclair Nghochu',
           process.env.ADMIN_EMAIL,
-          process.env.ADMIN_PASSWORD_HASH,
+          adminPasswordHash,
           JSON.stringify({
             manageProducts: true,
             manageOrders: true,
@@ -383,7 +455,7 @@ async function migrate(options = {}) {
         ]
       );
     } else {
-      console.warn('ADMIN_EMAIL and ADMIN_PASSWORD_HASH are required to create the super admin.');
+      console.warn('ADMIN_EMAIL and ADMIN_PASSWORD_HASH or ADMIN_PASSWORD are required to create the super admin.');
     }
 
     await client.query('COMMIT');
