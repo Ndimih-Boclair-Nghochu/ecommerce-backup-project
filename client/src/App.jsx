@@ -186,19 +186,19 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-slate-50 text-slate-900">
+      <div className="min-h-screen bg-gray-50 text-gray-900">
         <Toaster position="top-center" toastOptions={{ duration: 3000 }} />
 
-        <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <header className="sticky top-0 z-40 bg-white shadow-md">
+          <div className="max-w-7xl mx-auto px-4 py-3">
             <div className="h-16 flex items-center justify-between gap-3">
-              <Link to="/" className="text-xl sm:text-2xl font-bold text-blue-800 truncate">
+              <Link to="/" className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-700 to-blue-600 bg-clip-text text-transparent hover:from-blue-800 hover:to-blue-700 transition truncate">
                 {settings.shopName}
               </Link>
 
               <nav className="hidden md:flex items-center gap-6 text-sm font-semibold">
                 {navLinks.map((link) => (
-                  <Link key={link.to} to={link.to} className="text-slate-700 hover:text-blue-800">
+                  <Link key={link.to} to={link.to} className="text-gray-700 hover:text-blue-700 transition">
                     {link.label}
                   </Link>
                 ))}
@@ -207,21 +207,21 @@ export default function App() {
               <div className="flex items-center gap-2">
                 <Link
                   to="/cart"
-                  className="inline-flex items-center rounded-md bg-orange-500 px-3 py-2 text-sm font-bold text-white hover:bg-orange-600"
+                  className="inline-flex items-center rounded-lg bg-orange-500 px-3 py-2 text-sm font-bold text-white hover:bg-orange-600 transition"
                 >
                   Cart ({cartCount}) <span className="hidden sm:inline">&nbsp;- {formatXAF(subtotal)}</span>
                 </Link>
-                <Link to="/admin" className="hidden md:inline-flex text-sm font-semibold text-slate-700 hover:text-blue-800">
+                <Link to="/admin" className="hidden md:inline-flex text-sm font-semibold text-gray-700 hover:text-blue-700 transition">
                   Admin
                 </Link>
                 <button
                   type="button"
                   onClick={() => setMobileMenuOpen(true)}
-                  className="md:hidden rounded-md border border-slate-300 px-3 py-2 text-xl leading-none"
+                  className="md:hidden rounded-lg px-3 py-2 text-sm font-bold text-gray-700 hover:bg-gray-100 transition"
                   aria-label="Open navigation menu"
                   aria-expanded={mobileMenuOpen}
                 >
-                  ☰
+                  Menu
                 </button>
               </div>
             </div>
@@ -233,7 +233,7 @@ export default function App() {
             type="button"
             aria-label="Close menu backdrop"
             onClick={closeMobileMenu}
-            className={`absolute inset-0 bg-slate-950/50 transition-opacity ${mobileMenuOpen ? 'opacity-100' : 'opacity-0'}`}
+            className={`absolute inset-0 bg-gray-950/50 transition-opacity ${mobileMenuOpen ? 'opacity-100' : 'opacity-0'}`}
           />
           <aside
             ref={drawerRef}
@@ -243,22 +243,22 @@ export default function App() {
               mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
             }`}
           >
-            <div className="h-16 px-5 flex items-center justify-between border-b border-slate-200">
-              <span className="font-bold text-blue-800">{settings.shopName}</span>
-              <button type="button" onClick={closeMobileMenu} className="rounded-md border border-slate-300 px-3 py-2 text-xl leading-none" aria-label="Close navigation menu">
-                ×
+            <div className="h-16 px-5 flex items-center justify-between border-b border-gray-200">
+              <span className="font-bold bg-gradient-to-r from-blue-700 to-blue-600 bg-clip-text text-transparent">{settings.shopName}</span>
+              <button type="button" onClick={closeMobileMenu} className="rounded-md border border-gray-300 px-3 py-2 text-xl leading-none" aria-label="Close navigation menu">
+                x
               </button>
             </div>
             <nav className="p-5 space-y-2">
               {navLinks.map((link) => (
-                <Link key={link.to} to={link.to} onClick={closeMobileMenu} className="block rounded-md px-4 py-3 text-lg font-semibold text-slate-800 hover:bg-blue-50">
+                <Link key={link.to} to={link.to} onClick={closeMobileMenu} className="block rounded-md px-4 py-3 text-lg font-semibold text-gray-800 hover:bg-blue-50">
                   {link.label}
                 </Link>
               ))}
-              <Link to="/cart" onClick={closeMobileMenu} className="block rounded-md px-4 py-3 text-lg font-semibold text-slate-800 hover:bg-blue-50">
+              <Link to="/cart" onClick={closeMobileMenu} className="block rounded-md px-4 py-3 text-lg font-semibold text-gray-800 hover:bg-blue-50">
                 Cart ({cartCount}) - {formatXAF(subtotal)}
               </Link>
-              <Link to="/admin" onClick={closeMobileMenu} className="block rounded-md px-4 py-3 text-sm font-semibold text-slate-500 hover:bg-slate-50">
+              <Link to="/admin" onClick={closeMobileMenu} className="block rounded-md px-4 py-3 text-sm font-semibold text-gray-500 hover:bg-gray-50">
                 Admin
               </Link>
             </nav>
@@ -266,8 +266,8 @@ export default function App() {
         </div>
 
         {loading && (
-          <div className="bg-blue-50 border-b border-blue-100">
-            <div className="max-w-7xl mx-auto px-4 py-3 text-sm font-medium text-blue-800">Loading shop data...</div>
+          <div className="bg-blue-100 border-b-2 border-blue-500 text-blue-800">
+            <div className="max-w-7xl mx-auto px-4 py-3 text-sm font-semibold text-center">Loading shop data...</div>
           </div>
         )}
 
@@ -286,26 +286,26 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
 
-        <footer className="bg-white border-t border-slate-200">
+        <footer className="bg-white border-t">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 grid gap-6 md:grid-cols-3">
             <div>
-              <p className="text-xl font-bold text-blue-800">{settings.shopName}</p>
-              <p className="mt-2 text-sm text-slate-600">Premium electronics and accessories in Cameroon.</p>
+              <p className="text-xl font-bold bg-gradient-to-r from-blue-700 to-blue-600 bg-clip-text text-transparent">{settings.shopName}</p>
+              <p className="mt-2 text-sm text-gray-500">Premium electronics and accessories in Cameroon.</p>
             </div>
-            <div className="text-sm text-slate-600 space-y-1">
+            <div className="text-sm text-gray-600 space-y-1">
               <p>mile 4, Bamenda, Cameroon</p>
               <p>{settings.shopPhone}</p>
               <p>{settings.shopEmail}</p>
             </div>
             <div className="flex flex-wrap md:justify-end gap-4 text-sm font-semibold">
-              <Link to="/" className="text-slate-700 hover:text-blue-800">Home</Link>
-              <Link to="/products" className="text-slate-700 hover:text-blue-800">Products</Link>
-              <Link to="/track-order" className="text-slate-700 hover:text-blue-800">Track Order</Link>
-              <Link to="/wishlist" className="text-slate-700 hover:text-blue-800">Wishlist</Link>
+              <Link to="/" className="text-gray-600 hover:text-blue-700 transition">Home</Link>
+              <Link to="/products" className="text-gray-600 hover:text-blue-700 transition">Products</Link>
+              <Link to="/track-order" className="text-gray-600 hover:text-blue-700 transition">Track Order</Link>
+              <Link to="/wishlist" className="text-gray-600 hover:text-blue-700 transition">Wishlist</Link>
             </div>
           </div>
-          <div className="border-t border-slate-100 py-4 text-center text-xs text-slate-500">
-            © {new Date().getFullYear()} {settings.shopName}. All Rights Reserved.
+          <div className="border-t border-gray-100 py-4 text-center text-xs text-gray-400">
+            (c) {new Date().getFullYear()} {settings.shopName}. All Rights Reserved.
           </div>
         </footer>
 

@@ -35,13 +35,15 @@ const REAL_SHIPPING_FEES = {
   Nkong: 2000
 };
 
+const INITIAL_HERO_IMAGE = 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1920';
+
 const DEFAULT_HERO_SECTION = {
-  badge: 'New arrivals in Cameroon',
+  badge: 'Special Offers This Season',
   title: 'MyShop',
   description: 'Shop premium electronics and accessories with delivery across Cameroon.',
   primaryButtonText: 'Shop Now',
   secondaryButtonText: 'Browse Products',
-  backgroundImage: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1920'
+  backgroundImage: INITIAL_HERO_IMAGE
 };
 
 const DEFAULT_PAYMENT_ACCOUNTS = {
@@ -476,7 +478,8 @@ app.get('/api/platform-name', asyncHandler(async (req, res) => {
 app.get('/api/hero-section', asyncHandler(async (req, res) => {
   const settings = await getSettings();
   const result = await pool.query("SELECT value FROM settings WHERE key = 'hero_section'");
-  const hero = result.rowCount ? JSON.parse(result.rows[0].value) : DEFAULT_HERO_SECTION;
+  const hero = { ...DEFAULT_HERO_SECTION, ...(result.rowCount ? JSON.parse(result.rows[0].value) : {}) };
+  if (!hero.backgroundImage) hero.backgroundImage = INITIAL_HERO_IMAGE;
   res.json({ ...hero, title: hero.title === 'MyShop' ? settings.shop_name : hero.title });
 }));
 
@@ -1005,6 +1008,7 @@ app.put('/api/admin/settings', requireSuperAdmin, asyncHandler(async (req, res) 
 
 app.put('/api/admin/hero-section', requireSuperAdmin, asyncHandler(async (req, res) => {
   const hero = { ...DEFAULT_HERO_SECTION, ...req.body };
+  if (!hero.backgroundImage) hero.backgroundImage = INITIAL_HERO_IMAGE;
   await pool.query(
     `INSERT INTO settings (key, value)
      VALUES ('hero_section', $1)

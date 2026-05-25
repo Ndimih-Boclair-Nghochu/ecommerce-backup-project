@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import axios from '../lib/api'
 
@@ -32,62 +32,102 @@ export default function AdminLogin() {
   }
 
   return (
-    <main className="min-h-screen bg-blue-800 flex items-center justify-center p-4 sm:p-6">
-      <section className="bg-white rounded-lg shadow-2xl max-w-sm w-full p-6 sm:p-8">
-        <div className="text-center mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-950">Admin Login</h1>
-          <p className="text-slate-600 mt-2 text-sm">Manage the shop securely</p>
-        </div>
-
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-sm font-bold text-slate-800 mb-1">
-              Email Address <span className="text-red-600">*</span>
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 focus:border-blue-700 focus:outline-none"
-              autoComplete="email"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-bold text-slate-800 mb-1">
-              Password <span className="text-red-600">*</span>
-            </label>
-            <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                className="w-full rounded-md border border-slate-300 px-3 py-2 pr-20 focus:border-blue-700 focus:outline-none"
-                autoComplete="current-password"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((value) => !value)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded px-2 py-1 text-sm font-semibold text-blue-700"
-              >
-                {showPassword ? 'Hide' : 'Show'}
-              </button>
+    <main className="min-h-screen bg-gradient-to-br from-blue-800 via-blue-700 to-blue-600 px-4 py-8 sm:px-6">
+      <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-6xl items-center">
+        <section className="grid w-full overflow-hidden rounded-2xl bg-white shadow-2xl lg:grid-cols-[0.95fr_1.05fr]">
+          <div className="hidden bg-gradient-to-br from-blue-700 via-blue-600 to-blue-800 p-10 text-white lg:flex lg:flex-col lg:justify-between">
+            <div>
+              <Link to="/" className="inline-flex rounded-full bg-white/15 px-4 py-2 text-sm font-bold backdrop-blur">
+                Back to storefront
+              </Link>
+              <h1 className="mt-10 text-4xl font-bold leading-tight">Business control center</h1>
+              <p className="mt-4 max-w-md text-blue-100">
+                Manage products, orders, stock, POS receipts, support messages, locations, and team access from one secure dashboard.
+              </p>
+            </div>
+            <div className="grid gap-3 text-sm text-blue-50">
+              <div className="rounded-xl bg-white/10 p-4 backdrop-blur">
+                Secure JWT authentication for admins and sub-admins.
+              </div>
+              <div className="rounded-xl bg-white/10 p-4 backdrop-blur">
+                Real business data is protected by environment variables.
+              </div>
             </div>
           </div>
 
-          {error && <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+          <div className="p-6 sm:p-8 lg:p-12">
+            <div className="mb-8">
+              <Link to="/" className="mb-6 inline-flex text-sm font-bold text-blue-700 hover:text-blue-800 lg:hidden">
+                Back to storefront
+              </Link>
+              <p className="text-sm font-bold uppercase tracking-wide text-orange-500">Admin access</p>
+              <h2 className="mt-2 text-3xl font-bold text-gray-950 sm:text-4xl">Sign in securely</h2>
+              <p className="mt-3 text-sm text-gray-600">
+                Use the admin credentials configured in the server environment.
+              </p>
+            </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-md bg-blue-700 py-3 font-bold text-white hover:bg-blue-800 disabled:bg-slate-300"
-          >
-            {loading ? 'Logging in...' : 'Login'}
-          </button>
-        </form>
-      </section>
+            <form onSubmit={handleLogin} className="space-y-5">
+              <div>
+                <label className="mb-2 block text-sm font-bold text-gray-800">
+                  Email Address <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 text-base shadow-sm focus:border-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100"
+                  autoComplete="email"
+                  placeholder="admin@example.com"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-bold text-gray-800">
+                  Password <span className="text-red-600">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    className="w-full rounded-xl border border-gray-300 px-4 py-3 pr-24 text-base shadow-sm focus:border-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100"
+                    autoComplete="current-password"
+                    placeholder="Enter password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((value) => !value)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-3 py-2 text-sm font-bold text-blue-700 hover:bg-blue-50"
+                  >
+                    {showPassword ? 'Hide' : 'Show'}
+                  </button>
+                </div>
+              </div>
+
+              {error && (
+                <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                  {error}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-xl bg-gradient-to-r from-blue-700 to-blue-600 px-5 py-3.5 font-bold text-white shadow-lg transition hover:from-blue-800 hover:to-blue-700 disabled:from-gray-300 disabled:to-gray-300 disabled:text-gray-500"
+              >
+                {loading ? 'Signing in...' : 'Sign in to dashboard'}
+              </button>
+            </form>
+
+            <div className="mt-8 rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
+              For security, credentials are never displayed in the app. The super admin account is created from the Render environment variables.
+            </div>
+          </div>
+        </section>
+      </div>
     </main>
   )
 }

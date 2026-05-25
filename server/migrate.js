@@ -24,6 +24,136 @@ const shippingFees = [
   ['Nkong', 2000]
 ];
 
+const starterProducts = [
+  {
+    name: 'Samsung Galaxy A15 128GB',
+    description: 'Reliable Android smartphone with a bright display, long battery life, dual SIM support, and enough storage for everyday business, school, and entertainment use.',
+    price: 145000,
+    stock: 18,
+    category: 'Phones',
+    isNew: true,
+    mostOrdered: true,
+    availableRegions: ['ALL'],
+    imageUrl: 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=1200',
+    images: [
+      { color: 'Blue Black', url: 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=1200' },
+      { color: 'Light Blue', url: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=1200' }
+    ]
+  },
+  {
+    name: 'HP EliteBook 840 G6 Laptop',
+    description: 'Business-grade laptop for office work, online classes, inventory management, and daily productivity. Includes fast SSD storage, webcam, Wi-Fi, and a durable aluminum body.',
+    price: 285000,
+    stock: 7,
+    category: 'Computers',
+    isNew: false,
+    mostOrdered: true,
+    availableRegions: ['ALL'],
+    imageUrl: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=1200',
+    images: [
+      { color: 'Silver', url: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=1200' },
+      { color: 'Workspace View', url: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=1200' }
+    ]
+  },
+  {
+    name: 'Oraimo FreePods Wireless Earbuds',
+    description: 'Compact wireless earbuds with clear sound, charging case, touch controls, and comfortable fit for calls, music, and travel.',
+    price: 18500,
+    stock: 35,
+    category: 'Audio',
+    isNew: true,
+    mostOrdered: true,
+    availableRegions: ['ALL'],
+    imageUrl: 'https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?w=1200',
+    images: [
+      { color: 'Black', url: 'https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?w=1200' },
+      { color: 'White', url: 'https://images.unsplash.com/photo-1608156639585-b3a032ef9689?w=1200' }
+    ]
+  },
+  {
+    name: 'Smart LED TV 43 Inch',
+    description: 'Full HD smart television with built-in streaming apps, HDMI and USB ports, clear speakers, and a slim design for living rooms, shops, and offices.',
+    price: 195000,
+    stock: 9,
+    category: 'Televisions',
+    isNew: true,
+    mostOrdered: false,
+    availableRegions: ['ALL'],
+    imageUrl: 'https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=1200',
+    images: [
+      { color: 'Front View', url: 'https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=1200' },
+      { color: 'Home Setup', url: 'https://images.unsplash.com/photo-1461151304267-38535e780c79?w=1200' }
+    ]
+  },
+  {
+    name: 'Anker 20000mAh Power Bank',
+    description: 'High-capacity portable power bank with fast charging support for phones, tablets, wireless earbuds, and other USB-powered devices.',
+    price: 32000,
+    stock: 24,
+    category: 'Accessories',
+    isNew: false,
+    mostOrdered: true,
+    availableRegions: ['ALL'],
+    imageUrl: 'https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?w=1200',
+    images: [
+      { color: 'Black', url: 'https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?w=1200' },
+      { color: 'Portable Setup', url: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=1200' }
+    ]
+  },
+  {
+    name: 'Logitech Wireless Keyboard and Mouse Combo',
+    description: 'Comfortable wireless keyboard and mouse set for laptops, desktops, POS desks, and office work. Includes plug-and-play USB receiver.',
+    price: 28000,
+    stock: 16,
+    category: 'Computer Accessories',
+    isNew: true,
+    mostOrdered: false,
+    availableRegions: ['ALL'],
+    imageUrl: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=1200',
+    images: [
+      { color: 'Black', url: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=1200' },
+      { color: 'Desk Setup', url: 'https://images.unsplash.com/photo-1527814050087-3793815479db?w=1200' }
+    ]
+  }
+];
+
+async function seedStarterProducts(client) {
+  const marker = await client.query("SELECT 1 FROM settings WHERE key = 'starter_products_seeded_v1'");
+  if (marker.rowCount > 0) return;
+
+  for (const product of starterProducts) {
+    await client.query(
+      `INSERT INTO categories (name) VALUES ($1) ON CONFLICT (name) DO NOTHING`,
+      [product.category]
+    );
+
+    await client.query(
+      `INSERT INTO products (
+        name, description, price, stock, category, is_new, most_ordered,
+        available_regions, image_url, images
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb)`,
+      [
+        product.name,
+        product.description,
+        product.price,
+        product.stock,
+        product.category,
+        product.isNew,
+        product.mostOrdered,
+        product.availableRegions,
+        product.imageUrl,
+        JSON.stringify(product.images)
+      ]
+    );
+  }
+
+  await client.query(
+    `INSERT INTO settings (key, value) VALUES ('starter_products_seeded_v1', 'true')
+     ON CONFLICT (key) DO NOTHING`
+  );
+}
+
 async function migrate(options = {}) {
   const close = options.close !== false;
   const client = await pool.connect();
@@ -221,6 +351,8 @@ async function migrate(options = {}) {
       SELECT 'Buea Branch', 'Buea', 'mile 5, Buea, Cameroon', '+237 6 52 882 753', 'buea@store.cm', 4.1555, 9.2424, false, 'Mon-Sun: 8AM-8PM', 'Our scenic branch store overlooking Mount Cameroon'
       WHERE NOT EXISTS (SELECT 1 FROM locations WHERE name = 'Buea Branch' AND city = 'Buea')
     `);
+
+    await seedStarterProducts(client);
 
     if (process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD_HASH) {
       await client.query(

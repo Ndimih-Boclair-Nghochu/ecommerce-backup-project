@@ -2480,7 +2480,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* SECTION 5: System Information */}
-              <div className="bg-gradient-to-r from-gray-50 to-slate-50 rounded-xl shadow-md p-6 lg:p-8 border-2 border-gray-200">
+              <div className="bg-gradient-to-r from-gray-50 to-gray-50 rounded-xl shadow-md p-6 lg:p-8 border-2 border-gray-200">
                 <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">ℹ️ System Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="bg-white rounded-lg p-4 border border-gray-200">

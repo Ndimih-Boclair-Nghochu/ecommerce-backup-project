@@ -15,7 +15,7 @@ const emptyBuyer = {
 
 function RequiredLabel({ children }) {
   return (
-    <label className="block text-sm font-bold text-slate-800 mb-1">
+    <label className="block text-sm font-bold text-gray-800 mb-1">
       {children} <span className="text-red-600">*</span>
     </label>
   )
@@ -132,10 +132,10 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
 
   if (!cart.length && !successOrder) {
     return (
-      <main className="min-h-[70vh] bg-slate-50 flex items-center justify-center px-4 py-16">
+      <main className="min-h-[70vh] bg-gray-50 flex items-center justify-center px-4 py-16">
         <section className="max-w-md text-center">
-          <h1 className="text-3xl font-bold text-slate-950">Your cart is empty</h1>
-          <p className="mt-3 text-slate-600">Browse products and add the items you want to order.</p>
+          <h1 className="text-3xl font-bold text-gray-950">Your cart is empty</h1>
+          <p className="mt-3 text-gray-600">Browse products and add the items you want to order.</p>
           <Link to="/products" className="mt-6 inline-flex rounded-md bg-blue-700 px-5 py-3 font-bold text-white hover:bg-blue-800">
             Browse Products
           </Link>
@@ -145,11 +145,11 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
   }
 
   return (
-    <main className="min-h-screen bg-slate-50">
+    <main className="min-h-screen bg-gray-50">
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         <div className="mb-6">
           <Link to="/products" className="text-sm font-semibold text-blue-700 hover:text-blue-900">← Continue Shopping</Link>
-          <h1 className="mt-3 text-3xl sm:text-4xl font-bold text-slate-950">Shopping Cart</h1>
+          <h1 className="mt-3 text-3xl sm:text-4xl font-bold text-gray-950">Shopping Cart</h1>
         </div>
 
         {successOrder && (
@@ -170,14 +170,14 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
         <div className="grid gap-6 lg:grid-cols-[1fr_420px]">
           <div className="space-y-4">
             {cart.map((item) => (
-              <article key={item.id} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+              <article key={item.id} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
                 <div className="grid grid-cols-[88px_1fr] gap-4">
-                  <img src={getProductImage(item)} alt={item.name} className="h-24 w-24 rounded-md object-cover bg-slate-100" />
+                  <img src={getProductImage(item)} alt={item.name} className="h-24 w-24 rounded-md object-cover bg-gray-100" />
                   <div>
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <h2 className="font-bold text-slate-950">{item.name}</h2>
-                        <p className="mt-1 text-sm text-slate-600">{formatXAF(item.price)}</p>
+                        <h2 className="font-bold text-gray-950">{item.name}</h2>
+                        <p className="mt-1 text-sm text-gray-600">{formatXAF(item.price)}</p>
                       </div>
                       <button type="button" onClick={() => removeFromCart(item.id)} className="text-sm font-semibold text-red-700">
                         Remove
@@ -185,17 +185,17 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
                     </div>
                     <div className="mt-4 flex items-center justify-between gap-4">
                       <div className="flex items-center gap-2">
-                        <button type="button" onClick={() => updateQuantity(item.id, item.quantity - 1)} className="h-9 w-9 rounded-md border border-slate-300 font-bold">−</button>
+                        <button type="button" onClick={() => updateQuantity(item.id, item.quantity - 1)} className="h-9 w-9 rounded-md border border-gray-300 font-bold">−</button>
                         <input
                           type="number"
                           min="1"
                           value={item.quantity}
                           onChange={(event) => updateQuantity(item.id, Number(event.target.value) || 1)}
-                          className="h-9 w-16 rounded-md border border-slate-300 text-center font-bold"
+                          className="h-9 w-16 rounded-md border border-gray-300 text-center font-bold"
                         />
-                        <button type="button" onClick={() => updateQuantity(item.id, item.quantity + 1)} className="h-9 w-9 rounded-md border border-slate-300 font-bold">+</button>
+                        <button type="button" onClick={() => updateQuantity(item.id, item.quantity + 1)} className="h-9 w-9 rounded-md border border-gray-300 font-bold">+</button>
                       </div>
-                      <p className="font-bold text-slate-950">{formatXAF(item.price * item.quantity)}</p>
+                      <p className="font-bold text-gray-950">{formatXAF(item.price * item.quantity)}</p>
                     </div>
                   </div>
                 </div>
@@ -203,34 +203,34 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
             ))}
           </div>
 
-          <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm h-fit">
-            <h2 className="text-xl font-bold text-slate-950">Checkout</h2>
-            <p className="mt-2 text-sm text-slate-600">
+          <aside className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm h-fit">
+            <h2 className="text-xl font-bold text-gray-950">Checkout</h2>
+            <p className="mt-2 text-sm text-gray-600">
               No online payment is collected here. The shop will contact you after the order is received.
             </p>
 
             <form onSubmit={placeOrder} className="mt-6 space-y-4">
               <div>
                 <RequiredLabel>Full Name</RequiredLabel>
-                <input value={buyer.name} onChange={(event) => handleBuyerChange('name', event.target.value)} className="w-full rounded-md border border-slate-300 px-3 py-2 focus:border-blue-700 focus:outline-none" />
+                <input value={buyer.name} onChange={(event) => handleBuyerChange('name', event.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none" />
                 {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
               </div>
 
               <div>
                 <RequiredLabel>Email</RequiredLabel>
-                <input type="email" value={buyer.email} onChange={(event) => handleBuyerChange('email', event.target.value)} className="w-full rounded-md border border-slate-300 px-3 py-2 focus:border-blue-700 focus:outline-none" />
+                <input type="email" value={buyer.email} onChange={(event) => handleBuyerChange('email', event.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none" />
                 {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
               </div>
 
               <div>
                 <RequiredLabel>Phone</RequiredLabel>
-                <input type="tel" value={buyer.phone} onChange={(event) => handleBuyerChange('phone', event.target.value)} className="w-full rounded-md border border-slate-300 px-3 py-2 focus:border-blue-700 focus:outline-none" placeholder="+237 6 52 882 753" />
+                <input type="tel" value={buyer.phone} onChange={(event) => handleBuyerChange('phone', event.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none" placeholder="+237 6 52 882 753" />
                 {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
               </div>
 
               <div>
                 <RequiredLabel>Delivery Region</RequiredLabel>
-                <select value={region} onChange={(event) => setRegion(event.target.value)} className="w-full rounded-md border border-slate-300 px-3 py-2 focus:border-blue-700 focus:outline-none">
+                <select value={region} onChange={(event) => setRegion(event.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none">
                   {(regions.length ? regions : [mainTown]).map((city) => (
                     <option key={city} value={city}>{city}</option>
                   ))}
@@ -239,13 +239,13 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
 
               <div>
                 <RequiredLabel>Delivery Address</RequiredLabel>
-                <textarea value={buyer.address} onChange={(event) => handleBuyerChange('address', event.target.value)} rows="3" className="w-full rounded-md border border-slate-300 px-3 py-2 focus:border-blue-700 focus:outline-none" />
+                <textarea value={buyer.address} onChange={(event) => handleBuyerChange('address', event.target.value)} rows="3" className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none" />
                 {errors.address && <p className="mt-1 text-sm text-red-600">{errors.address}</p>}
               </div>
 
               {showAgencies && (
                 <div>
-                  <label className="block text-sm font-bold text-slate-800 mb-2">Nearby collection agencies</label>
+                  <label className="block text-sm font-bold text-gray-800 mb-2">Nearby collection agencies</label>
                   <div className="space-y-2">
                     {buyer.agencies.map((agency, index) => (
                       <input
@@ -253,7 +253,7 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
                         value={agency}
                         onChange={(event) => handleAgencyChange(index, event.target.value)}
                         placeholder={`Agency ${index + 1}`}
-                        className="w-full rounded-md border border-slate-300 px-3 py-2 focus:border-blue-700 focus:outline-none"
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none"
                       />
                     ))}
                   </div>
@@ -261,18 +261,18 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
               )}
 
               <div>
-                <label className="block text-sm font-bold text-slate-800 mb-1">Notes</label>
-                <textarea value={buyer.notes} onChange={(event) => handleBuyerChange('notes', event.target.value)} rows="2" className="w-full rounded-md border border-slate-300 px-3 py-2 focus:border-blue-700 focus:outline-none" />
+                <label className="block text-sm font-bold text-gray-800 mb-1">Notes</label>
+                <textarea value={buyer.notes} onChange={(event) => handleBuyerChange('notes', event.target.value)} rows="2" className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none" />
               </div>
 
-              <div className="rounded-lg bg-slate-50 p-4 space-y-2">
+              <div className="rounded-lg bg-gray-50 p-4 space-y-2">
                 <div className="flex justify-between text-sm"><span>Subtotal</span><span className="font-semibold">{formatXAF(subtotal)}</span></div>
                 <div className="flex justify-between text-sm">
                   <span>Shipping</span>
                   <span className="font-semibold">{freeShipping ? 'Free' : formatXAF(shipping)}</span>
                 </div>
                 {freeShipping && <p className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-800 inline-flex">Free shipping</p>}
-                <div className="border-t border-slate-200 pt-2 flex justify-between text-lg font-bold">
+                <div className="border-t border-gray-200 pt-2 flex justify-between text-lg font-bold">
                   <span>Total</span>
                   <span>{formatXAF(total)}</span>
                 </div>
@@ -282,7 +282,7 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
               <button
                 type="submit"
                 disabled={placingOrder}
-                className="w-full rounded-md bg-blue-700 px-5 py-3 font-bold text-white hover:bg-blue-800 disabled:bg-slate-300"
+                className="w-full rounded-md bg-blue-700 px-5 py-3 font-bold text-white hover:bg-blue-800 disabled:bg-gray-300"
               >
                 {placingOrder ? 'Submitting...' : 'Place Order'}
               </button>

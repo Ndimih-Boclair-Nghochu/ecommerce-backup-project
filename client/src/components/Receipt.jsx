@@ -57,20 +57,20 @@ export default function Receipt({ order, onClose }) {
   const totals = order.totals || { subtotal: order.subtotal, shipping: order.shippingFee, total: order.total }
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/60 p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-gray-950/60 p-4 overflow-y-auto">
       <div className="max-w-3xl mx-auto">
         <div className="mb-3 flex justify-end gap-2">
           <button type="button" onClick={downloadPdf} className="rounded-md bg-blue-700 px-4 py-2 font-bold text-white hover:bg-blue-800">
             Download PDF
           </button>
           {onClose && (
-            <button type="button" onClick={onClose} className="rounded-md bg-white px-4 py-2 font-bold text-slate-800 hover:bg-slate-100">
+            <button type="button" onClick={onClose} className="rounded-md bg-white px-4 py-2 font-bold text-gray-800 hover:bg-gray-100">
               Close
             </button>
           )}
         </div>
 
-        <section ref={receiptRef} className="bg-white rounded-lg shadow-xl overflow-hidden text-slate-950">
+        <section ref={receiptRef} className="bg-white rounded-lg shadow-xl overflow-hidden text-gray-950">
           <header className="bg-blue-800 text-white p-6">
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               <div>
@@ -88,13 +88,13 @@ export default function Receipt({ order, onClose }) {
 
           <div className="p-6 space-y-6">
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-lg border border-slate-200 p-4">
+              <div className="rounded-lg border border-gray-200 p-4">
                 <h2 className="font-bold mb-2">Customer</h2>
                 <p>{buyer.name || order.customer?.name || 'Walk-in customer'}</p>
-                <p className="text-sm text-slate-600">{buyer.email || ''}</p>
-                <p className="text-sm text-slate-600">{buyer.phone || order.customer?.phone || ''}</p>
+                <p className="text-sm text-gray-600">{buyer.email || ''}</p>
+                <p className="text-sm text-gray-600">{buyer.phone || order.customer?.phone || ''}</p>
               </div>
-              <div className="rounded-lg border border-slate-200 p-4">
+              <div className="rounded-lg border border-gray-200 p-4">
                 <h2 className="font-bold mb-2">Order</h2>
                 <p className="capitalize">Status: {order.status || 'completed'}</p>
                 <p>Region: {order.region || 'In store'}</p>
@@ -105,7 +105,7 @@ export default function Receipt({ order, onClose }) {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-slate-200 text-left">
+                  <tr className="border-b border-gray-200 text-left">
                     <th className="py-3 pr-3">Item</th>
                     <th className="py-3 pr-3 text-center">Qty</th>
                     <th className="py-3 pr-3 text-right">Price</th>
@@ -114,7 +114,7 @@ export default function Receipt({ order, onClose }) {
                 </thead>
                 <tbody>
                   {(order.items || []).map((item, index) => (
-                    <tr key={`${item.id || item.name}-${index}`} className="border-b border-slate-100">
+                    <tr key={`${item.id || item.name}-${index}`} className="border-b border-gray-100">
                       <td className="py-3 pr-3 font-semibold">{item.name}</td>
                       <td className="py-3 pr-3 text-center">{item.quantity}</td>
                       <td className="py-3 pr-3 text-right">{formatXAF(item.price)}</td>
@@ -125,10 +125,10 @@ export default function Receipt({ order, onClose }) {
               </table>
             </div>
 
-            <div className="ml-auto max-w-sm rounded-lg bg-slate-50 p-4 space-y-2">
+            <div className="ml-auto max-w-sm rounded-lg bg-gray-50 p-4 space-y-2">
               <div className="flex justify-between"><span>Subtotal</span><span>{formatXAF(totals.subtotal || 0)}</span></div>
               <div className="flex justify-between"><span>Shipping</span><span>{formatXAF(totals.shipping || totals.shippingFee || 0)}</span></div>
-              <div className="border-t border-slate-200 pt-2 flex justify-between text-lg font-bold">
+              <div className="border-t border-gray-200 pt-2 flex justify-between text-lg font-bold">
                 <span>Total</span>
                 <span>{formatXAF(totals.total || 0)}</span>
               </div>
