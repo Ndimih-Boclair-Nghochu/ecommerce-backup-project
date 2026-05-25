@@ -86,51 +86,52 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
   }, [products])
 
   const heroData = {
-    badge: hero?.badge || 'Bamenda based shop',
+    badge: hero?.badge || 'Special Offers This Season',
     title: settings.shopName || 'MyShop',
     description: hero?.description || 'Shop premium electronics and accessories in Cameroon. Your order is received first, then our team contacts you to confirm payment and delivery.',
+    primaryButtonText: hero?.primaryButtonText || 'Shop Now',
+    secondaryButtonText: hero?.secondaryButtonText || 'Browse Products',
     backgroundImage: hero?.backgroundImage || 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1920'
   }
 
+  const heroStats = [
+    { value: stats?.totalProducts ?? products.length, label: 'Products listed' },
+    { value: stats?.totalInStock ?? 0, label: 'Items in stock' },
+    { value: formatXAF(settings.freeShippingThreshold), label: 'Free shipping from' }
+  ]
+
   return (
     <main>
-      <section className="relative min-h-[520px] sm:min-h-[560px] flex items-end overflow-hidden bg-slate-950">
-        <img src={heroData.backgroundImage} alt="" className="absolute inset-0 h-full w-full object-cover opacity-55" />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/55 to-transparent" />
-        <div className="relative max-w-7xl mx-auto w-full px-4 sm:px-6 pb-16 pt-32">
-          <div className="max-w-2xl text-white">
-            <p className="inline-flex rounded-full bg-white/15 px-4 py-2 text-sm font-semibold backdrop-blur">{heroData.badge}</p>
-            <h1 className="mt-5 text-4xl sm:text-5xl md:text-6xl font-bold leading-tight">{heroData.title}</h1>
-            <p className="mt-5 text-base sm:text-lg text-slate-100 max-w-xl">{heroData.description}</p>
-            <div className="mt-8 flex flex-col sm:flex-row gap-3">
-              <Link to="/products" className="rounded-md bg-orange-500 px-6 py-3 text-center font-bold text-white hover:bg-orange-600">
-                Shop Now
-              </Link>
-              <Link to="/products" className="rounded-md border border-white/70 px-6 py-3 text-center font-bold text-white hover:bg-white/10">
-                Browse Products
-              </Link>
-            </div>
-          </div>
+      <section className="relative overflow-hidden bg-gradient-to-r from-blue-700 via-blue-600 to-blue-800 py-12 text-white sm:py-16 md:py-20 lg:py-24">
+        <div className="absolute inset-0 opacity-10">
+          <img src={heroData.backgroundImage} alt="" className="h-full w-full object-cover" />
         </div>
-      </section>
+        <div className="relative mx-auto max-w-7xl px-4 text-center sm:px-6">
+          <div className="inline-flex rounded-full bg-orange-500 px-4 py-2 text-sm font-bold text-white shadow-lg sm:px-6 sm:text-base">
+            {heroData.badge}
+          </div>
+          <h1 className="mx-auto mt-5 max-w-4xl text-3xl font-bold leading-tight sm:mt-6 sm:text-4xl md:text-5xl lg:text-6xl">
+            {heroData.title}
+          </h1>
+          <p className="mx-auto mt-4 max-w-3xl px-2 text-base text-gray-100 sm:mt-6 sm:text-lg md:text-xl">
+            {heroData.description}
+          </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3 px-2 sm:mt-8 sm:gap-4">
+            <Link to="/products" className="rounded-lg bg-orange-500 px-6 py-2 text-sm font-bold text-white shadow-lg transition hover:bg-orange-600 sm:px-8 sm:py-3 sm:text-base md:text-lg">
+              {heroData.primaryButtonText}
+            </Link>
+            <Link to="/products" className="rounded-lg border-2 border-white px-6 py-2 text-sm font-bold text-white transition hover:bg-white/10 sm:px-8 sm:py-3 sm:text-base">
+              {heroData.secondaryButtonText}
+            </Link>
+          </div>
 
-      <section className="bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="rounded-lg bg-slate-50 p-4">
-            <p className="text-2xl font-bold text-slate-950">{stats?.totalProducts ?? products.length}</p>
-            <p className="text-sm text-slate-600">Products listed</p>
-          </div>
-          <div className="rounded-lg bg-slate-50 p-4">
-            <p className="text-2xl font-bold text-slate-950">{stats?.totalInStock ?? 0}</p>
-            <p className="text-sm text-slate-600">Items in stock</p>
-          </div>
-          <div className="rounded-lg bg-slate-50 p-4">
-            <p className="text-2xl font-bold text-slate-950">{settings.mainShopTown}</p>
-            <p className="text-sm text-slate-600">Main shop town</p>
-          </div>
-          <div className="rounded-lg bg-slate-50 p-4">
-            <p className="text-2xl font-bold text-slate-950">{formatXAF(settings.freeShippingThreshold)}</p>
-            <p className="text-sm text-slate-600">Free shipping threshold</p>
+          <div className="mx-auto mt-10 grid max-w-3xl grid-cols-3 gap-3 sm:mt-16 sm:gap-6">
+            {heroStats.map((stat) => (
+              <div key={stat.label} className="rounded-lg bg-white/15 p-3 backdrop-blur sm:p-6">
+                <div className="mb-1 text-xl font-bold sm:mb-2 sm:text-3xl">{stat.value}</div>
+                <div className="text-xs sm:text-sm">{stat.label}</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
