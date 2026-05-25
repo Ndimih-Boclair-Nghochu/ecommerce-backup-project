@@ -370,8 +370,19 @@ async function seedAdditionalProducts(client) {
         name, description, price, stock, category, is_new, most_ordered,
         available_regions, image_url, images, translations
       )
-      SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb
-      WHERE NOT EXISTS (SELECT 1 FROM products WHERE name = $1)`,
+      SELECT
+        $1::varchar(255),
+        $2::text,
+        $3::integer,
+        $4::integer,
+        $5::varchar(100),
+        $6::boolean,
+        $7::boolean,
+        $8::text[],
+        $9::text,
+        $10::jsonb,
+        $11::jsonb
+      WHERE NOT EXISTS (SELECT 1 FROM products WHERE name = $1::varchar(255))`,
       [
         product.name,
         product.description,
