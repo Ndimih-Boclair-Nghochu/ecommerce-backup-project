@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import axios from '../lib/api'
+import { resolveAssetUrl } from '../utils/format'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024
 const VALID_FILE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf']
@@ -228,11 +229,11 @@ export default function ChatWidget() {
                     {message.imageUrl && (
                       <div className="mb-2">
                         {message.imageUrl.toLowerCase().endsWith('.pdf') ? (
-                          <a href={message.imageUrl} target="_blank" rel="noopener noreferrer" className="font-bold text-blue-700 underline">
+                          <a href={resolveAssetUrl(message.imageUrl)} target="_blank" rel="noopener noreferrer" className="font-bold text-blue-700 underline">
                             Open attached PDF
                           </a>
                         ) : (
-                          <img src={message.imageUrl} alt="Attachment" className="max-h-44 w-full rounded-lg object-cover" />
+                          <img src={resolveAssetUrl(message.imageUrl)} alt="Attachment" className="max-h-44 w-full rounded-lg object-cover" />
                         )}
                       </div>
                     )}

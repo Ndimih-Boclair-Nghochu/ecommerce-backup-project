@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import axios from '../lib/api'
 import ProductCard from '../components/ProductCard'
-import { formatXAF, getProductImage } from '../utils/format'
+import { formatXAF, getProductImage, resolveAssetUrl } from '../utils/format'
 import { useLanguage } from '../i18n/LanguageContext'
 
 export default function ProductDetail({ addToCart, toggleWishlist, isInWishlist, settings }) {
@@ -81,14 +81,14 @@ export default function ProductDetail({ addToCart, toggleWishlist, isInWishlist,
         <div className="mt-6 grid gap-8 lg:grid-cols-2">
           <div>
             <div className="relative aspect-square overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-              <img src={selectedImage || getProductImage(product)} alt={displayProduct.displayName} className="h-full w-full object-cover" />
+              <img src={resolveAssetUrl(selectedImage) || getProductImage(product)} alt={displayProduct.displayName} className="h-full w-full object-cover" />
               {outOfStock && <div className="absolute inset-x-0 top-0 bg-red-600 py-3 text-center font-bold text-white">{t('outOfStock')}</div>}
             </div>
             {variants.length > 1 && (
               <div className="mt-4 grid grid-cols-4 sm:grid-cols-6 gap-3">
                 {variants.map((variant) => (
                   <button key={`${variant.color}-${variant.url}`} type="button" onClick={() => { setSelectedVariant(variant); setSelectedImage(variant.url) }} className={`aspect-square overflow-hidden rounded-xl border-2 ${selectedVariant?.url === variant.url ? 'border-blue-700' : 'border-gray-200'}`} aria-label={`Select ${variant.color || 'variant'}`}>
-                    <img src={variant.url} alt={variant.color || displayProduct.displayName} className="h-full w-full object-cover" />
+                    <img src={resolveAssetUrl(variant.url)} alt={variant.color || displayProduct.displayName} className="h-full w-full object-cover" />
                   </button>
                 ))}
               </div>
@@ -154,7 +154,7 @@ export default function ProductDetail({ addToCart, toggleWishlist, isInWishlist,
       <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-12">
         <h2 className="text-2xl font-bold text-gray-950 mb-4">{t('related')}</h2>
         {related.length ? (
-          <div className="grid grid-cols-2 gap-3 sm:gap-5">
+          <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 xl:grid-cols-4">
             {related.map((item) => <ProductCard key={item.id} product={item} addToCart={addToCart} toggleWishlist={toggleWishlist} isInWishlist={isInWishlist} />)}
           </div>
         ) : (

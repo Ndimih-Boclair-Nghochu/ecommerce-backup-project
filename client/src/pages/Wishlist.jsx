@@ -45,7 +45,7 @@ export default function Wishlist({ wishlist, addToCart, toggleWishlist }) {
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:gap-5">
+        <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 xl:grid-cols-4">
           {wishlist.map((product) => (
             <ProductCard key={product.id} product={product} addToCart={addToCart} toggleWishlist={toggleWishlist} isInWishlist={() => true} />
           ))}

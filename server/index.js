@@ -61,7 +61,14 @@ const DEFAULT_PAYMENT_ACCOUNTS = {
 
 app.set('trust proxy', 1);
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: 'cross-origin' }
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  contentSecurityPolicy: {
+    directives: {
+      'connect-src': ["'self'", 'https:', 'http:'],
+      'img-src': ["'self'", 'data:', 'blob:', 'https:', 'http:'],
+      'media-src': ["'self'", 'data:', 'blob:', 'https:', 'http:']
+    }
+  }
 }));
 app.use(cors({ origin: CLIENT_ORIGIN }));
 app.use(express.json({ limit: '2mb' }));
@@ -93,6 +100,22 @@ const upload = multer({
     cb(allowed.includes(file.mimetype) ? null : new Error('Unsupported file type'), allowed.includes(file.mimetype));
   }
 });
+
+const adminProductUpload = upload.fields([
+  { name: 'image', maxCount: 1 },
+  { name: 'file', maxCount: 1 }
+]);
+
+function getUploadedFile(req) {
+  return req.file || req.files?.image?.[0] || req.files?.file?.[0] || null;
+}
+
+function sendUploadResponse(req, res) {
+  const file = getUploadedFile(req);
+  if (!file) return res.status(400).json({ error: 'No file uploaded' });
+  const imageUrl = `/uploads/${file.filename}`;
+  return res.json({ imageUrl, url: imageUrl });
+}
 
 app.use('/uploads', express.static(uploadDir));
 
@@ -726,10 +749,7 @@ app.post('/api/chat', chatValidation, asyncHandler(async (req, res) => {
   });
 }));
 
-app.post('/api/chat/upload', upload.single('file'), (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-  res.json({ imageUrl: `/uploads/${req.file.filename}` });
-});
+app.post('/api/chat/upload', upload.single('file'), sendUploadResponse);
 
 app.post('/api/admin/login', loginValidation, asyncHandler(async (req, res) => {
   requireJwtSecret();
@@ -1041,10 +1061,7 @@ app.put('/api/admin/hero-section', requireSuperAdmin, asyncHandler(async (req, r
   res.json(hero);
 }));
 
-app.post('/api/admin/upload', checkPermission('manageProducts'), upload.single('image'), (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-  res.json({ imageUrl: `/uploads/${req.file.filename}` });
-});
+app.post('/api/admin/upload', checkPermission('manageProducts'), adminProductUpload, sendUploadResponse);
 
 app.get('/api/admin/locations', checkPermission('manageLocations'), asyncHandler(async (req, res) => {
   const result = await pool.query('SELECT * FROM locations ORDER BY is_main_store DESC, city ASC, name ASC');

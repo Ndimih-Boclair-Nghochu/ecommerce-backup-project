@@ -130,11 +130,11 @@ export default function AllProducts({ addToCart, toggleWishlist, isInWishlist })
             )}
 
             {loading ? (
-              <div className="grid grid-cols-2 gap-3 sm:gap-5">
+              <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 2xl:grid-cols-4">
                 {Array.from({ length: 8 }).map((_, index) => <div key={index} className="h-80 rounded-2xl bg-white border border-gray-200 animate-pulse" />)}
               </div>
             ) : filteredProducts.length ? (
-              <div className="grid grid-cols-2 gap-3 sm:gap-5">
+              <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 2xl:grid-cols-4">
                 {filteredProducts.map((product) => <ProductCard key={product.id} product={product} addToCart={addToCart} toggleWishlist={toggleWishlist} isInWishlist={isInWishlist} />)}
               </div>
             ) : (

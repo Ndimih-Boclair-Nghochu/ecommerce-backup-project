@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'import toast from 'react-hot-toast'
 
 import axios from 'axios'
+import { resolveAssetUrl } from '../utils/format'
 
 export default function AdminMessaging({ token }) {
   const [conversations, setConversations] = useState([])
@@ -448,7 +449,7 @@ export default function AdminMessaging({ token }) {
                         <>
                           {msg.imageUrl.toLowerCase().endsWith('.pdf') ? (
                             <a 
-                              href={msg.imageUrl} 
+                              href={resolveAssetUrl(msg.imageUrl)}
                               target="_blank" 
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-2 bg-red-100 hover:bg-red-200 px-3 py-2 rounded-lg border-2 border-red-500 transition cursor-pointer mb-2 shadow-md"
@@ -459,12 +460,12 @@ export default function AdminMessaging({ token }) {
                             </a>
                           ) : (
                             <img 
-                              src={msg.imageUrl} 
+                              src={resolveAssetUrl(msg.imageUrl)}
                               alt="Message attachment" 
                               className="w-48 h-48 object-cover rounded-lg mb-2 cursor-pointer hover:opacity-90 transition shadow-md border-2 border-gray-300" 
                               onClick={(e) => {
                                 e.stopPropagation()
-                                window.open(msg.imageUrl, '_blank')
+                                window.open(resolveAssetUrl(msg.imageUrl), '_blank')
                               }} 
                             />
                           )}

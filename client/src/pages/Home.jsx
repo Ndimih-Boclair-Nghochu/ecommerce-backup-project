@@ -119,13 +119,13 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
           </div>
 
           {loading ? (
-            <div className="grid grid-cols-2 gap-3 sm:gap-5">
+            <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 xl:grid-cols-4">
               {Array.from({ length: 8 }).map((_, index) => (
                 <div key={index} className="h-72 rounded-2xl bg-white border border-gray-200 animate-pulse" />
               ))}
             </div>
           ) : featuredProducts.length ? (
-            <div className="grid grid-cols-2 gap-3 sm:gap-5">
+            <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 xl:grid-cols-4">
               {featuredProducts.map((product) => (
                 <ProductCard key={product.id} product={product} addToCart={addToCart} toggleWishlist={toggleWishlist} isInWishlist={isInWishlist} />
               ))}

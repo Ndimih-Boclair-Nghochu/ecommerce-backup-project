@@ -10,6 +10,7 @@ import OrderManagement from '../components/OrderManagement'
 import SubAdminManagement from '../components/SubAdminManagement'
 import PointOfSale from '../components/PointOfSale'
 import AgencySelectModal from '../components/AgencySelectModal'
+import { getProductImage, resolveAssetUrl } from '../utils/format'
 
 export default function AdminDashboard() {
   const navigate = useNavigate()
@@ -157,6 +158,16 @@ export default function AdminDashboard() {
   const [resetLoading, setResetLoading] = useState(false)
 
   const token = localStorage.getItem('adminToken')
+
+  const readUploadUrl = (payload) => payload?.imageUrl || payload?.url || ''
+
+  const applyMainProductImage = (imageUrl) => {
+    setProductForm((current) => {
+      const images = Array.isArray(current.images) && current.images.length ? [...current.images] : [{ color: 'default', url: '' }]
+      if (!images[0]?.url) images[0] = { ...images[0], color: images[0]?.color || 'default', url: imageUrl }
+      return { ...current, image: imageUrl, images }
+    })
+  }
 
   useEffect(() => {
     if (!token) {
@@ -1165,11 +1176,11 @@ export default function AdminDashboard() {
                         <div className="flex flex-col sm:flex-row gap-4">
                           <div className="flex-1">
                             <label className="block text-xs text-gray-600 mb-2">📥 Upload or paste URL:</label>
-                            <input type="url" placeholder="https://example.com/product.jpg" value={productForm.image} onChange={(e) => setProductForm({...productForm, image: e.target.value})} required={!productForm.image} className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm transition" />
+                            <input type="text" placeholder="https://example.com/product.jpg or /uploads/product.jpg" value={productForm.image} onChange={(e) => setProductForm({...productForm, image: e.target.value})} required={!productForm.image} className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm transition" />
                             <p className="text-xs text-gray-500 mt-1">High-quality image for product listing</p>
                           </div>
                           {productForm.image && (
-                            <img src={productForm.image} alt="Preview" className="w-24 h-24 object-cover rounded-lg border-2 border-indigo-300" onError={() => {}} />
+                            <img src={resolveAssetUrl(productForm.image)} alt="Preview" className="w-24 h-24 object-cover rounded-lg border-2 border-indigo-300" onError={() => {}} />
                           )}
                         </div>
                         <div className="border-t border-gray-200 pt-3">
@@ -1181,9 +1192,9 @@ export default function AdminDashboard() {
                               setUploadingImage(true)
                               try {
                                 const formData = new FormData()
-                                formData.append('file', file)
+                                formData.append('image', file)
                                 const resp = await axios.post('/api/admin/upload', formData, { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' } })
-                                setProductForm({...productForm, image: resp.data.url})
+                                applyMainProductImage(readUploadUrl(resp.data))
                                 setMessage({ type: 'success', text: 'Image uploaded successfully' })
                                 setTimeout(() => setMessage({ type: '', text: '' }), 2000)
                               } catch (err) {
@@ -1231,9 +1242,10 @@ export default function AdminDashboard() {
                                   if (!file) return
                                   try {
                                     const formData = new FormData()
-                                    formData.append('file', file)
+                                    formData.append('image', file)
                                     const resp = await axios.post('/api/admin/upload', formData, { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' } })
-                                    const arr = [...productForm.images]; arr[idx] = { ...arr[idx], url: resp.data.url }; setProductForm({ ...productForm, images: arr })
+                                    const imageUrl = readUploadUrl(resp.data)
+                                    const arr = [...productForm.images]; arr[idx] = { ...arr[idx], url: imageUrl }; setProductForm({ ...productForm, image: productForm.image || imageUrl, images: arr })
                                     setMessage({ type: 'success', text: 'Image uploaded' })
                                     setTimeout(() => setMessage({ type: '', text: '' }), 2000)
                                   } catch (err) {
@@ -1251,7 +1263,7 @@ export default function AdminDashboard() {
                           </div>
                           {img.url && (
                             <div className="mt-2">
-                              <img src={img.url} alt={img.color || 'variant'} className="h-16 object-cover rounded border border-indigo-200" onError={() => {}} />
+                              <img src={resolveAssetUrl(img.url)} alt={img.color || 'variant'} className="h-16 object-cover rounded border border-indigo-200" onError={() => {}} />
                             </div>
                           )}
                         </div>
@@ -1437,7 +1449,7 @@ export default function AdminDashboard() {
                   return filtered.map(product => (
                     <div key={product.id} className={`bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition ${parseInt(product.stock) <= 10 ? 'border-2 border-orange-300' : ''}`}>
                       <div className="relative">
-                        <img src={product.image} alt={product.name} className="w-full h-48 object-cover" />
+                        <img src={getProductImage(product)} alt={product.name} className="w-full h-48 object-cover" />
                         <div className="absolute top-3 right-3 bg-white rounded-full px-3 py-1 text-sm font-bold text-yellow-500">⭐ {product.rating || 4.5}</div>
                       </div>
                       <div className="p-4">
@@ -1860,7 +1872,7 @@ export default function AdminDashboard() {
                 <div className="space-y-3">
                   {viewOrder.items?.map(it => (
                     <div key={`${it.id}-${it.selectedImageUrl}`} className="flex items-center gap-4 p-3 bg-white rounded-lg border">
-                      <img src={it.selectedImageUrl || it.image} alt={it.name} className="w-16 h-16 object-cover rounded" />
+                      <img src={getProductImage({ ...it, image: it.selectedImageUrl || it.image })} alt={it.name} className="w-16 h-16 object-cover rounded" />
                       <div className="flex-1">
                         <div className="font-semibold text-gray-900">{it.name}</div>
                         <div className="text-sm text-gray-600">Variant: {it.selectedVariant || 'default'}</div>
@@ -2333,7 +2345,7 @@ export default function AdminDashboard() {
                     <p className="text-xs text-gray-600 mt-1">Background image for hero section</p>
                     {heroForm.backgroundImage && (
                       <div className="mt-3 rounded-lg overflow-hidden border-2 border-amber-300">
-                        <img src={heroForm.backgroundImage} alt="Preview" className="w-full h-24 object-cover" onError={() => {}} />
+                        <img src={resolveAssetUrl(heroForm.backgroundImage)} alt="Preview" className="w-full h-24 object-cover" onError={() => {}} />
                       </div>
                     )}
                   </div>

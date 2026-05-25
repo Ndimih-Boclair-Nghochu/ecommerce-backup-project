@@ -120,7 +120,7 @@ export default function OrderTracking({ settings }) {
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         {(order.items || []).slice(0, 4).map((item) => (
                           <div key={`${order.id}-${item.id}`} className="rounded-md bg-gray-50 p-2 flex gap-2 items-center">
-                            <img src={item.selectedImageUrl || item.image || getProductImage(item)} alt={item.name} className="h-12 w-12 rounded object-cover bg-gray-100" />
+                            <img src={getProductImage({ ...item, image: item.selectedImageUrl || item.image })} alt={item.name} className="h-12 w-12 rounded object-cover bg-gray-100" />
                             <div className="min-w-0">
                               <p className="text-xs font-bold truncate">{item.name}</p>
                               <p className="text-xs text-gray-600">Qty: {item.quantity}</p>

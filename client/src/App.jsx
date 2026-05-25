@@ -178,6 +178,8 @@ export default function App() {
 
   const isInWishlist = (productId) => wishlist.some((item) => item.id === productId)
   const closeMobileMenu = () => setMobileMenuOpen(false)
+  const hasAdminSession = Boolean(localStorage.getItem('adminToken'))
+  const isAdminRoute = location.pathname.startsWith('/admin')
 
   const navLinks = [
     { to: '/', label: t('home') },
@@ -207,12 +209,13 @@ export default function App() {
               </nav>
 
               <div className="flex items-center gap-2">
-                <label className="hidden sm:flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs font-bold text-gray-700">
-                  <span>{t('language')}</span>
+                <label className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs font-bold text-gray-700">
+                  <span aria-hidden="true" className="text-base leading-none">🌐</span>
+                  <span className="hidden sm:inline">{t('language')}</span>
                   <select
                     value={language}
                     onChange={(event) => setLanguage(event.target.value)}
-                    className="bg-transparent text-sm font-bold text-blue-700 focus:outline-none"
+                    className="max-w-[4.6rem] bg-transparent text-sm font-bold text-blue-700 focus:outline-none sm:max-w-none"
                     aria-label={t('language')}
                   >
                     {languages.map((item) => (
@@ -266,7 +269,7 @@ export default function App() {
             </div>
             <nav className="p-5 space-y-2">
               <label className="mb-3 flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3 text-sm font-bold text-gray-700">
-                <span>{t('language')}</span>
+                <span className="flex items-center gap-2"><span aria-hidden="true">🌐</span>{t('language')}</span>
                 <select
                   value={language}
                   onChange={(event) => setLanguage(event.target.value)}
@@ -337,7 +340,7 @@ export default function App() {
           </div>
         </footer>
 
-        <ChatWidget />
+        {!hasAdminSession && !isAdminRoute && <ChatWidget />}
       </div>
     </ErrorBoundary>
   )
