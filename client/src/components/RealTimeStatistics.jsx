@@ -347,8 +347,22 @@ const RealTimeStatistics = ({ token }) => {
         <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -mr-48 -mt-48"></div>
         <div className="absolute bottom-0 left-0 w-72 h-72 bg-white/5 rounded-full -ml-36 -mb-36"></div>
         <div className="relative z-10">
-          <h1 className="text-4xl md:text-5xl font-black mb-2">📊 Analytics Dashboard</h1>
-          <p className="text-blue-100 text-lg md:text-xl mb-6">Real-time insights, comprehensive analytics, actionable intelligence</p>
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
+            <div>
+              <h1 className="text-4xl md:text-5xl font-black mb-2">📊 Analytics Dashboard</h1>
+              <p className="text-blue-100 text-lg md:text-xl mb-6">Real-time insights, comprehensive analytics, actionable intelligence</p>
+            </div>
+            <div className="bg-white/20 backdrop-blur-sm border-2 border-white/40 px-6 py-4 rounded-2xl text-center">
+              <p className="text-white/80 text-sm font-semibold uppercase tracking-wide">📅 Period</p>
+              <p className="text-2xl md:text-3xl font-black text-white capitalize mt-1">
+                {selectedPeriod === 'day' ? '📆 Today' : 
+                 selectedPeriod === 'week' ? '📆 This Week' : 
+                 selectedPeriod === 'month' ? '📆 This Month' : 
+                 selectedPeriod === 'year' ? '📆 This Year' : 'Current'}
+              </p>
+              <p className="text-xs text-white/70 mt-2">{new Date().toLocaleDateString()}</p>
+            </div>
+          </div>
           
           <div className="flex flex-wrap gap-3">
             <button
@@ -722,6 +736,23 @@ const RealTimeStatistics = ({ token }) => {
       )}
 
       {/* PRIMARY KPI CARDS WITH COMPARISON */}
+      <div className="mb-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+          <div>
+            <h2 className="text-2xl md:text-3xl font-black text-gray-900">📊 Core Metrics</h2>
+            <p className="text-gray-600 text-sm mt-1">Real-time performance indicators for {selectedPeriod === 'day' ? 'today' : selectedPeriod === 'week' ? 'this week' : selectedPeriod === 'month' ? 'this month' : 'this year'}</p>
+          </div>
+          <div className="bg-gradient-to-r from-indigo-100 to-purple-100 border-2 border-indigo-300 px-6 py-3 rounded-xl">
+            <p className="text-xs font-bold text-indigo-700 uppercase tracking-wide">📅 Time Period</p>
+            <p className="text-lg font-black text-indigo-900 capitalize">
+              {selectedPeriod === 'day' ? '📆 Today' : 
+               selectedPeriod === 'week' ? '📆 This Week' : 
+               selectedPeriod === 'month' ? '📆 This Month' : 
+               selectedPeriod === 'year' ? '📆 This Year' : selectedPeriod}
+            </p>
+          </div>
+        </div>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-gradient-to-br from-emerald-400 via-green-500 to-green-600 rounded-2xl shadow-2xl p-8 text-white transform hover:scale-105 hover:shadow-3xl transition duration-300 border-t-4 border-white">
           <div className="flex justify-between items-start mb-6">

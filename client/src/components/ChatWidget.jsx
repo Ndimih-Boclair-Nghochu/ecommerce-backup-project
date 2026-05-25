@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'import toast from 'react-hot-toast'
+
 import axios from 'axios'
 
 export default function ChatWidget() {
@@ -103,7 +104,7 @@ export default function ChatWidget() {
         imageUrl = uploadRes.data.imageUrl
       } catch (err) {
         console.error('Upload error:', err.response?.data || err.message)
-        alert('Failed to upload image. Please try again.')
+        toast('Failed to upload image. Please try again.')
         setUploading(false)
         return
       }
@@ -131,7 +132,7 @@ export default function ChatWidget() {
       setTimeout(() => setIsTyping(false), 1500)
     } catch (err) {
       console.error('Send message error:', err.response?.data || err.message)
-      alert('Failed to send message. Please try again.')
+      toast('Failed to send message. Please try again.')
     }
   }
 
@@ -140,13 +141,13 @@ export default function ChatWidget() {
     if (file) {
       // Check file size (10MB limit for files)
       if (file.size > 10 * 1024 * 1024) {
-        alert('File size should be less than 10MB')
+        toast('File size should be less than 10MB')
         return
       }
       // Check file type
       const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf']
       if (!validTypes.includes(file.type)) {
-        alert('Please upload an image (JPG, PNG, GIF, WebP) or PDF file')
+        toast('Please upload an image (JPG, PNG, GIF, WebP) or PDF file')
         return
       }
       setSelectedImage(file)
@@ -169,7 +170,7 @@ export default function ChatWidget() {
     if (window.confirm('Are you sure you want to clear your chat history? This cannot be undone.')) {
       setMessages([])
       setShowMenu(false)
-      alert('✅ Your chat has been cleared successfully')
+      toast('✅ Your chat has been cleared successfully')
     }
   }
 
@@ -267,7 +268,7 @@ export default function ChatWidget() {
                         localStorage.removeItem('chatUserName')
                         setUserName('')
                         setShowMenu(false)
-                        alert('✅ Your name has been cleared')
+                        toast('✅ Your name has been cleared')
                       }}
                       className="w-full text-left px-4 py-3 hover:bg-gray-100 transition flex items-center gap-2 font-semibold text-sm rounded-b-lg border-t border-gray-200"
                     >

@@ -1,497 +1,295 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import axios from 'axios'
-import Receipt from '../components/Receipt'
+import toast from 'react-hot-toast'
+import axios from '../lib/api'
+import { formatXAF, getProductImage } from '../utils/format'
 
-export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, subtotal, total }) {
-  const [showSignupModal, setShowSignupModal] = useState(false)
-  const [selectedRegion, setSelectedRegion] = useState('Douala')
+const emptyBuyer = {
+  name: '',
+  email: '',
+  phone: '',
+  address: '',
+  agencies: ['', '', ''],
+  notes: ''
+}
+
+function RequiredLabel({ children }) {
+  return (
+    <label className="block text-sm font-bold text-slate-800 mb-1">
+      {children} <span className="text-red-600">*</span>
+    </label>
+  )
+}
+
+export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, subtotal, settings }) {
   const [shippingFees, setShippingFees] = useState({})
-  const [selectedVariants, setSelectedVariants] = useState({})
-  const [buyerInfo, setBuyerInfo] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    address: '',
-    agencies: ['', '', '']
-  })
-  const [orderReceipt, setOrderReceipt] = useState(null)
+  const [region, setRegion] = useState(settings?.mainShopTown || 'Bamenda')
+  const [buyer, setBuyer] = useState(emptyBuyer)
+  const [errors, setErrors] = useState({})
+  const [placingOrder, setPlacingOrder] = useState(false)
+  const [successOrder, setSuccessOrder] = useState(null)
 
   useEffect(() => {
-    axios.get('/api/shipping-fees').then(res => {
-      setShippingFees(res.data || {})
-      const keys = Object.keys(res.data || {})
-      if (keys.length && !keys.includes(selectedRegion)) setSelectedRegion(keys[0])
-    }).catch(() => {})
-  }, [])
-
-  // Calculate shipping based on selected region
-  const regionShipping = Number(shippingFees[selectedRegion] ?? 0)
-  const finalShipping = subtotal > 50000 && selectedRegion === 'Douala' ? 0 : regionShipping
-  const finalTotal = subtotal + finalShipping
-
-  // Check if region is out of city and show modal
-  useEffect(() => {
-    if (selectedRegion !== 'Douala' && cart.length > 0) {
-      setShowSignupModal(true)
+    let active = true
+    axios.get('/api/shipping-fees')
+      .then((res) => {
+        if (!active) return
+        setShippingFees(res.data || {})
+        if (!region && res.data?.[settings?.mainShopTown]) setRegion(settings.mainShopTown)
+      })
+      .catch(() => toast.error('Shipping fees could not be loaded'))
+    return () => {
+      active = false
     }
-  }, [selectedRegion, cart.length])
+  }, [region, settings?.mainShopTown])
 
-  const handleVariantChange = (itemId, variant) => {
-    setSelectedVariants({ ...selectedVariants, [itemId]: variant })
+  const mainTown = settings?.mainShopTown || 'Bamenda'
+  const showAgencies = region !== mainTown
+  const freeShippingThreshold = Number(settings?.freeShippingThreshold || 100000)
+  const baseShipping = Number(shippingFees[region] ?? 0)
+  const freeShipping = subtotal >= freeShippingThreshold
+  const shipping = freeShipping ? 0 : baseShipping
+  const total = subtotal + shipping
+
+  const regions = useMemo(() => Object.keys(shippingFees).sort((a, b) => a.localeCompare(b)), [shippingFees])
+
+  const validateForm = () => {
+    const nextErrors = {}
+    if (!buyer.name.trim()) nextErrors.name = 'Name is required'
+    if (!buyer.email.trim()) nextErrors.email = 'Email is required'
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyer.email)) nextErrors.email = 'Enter a valid email address'
+    if (!buyer.phone.trim()) nextErrors.phone = 'Phone number is required'
+    if (!buyer.address.trim()) nextErrors.address = 'Delivery address is required'
+    if (!cart.length) nextErrors.cart = 'Your cart is empty'
+    setErrors(nextErrors)
+    return Object.keys(nextErrors).length === 0
   }
 
-  const handleQuantityChange = (itemId, currentQty, change) => {
-    const newQty = currentQty + change
-    if (newQty > 0) {
-      updateQuantity(itemId, newQty)
-    }
+  const handleBuyerChange = (field, value) => {
+    setBuyer((current) => ({ ...current, [field]: value }))
+    setErrors((current) => ({ ...current, [field]: undefined }))
   }
 
-  const handleInputChange = (itemId, value) => {
-    const newQty = parseInt(value) || 1
-    updateQuantity(itemId, newQty)
+  const handleAgencyChange = (index, value) => {
+    setBuyer((current) => {
+      const agencies = [...current.agencies]
+      agencies[index] = value
+      return { ...current, agencies }
+    })
   }
 
-  const handleBuyerInfoChange = (field, value) => {
-    setBuyerInfo({ ...buyerInfo, [field]: value })
-  }
-
-  const handleCheckout = async () => {
-    if (!buyerInfo.name || !buyerInfo.email || !buyerInfo.phone || !buyerInfo.address) {
-      alert('Please fill in all your information before checkout')
+  const placeOrder = async (event) => {
+    event.preventDefault()
+    if (!validateForm()) {
+      toast.error('Please fix the highlighted fields')
       return
     }
-    const filledAgencies = buyerInfo.agencies.filter(a => a.trim() !== '')
-    if (filledAgencies.length < 3) {
-      alert('Please provide at least 3 nearby agencies for delivery')
-      return
-    }
+
+    const loadingToast = toast.loading('Placing order...')
+    setPlacingOrder(true)
     try {
       const payload = {
-        buyer: { ...buyerInfo, agencies: filledAgencies },
-        region: selectedRegion,
-        shippingFee: finalShipping,
-        totals: { subtotal, total: finalTotal },
-        items: cart.map(item => {
-          const variant = selectedVariants[item.id] || (item.images?.[0] ? { color: item.images[0].color, url: item.images[0].url } : { color: 'default', url: item.image })
-          return {
-            id: item.id,
-            name: item.name,
-            price: item.price,
-            quantity: item.quantity,
-            selectedVariant: variant.color,
-            selectedImageUrl: variant.url,
-            image: item.image
-          }
-        })
+        buyer: {
+          name: buyer.name.trim(),
+          email: buyer.email.trim(),
+          phone: buyer.phone.trim(),
+          address: buyer.address.trim(),
+          agencies: showAgencies ? buyer.agencies.filter((agency) => agency.trim()) : [],
+          specialInstructions: buyer.notes.trim()
+        },
+        region,
+        paymentMethod: 'manual_confirmation',
+        items: cart.map((item) => ({
+          id: item.id,
+          name: item.name,
+          price: Number(item.price),
+          quantity: Number(item.quantity),
+          selectedVariant: item.selectedVariant?.color || '',
+          selectedImageUrl: item.selectedVariant?.url || getProductImage(item),
+          image: getProductImage(item)
+        }))
       }
-      const resp = await axios.post('/api/orders', payload)
-      setOrderReceipt(resp.data)
+      const response = await axios.post('/api/orders', payload)
+      setSuccessOrder(response.data)
       clearCart()
+      setBuyer(emptyBuyer)
+      toast.success('Order received')
     } catch (err) {
-      alert('Failed to place order')
+      const responseErrors = err.response?.data?.errors || []
+      if (responseErrors.length) {
+        const mapped = {}
+        responseErrors.forEach((error) => {
+          mapped[String(error.field || '').replace('buyer.', '')] = error.message
+        })
+        setErrors(mapped)
+      }
+      toast.error(err.response?.data?.error || 'Failed to place order')
+    } finally {
+      toast.dismiss(loadingToast)
+      setPlacingOrder(false)
     }
+  }
+
+  if (!cart.length && !successOrder) {
+    return (
+      <main className="min-h-[70vh] bg-slate-50 flex items-center justify-center px-4 py-16">
+        <section className="max-w-md text-center">
+          <h1 className="text-3xl font-bold text-slate-950">Your cart is empty</h1>
+          <p className="mt-3 text-slate-600">Browse products and add the items you want to order.</p>
+          <Link to="/products" className="mt-6 inline-flex rounded-md bg-blue-700 px-5 py-3 font-bold text-white hover:bg-blue-800">
+            Browse Products
+          </Link>
+        </section>
+      </main>
+    )
   }
 
   return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-50 to-blue-100 py-8 sm:py-12 md:py-16">
-      {/* Receipt Modal */}
-      {orderReceipt && (
-        <Receipt 
-          order={orderReceipt} 
-          onClose={() => setOrderReceipt(null)}
-        />
-      )}
-
-      {/* Signup Modal for Out-of-City Customers */}
-      {showSignupModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 relative">
-            <button
-              onClick={() => setShowSignupModal(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl"
-            >
-              ×
-            </button>
-            <div className="text-center mb-6">
-              <div className="text-6xl mb-4">📦</div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">Out-of-City Delivery</h2>
-              <p className="text-gray-600">
-                You've selected <span className="font-bold text-purple-600">{selectedRegion}</span>
-              </p>
-            </div>
-            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
-              <h3 className="font-bold text-purple-800 mb-2">📋 Track Your Order</h3>
-              <p className="text-sm text-gray-700 mb-3">
-                For deliveries outside Douala, we recommend signing up to track your package in real-time.
-              </p>
-              <ul className="text-sm text-gray-700 space-y-1 mb-4">
-                <li>✓ Real-time tracking updates</li>
-                <li>✓ SMS & Email notifications</li>
-                <li>✓ Estimated delivery date</li>
-                <li>✓ Order history</li>
-              </ul>
-            </div>
-            <div className="space-y-3">
-              <button
-                onClick={() => setShowSignupModal(false)}
-                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 transition"
-              >
-                Sign Up & Track Order
-              </button>
-              <button
-                onClick={() => setShowSignupModal(false)}
-                className="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition"
-              >
-                Continue as Guest
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="max-w-7xl mx-auto px-4">
-        {/* Header */}
-        <div className="text-center mb-8 sm:mb-10 md:mb-12">
-          <div className="inline-block bg-gradient-to-r from-blue-700 to-blue-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl shadow-lg mb-3 sm:mb-4">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold flex items-center gap-2 sm:gap-3 justify-center">
-              🛒 Shopping Cart
-            </h1>
-          </div>
-          <p className="text-gray-600 text-sm sm:text-base md:text-lg">
-            {cart.length === 0 ? 'Your cart is empty' : `You have ${cart.length} ${cart.length === 1 ? 'item' : 'items'} in your cart`}
-          </p>
+    <main className="min-h-screen bg-slate-50">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        <div className="mb-6">
+          <Link to="/products" className="text-sm font-semibold text-blue-700 hover:text-blue-900">← Continue Shopping</Link>
+          <h1 className="mt-3 text-3xl sm:text-4xl font-bold text-slate-950">Shopping Cart</h1>
         </div>
 
-        {cart.length === 0 ? (
-          /* Empty Cart State */
-          <div className="text-center py-12 sm:py-16 md:py-20">
-            <div className="text-6xl sm:text-7xl md:text-8xl mb-4 sm:mb-6">🛒</div>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-2 sm:mb-3 md:mb-4">Your Cart is Empty</h2>
-            <p className="text-gray-600 mb-6 sm:mb-8 text-sm sm:text-base md:text-lg">
-              Looks like you haven't added any items to your cart yet.
+        {successOrder && (
+          <div className="mb-6 rounded-lg border border-green-200 bg-green-50 p-5">
+            <h2 className="text-xl font-bold text-green-900">Order received</h2>
+            <p className="mt-2 text-green-800">
+              Order ID: <span className="font-mono font-bold">{successOrder.id}</span>
             </p>
-            <Link 
-              to="/products" 
-              className="inline-block bg-gradient-to-r from-blue-700 to-blue-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-lg sm:rounded-xl font-semibold hover:from-blue-800 hover:to-blue-700 transition-all transform hover:scale-105 shadow-lg"
-            >
-              Start Shopping
+            <p className="mt-2 text-green-800">
+              Your order has been received. We will contact you shortly to confirm payment and delivery.
+            </p>
+            <Link to="/track-order" className="mt-4 inline-flex rounded-md bg-green-700 px-4 py-2 font-bold text-white hover:bg-green-800">
+              Track Order
             </Link>
           </div>
-        ) : (
-          /* Cart Items */
-          <div className="grid lg:grid-cols-3 gap-6 sm:gap-8">
-            {/* Cart Items List */}
-            <div className="lg:col-span-2 space-y-3 sm:space-y-4">
-              {/* Clear Cart Button */}
-              <div className="flex justify-between items-center mb-3 sm:mb-4">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Cart Items</h2>
-                <button
-                  onClick={clearCart}
-                  className="text-red-600 hover:text-red-700 font-semibold flex items-center gap-1 sm:gap-2 hover:underline transition text-sm sm:text-base"
-                >
-                  🗑️ Clear
-                </button>
-              </div>
+        )}
 
-              {cart.map((item) => (
-                <div key={item.id} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow">
-                  <div className="flex gap-3 sm:gap-4 p-3 sm:p-4">
-                    {/* Product Image */}
-                    <div className="w-24 sm:w-32 h-24 sm:h-32 flex-shrink-0">
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="w-full h-full object-cover rounded-lg"
-                      />
+        <div className="grid gap-6 lg:grid-cols-[1fr_420px]">
+          <div className="space-y-4">
+            {cart.map((item) => (
+              <article key={item.id} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="grid grid-cols-[88px_1fr] gap-4">
+                  <img src={getProductImage(item)} alt={item.name} className="h-24 w-24 rounded-md object-cover bg-slate-100" />
+                  <div>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h2 className="font-bold text-slate-950">{item.name}</h2>
+                        <p className="mt-1 text-sm text-slate-600">{formatXAF(item.price)}</p>
+                      </div>
+                      <button type="button" onClick={() => removeFromCart(item.id)} className="text-sm font-semibold text-red-700">
+                        Remove
+                      </button>
                     </div>
-
-                    {/* Product Details */}
-                    <div className="flex-grow min-w-0">
-                      <div className="flex justify-between items-start gap-2 mb-1 sm:mb-2">
-                        <div className="min-w-0">
-                          <h3 className="text-base sm:text-lg font-bold text-gray-800 line-clamp-1">{item.name}</h3>
-                          <p className="text-gray-600 text-xs sm:text-sm mb-1 sm:mb-2 line-clamp-1">{item.description}</p>
-                          <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2 flex-wrap">
-                            <span className="bg-blue-100 text-blue-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs font-semibold">
-                              {item.category}
-                            </span>
-                            {item.stock > 0 ? (
-                              <span className="bg-green-100 text-green-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs font-semibold">
-                                ✓ In Stock
-                              </span>
-                            ) : (
-                              <span className="bg-red-100 text-red-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs font-semibold">
-                                ✗ Out of Stock
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => removeFromCart(item.id)}
-                          className="text-red-500 hover:text-red-700 transition-colors p-1 hover:bg-red-50 rounded flex-shrink-0"
-                          title="Remove from cart"
-                        >
-                          <span className="text-xl sm:text-2xl">×</span>
-                        </button>
+                    <div className="mt-4 flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-2">
+                        <button type="button" onClick={() => updateQuantity(item.id, item.quantity - 1)} className="h-9 w-9 rounded-md border border-slate-300 font-bold">−</button>
+                        <input
+                          type="number"
+                          min="1"
+                          value={item.quantity}
+                          onChange={(event) => updateQuantity(item.id, Number(event.target.value) || 1)}
+                          className="h-9 w-16 rounded-md border border-slate-300 text-center font-bold"
+                        />
+                        <button type="button" onClick={() => updateQuantity(item.id, item.quantity + 1)} className="h-9 w-9 rounded-md border border-slate-300 font-bold">+</button>
                       </div>
-
-                      {/* Price and Quantity Controls */}
-                      <div className="flex flex-col gap-2 mt-2 sm:mt-3">
-                        <div className="flex items-center gap-2 text-xs sm:text-sm">
-                          <span className="text-gray-600 font-semibold whitespace-nowrap">Qty:</span>
-                          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
-                            <button
-                              onClick={() => handleQuantityChange(item.id, item.quantity, -1)}
-                              className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center bg-white rounded hover:bg-blue-700 hover:text-white transition-colors font-bold text-blue-700 text-sm"
-                            >
-                              −
-                            </button>
-                            <input
-                              type="number"
-                              min="1"
-                              value={item.quantity}
-                              onChange={(e) => handleInputChange(item.id, e.target.value)}
-                              className="w-10 sm:w-12 text-center bg-white border-0 rounded font-semibold text-gray-800 text-xs sm:text-sm"
-                            />
-                            <button
-                              onClick={() => handleQuantityChange(item.id, item.quantity, 1)}
-                              className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center bg-white rounded hover:bg-blue-700 hover:text-white transition-colors font-bold text-blue-700 text-sm"
-                            >
-                              +
-                            </button>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-xs text-gray-500">
-                            {item.price.toLocaleString()} XAF × {item.quantity}
-                          </div>
-                          <div className="text-lg sm:text-2xl font-bold text-blue-700">
-                            {(item.price * item.quantity).toLocaleString()} XAF
-                          </div>
-                        </div>
-
-                        {/* Variant selection */}
-                        {item.images && item.images.length > 0 && (
-                          <div className="mt-1 sm:mt-2 text-xs sm:text-sm">
-                            <label className="block font-semibold text-gray-700 mb-1">Variant:</label>
-                            <div className="flex flex-wrap gap-1.5 sm:gap-2 items-center">
-                              {item.images.map(img => (
-                                <button key={img.url} onClick={() => handleVariantChange(item.id, { color: img.color, url: img.url })} className={`border rounded overflow-hidden transition ${selectedVariants[item.id]?.url === img.url ? 'ring-2 ring-blue-700' : ''}`}>
-                                  <img src={img.url} alt={img.color} className="w-14 h-14 sm:w-16 sm:h-16 object-cover" />
-                                  <div className="text-xs text-center py-0.5 px-1">{img.color || 'default'}</div>
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                      <p className="font-bold text-slate-950">{formatXAF(item.price * item.quantity)}</p>
                     </div>
                   </div>
                 </div>
-              ))}
+              </article>
+            ))}
+          </div>
 
-              {/* Continue Shopping Button */}
-              <Link
-                to="/products"
-                className="inline-flex mt-6 text-purple-600 hover:text-purple-700 font-semibold items-center gap-2 hover:underline transition"
-              >
-                ← Continue Shopping
-              </Link>
-            </div>
+          <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm h-fit">
+            <h2 className="text-xl font-bold text-slate-950">Checkout</h2>
+            <p className="mt-2 text-sm text-slate-600">
+              No online payment is collected here. The shop will contact you after the order is received.
+            </p>
 
-            {/* Buyer Information & Order Summary */}
-            <div className="lg:col-span-1 space-y-6">
-              {/* Buyer Information Form */}
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">📝 Your Information</h2>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Full Name *
-                    </label>
-                    <input
-                      type="text"
-                      value={buyerInfo.name}
-                      onChange={(e) => handleBuyerInfoChange('name', e.target.value)}
-                      placeholder="John Doe"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Email Address *
-                    </label>
-                    <input
-                      type="email"
-                      value={buyerInfo.email}
-                      onChange={(e) => handleBuyerInfoChange('email', e.target.value)}
-                      placeholder="john@example.com"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Phone Number *
-                    </label>
-                    <input
-                      type="tel"
-                      value={buyerInfo.phone}
-                      onChange={(e) => handleBuyerInfoChange('phone', e.target.value)}
-                      placeholder="+237 6XX XX XX XX"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Delivery Address *
-                    </label>
-                    <textarea
-                      value={buyerInfo.address}
-                      onChange={(e) => handleBuyerInfoChange('address', e.target.value)}
-                      placeholder="Street, Neighborhood, Building details..."
-                      rows="3"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
-                    />
-                  </div>
-                  
-                  {/* Nearby Agencies */}
-                  <div className="border-t border-gray-200 pt-4">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      🏢 Nearby Agencies (At least 3 required) *
-                    </label>
-                    <p className="text-xs text-gray-600 mb-3">
-                      Provide 3 nearby agencies where you can collect your order
-                    </p>
-                    {[0, 1, 2].map((index) => (
-                      <div key={index} className="mb-3">
-                        <input
-                          type="text"
-                          value={buyerInfo.agencies[index] || ''}
-                          onChange={(e) => {
-                            const newAgencies = [...buyerInfo.agencies]
-                            newAgencies[index] = e.target.value
-                            handleBuyerInfoChange('agencies', newAgencies)
-                          }}
-                          placeholder={`Agency ${index + 1} (e.g., Express Union Bonanjo)`}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
-                        />
-                      </div>
+            <form onSubmit={placeOrder} className="mt-6 space-y-4">
+              <div>
+                <RequiredLabel>Full Name</RequiredLabel>
+                <input value={buyer.name} onChange={(event) => handleBuyerChange('name', event.target.value)} className="w-full rounded-md border border-slate-300 px-3 py-2 focus:border-blue-700 focus:outline-none" />
+                {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
+              </div>
+
+              <div>
+                <RequiredLabel>Email</RequiredLabel>
+                <input type="email" value={buyer.email} onChange={(event) => handleBuyerChange('email', event.target.value)} className="w-full rounded-md border border-slate-300 px-3 py-2 focus:border-blue-700 focus:outline-none" />
+                {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
+              </div>
+
+              <div>
+                <RequiredLabel>Phone</RequiredLabel>
+                <input type="tel" value={buyer.phone} onChange={(event) => handleBuyerChange('phone', event.target.value)} className="w-full rounded-md border border-slate-300 px-3 py-2 focus:border-blue-700 focus:outline-none" placeholder="+237 6 52 882 753" />
+                {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
+              </div>
+
+              <div>
+                <RequiredLabel>Delivery Region</RequiredLabel>
+                <select value={region} onChange={(event) => setRegion(event.target.value)} className="w-full rounded-md border border-slate-300 px-3 py-2 focus:border-blue-700 focus:outline-none">
+                  {(regions.length ? regions : [mainTown]).map((city) => (
+                    <option key={city} value={city}>{city}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <RequiredLabel>Delivery Address</RequiredLabel>
+                <textarea value={buyer.address} onChange={(event) => handleBuyerChange('address', event.target.value)} rows="3" className="w-full rounded-md border border-slate-300 px-3 py-2 focus:border-blue-700 focus:outline-none" />
+                {errors.address && <p className="mt-1 text-sm text-red-600">{errors.address}</p>}
+              </div>
+
+              {showAgencies && (
+                <div>
+                  <label className="block text-sm font-bold text-slate-800 mb-2">Nearby collection agencies</label>
+                  <div className="space-y-2">
+                    {buyer.agencies.map((agency, index) => (
+                      <input
+                        key={index}
+                        value={agency}
+                        onChange={(event) => handleAgencyChange(index, event.target.value)}
+                        placeholder={`Agency ${index + 1}`}
+                        className="w-full rounded-md border border-slate-300 px-3 py-2 focus:border-blue-700 focus:outline-none"
+                      />
                     ))}
                   </div>
+                </div>
+              )}
 
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      🌍 Delivery Region *
-                    </label>
-                    <select
-                      value={selectedRegion}
-                      onChange={(e) => setSelectedRegion(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 bg-white"
-                    >
-                      {Object.keys(shippingFees).map((region) => (
-                        <option key={region} value={region}>
-                          {region} {Number(shippingFees[region] || 0) > 0 ? `(+${Number(shippingFees[region]).toLocaleString()} XAF)` : '(Free in city)'}
-                        </option>
-                      ))}
-                    </select>
-                    {selectedRegion !== 'Douala' && (
-                      <p className="text-xs text-orange-600 mt-2 flex items-center gap-1">
-                        <span>⚠️</span>
-                        <span>Out-of-city delivery - signup recommended for tracking</span>
-                      </p>
-                    )}
-                  </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-800 mb-1">Notes</label>
+                <textarea value={buyer.notes} onChange={(event) => handleBuyerChange('notes', event.target.value)} rows="2" className="w-full rounded-md border border-slate-300 px-3 py-2 focus:border-blue-700 focus:outline-none" />
+              </div>
+
+              <div className="rounded-lg bg-slate-50 p-4 space-y-2">
+                <div className="flex justify-between text-sm"><span>Subtotal</span><span className="font-semibold">{formatXAF(subtotal)}</span></div>
+                <div className="flex justify-between text-sm">
+                  <span>Shipping</span>
+                  <span className="font-semibold">{freeShipping ? 'Free' : formatXAF(shipping)}</span>
+                </div>
+                {freeShipping && <p className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-800 inline-flex">Free shipping</p>}
+                <div className="border-t border-slate-200 pt-2 flex justify-between text-lg font-bold">
+                  <span>Total</span>
+                  <span>{formatXAF(total)}</span>
                 </div>
               </div>
 
-              {/* Order Summary */}
-              <div className="bg-white rounded-xl shadow-lg p-6 sticky top-24">
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">Order Summary</h2>
-                
-                {/* Summary Details */}
-                <div className="space-y-4 mb-6">
-                  <div className="flex justify-between text-gray-700">
-                    <span>Subtotal ({cart.reduce((sum, item) => sum + item.quantity, 0)} items)</span>
-                    <span className="font-semibold">{subtotal.toLocaleString()} XAF</span>
-                  </div>
-                  <div className="flex justify-between text-gray-700">
-                    <span>Shipping ({selectedRegion})</span>
-                    <span className="font-semibold">
-                      {finalShipping === 0 ? (
-                        <span className="text-green-600">FREE</span>
-                      ) : (
-                        <span>{finalShipping.toLocaleString()} XAF</span>
-                      )}
-                    </span>
-                  </div>
-                  
-                  {/* Free Shipping Progress */}
-                  {selectedRegion === 'Douala' && finalShipping > 0 && subtotal < 50000 && (
-                    <div className="pt-4 border-t">
-                      <div className="text-sm text-gray-600 mb-2">
-                        Add {(50000 - subtotal).toLocaleString()} XAF more for FREE shipping! 🚚
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-gradient-to-r from-purple-600 to-blue-600 h-2 rounded-full transition-all"
-                          style={{ width: `${Math.min((subtotal / 50000) * 100, 100)}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {selectedRegion !== 'Douala' && (
-                    <div className="pt-4 border-t">
-                      <div className="text-sm text-blue-600 flex items-center gap-2">
-                        <span>📍</span>
-                        <span>Regional delivery: 3-5 business days</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Total */}
-                <div className="border-t pt-4 mb-6">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xl font-bold text-gray-800">Total</span>
-                    <span className="text-3xl font-bold text-purple-600">
-                      {finalTotal.toLocaleString()} XAF
-                    </span>
-                  </div>
-                </div>
-
-                {/* Checkout Button */}
-                <button 
-                  onClick={handleCheckout}
-                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-4 rounded-xl font-bold text-lg hover:from-purple-700 hover:to-blue-700 transition-all transform hover:scale-105 shadow-lg mb-4"
-                >
-                  Complete Order 🔒
-                </button>
-
-                {/* Payment Methods */}
-                <div className="text-center">
-                  <p className="text-sm text-gray-500 mb-3">We accept</p>
-                  <div className="flex justify-center gap-2 flex-wrap">
-                    <span className="bg-gray-100 px-3 py-1 rounded text-xs font-semibold text-gray-700">💳 Card</span>
-                    <span className="bg-gray-100 px-3 py-1 rounded text-xs font-semibold text-gray-700">📱 Mobile Money</span>
-                    <span className="bg-gray-100 px-3 py-1 rounded text-xs font-semibold text-gray-700">💰 Cash</span>
-                  </div>
-                </div>
-
-                {/* Security Badge */}
-                <div className="mt-6 pt-6 border-t text-center">
-                  <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
-                    <span className="text-green-600">🔒</span>
-                    <span>Secure Checkout</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+              {errors.cart && <p className="text-sm text-red-600">{errors.cart}</p>}
+              <button
+                type="submit"
+                disabled={placingOrder}
+                className="w-full rounded-md bg-blue-700 px-5 py-3 font-bold text-white hover:bg-blue-800 disabled:bg-slate-300"
+              >
+                {placingOrder ? 'Submitting...' : 'Place Order'}
+              </button>
+            </form>
+          </aside>
+        </div>
+      </section>
+    </main>
   )
 }

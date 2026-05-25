@@ -1,26 +1,188 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'import toast from 'react-hot-toast'
+
 import axios from 'axios'
 
-const DashboardOverview = ({ token, products, orders, subAdmins, onAddProduct, onViewAnalytics, onManageTeam, onSettings }) => {
+const DashboardOverview = ({ token, products, orders, subAdmins, customers, installmentStats, resetStatus, onAddProduct, onViewAnalytics, onManageTeam, onSettings }) => {
   const [dashboardStats, setDashboardStats] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [lastUpdate, setLastUpdate] = useState(new Date())
+  const [isRealTimeActive, setIsRealTimeActive] = useState(true)
+  const [deletedItems, setDeletedItems] = useState([])
+  const [dataMgmtStats, setDataMgmtStats] = useState(null)
+  const [showDataMgmt, setShowDataMgmt] = useState(false)
+  const [selectedRestoreItems, setSelectedRestoreItems] = useState(new Set())
 
   useEffect(() => {
     fetchDashboardStats()
-    const interval = setInterval(fetchDashboardStats, 60000) // Refresh every 60 seconds
+    fetchDeletedItems()
+    fetchDataMgmtStats()
+    
+    // Real-time polling - 5 seconds on dashboard
+    const interval = setInterval(() => {
+      if (isRealTimeActive) {
+        fetchDashboardStats()
+        fetchDeletedItems()
+        fetchDataMgmtStats()
+        setLastUpdate(new Date())
+      }
+    }, 5000)
+    
     return () => clearInterval(interval)
-  }, [])
+  }, [isRealTimeActive])
 
   const fetchDashboardStats = async () => {
     try {
-      const response = await axios.get('/api/admin/real-time-stats?period=month', {
+      const response = await axios.get(`/api/admin/real-time-stats?period=month&t=${Date.now()}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
+      console.debug('📊 Dashboard Stats Fetched:', response.data)
       setDashboardStats(response.data)
       setLoading(false)
     } catch (err) {
       console.error('Failed to fetch dashboard stats:', err)
       setLoading(false)
+    }
+  }
+
+  const fetchDeletedItems = async () => {
+    try {
+      const response = await axios.get('/api/admin/data-management/deleted', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      setDeletedItems(response.data)
+    } catch (err) {
+      console.error('Failed to fetch deleted items:', err)
+    }
+  }
+
+  const fetchDataMgmtStats = async () => {
+    try {
+      const response = await axios.get('/api/admin/data-management/stats', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      setDataMgmtStats(response.data)
+    } catch (err) {
+      console.error('Failed to fetch data management stats:', err)
+    }
+  }
+
+  const handleRestoreItem = async (deleteId) => {
+    try {
+      await axios.post(`/api/admin/data-management/restore/${deleteId}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      fetchDeletedItems()
+      fetchDataMgmtStats()
+      toast('Item restored successfully!')
+    } catch (err) {
+      toast('Failed to restore item: ' + err.response?.data?.error)
+    }
+  }
+
+  const handlePermanentDelete = async (deleteId) => {
+    if (!window.confirm('Permanently delete this item? This action cannot be undone.')) return
+    try {
+      await axios.post(`/api/admin/data-management/permanent-delete/${deleteId}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      fetchDeletedItems()
+      fetchDataMgmtStats()
+      toast('Item permanently deleted!')
+    } catch (err) {
+      toast('Failed to permanently delete: ' + err.response?.data?.error)
+    }
+  }
+
+  const handleClearPeriodData = async (type, period) => {
+    if (!window.confirm(`Clear all ${type} from the last ${period}? This will soft-delete them for 48 hours.`)) return
+    try {
+      const response = await axios.post(
+        `/api/admin/data-management/clear-period/${type}/${period}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      toast(`Cleared ${response.data.deletedCount} items!`)
+      fetchDeletedItems()
+      fetchDataMgmtStats()
+      fetchDashboardStats()
+    } catch (err) {
+      toast('Failed to clear data: ' + err.response?.data?.error)
+    }
+  }
+
+  const handleBulkRestore = async () => {
+    if (selectedRestoreItems.size === 0) {
+      toast('Please select items to restore')
+      return
+    }
+    if (!window.confirm(`Restore ${selectedRestoreItems.size} selected items?`)) return
+
+    try {
+      let successCount = 0
+      let failedCount = 0
+      for (const deleteId of selectedRestoreItems) {
+        try {
+          await axios.post(`/api/admin/data-management/restore/${deleteId}`, {}, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+          successCount++
+        } catch (err) {
+          failedCount++
+          console.error(`Failed to restore ${deleteId}:`, err)
+        }
+      }
+      toast(`Restored ${successCount} items${failedCount > 0 ? `, failed: ${failedCount}` : ''}!`)
+      setSelectedRestoreItems(new Set())
+      fetchDeletedItems()
+      fetchDataMgmtStats()
+    } catch (err) {
+      toast('Error during bulk restore: ' + err.message)
+    }
+  }
+
+  const handleBulkPermanentDelete = async () => {
+    if (selectedRestoreItems.size === 0) {
+      toast('Please select items to delete')
+      return
+    }
+    if (!window.confirm(`Permanently delete ${selectedRestoreItems.size} items? This cannot be undone.`)) return
+
+    try {
+      let successCount = 0
+      for (const deleteId of selectedRestoreItems) {
+        try {
+          await axios.post(`/api/admin/data-management/permanent-delete/${deleteId}`, {}, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+          successCount++
+        } catch (err) {
+          console.error(`Failed to delete ${deleteId}:`, err)
+        }
+      }
+      toast(`Permanently deleted ${successCount} items!`)
+      setSelectedRestoreItems(new Set())
+      fetchDeletedItems()
+      fetchDataMgmtStats()
+    } catch (err) {
+      toast('Error during bulk delete: ' + err.message)
+    }
+  }
+
+  const toggleSelectItem = (deleteId) => {
+    const newSelected = new Set(selectedRestoreItems)
+    if (newSelected.has(deleteId)) {
+      newSelected.delete(deleteId)
+    } else {
+      newSelected.add(deleteId)
+    }
+    setSelectedRestoreItems(newSelected)
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedRestoreItems.size === deletedItems.length) {
+      setSelectedRestoreItems(new Set())
+    } else {
+      setSelectedRestoreItems(new Set(deletedItems.map(item => item.id)))
     }
   }
 
@@ -122,6 +284,14 @@ const DashboardOverview = ({ token, products, orders, subAdmins, onAddProduct, o
 
   return (
     <div className="space-y-6 sm:space-y-8">
+      {/* Platform Reset Notice */}
+      {resetStatus?.isReset && (
+        <div className="bg-orange-100 border-l-4 border-orange-600 p-4 rounded-lg">
+          <p className="font-bold text-orange-900">🔄 Platform Reset Active</p>
+          <p className="text-sm text-orange-800 mt-1">All data is temporarily hidden. Statistics, products, and orders will reappear when you restore the platform data.</p>
+        </div>
+      )}
+
       {/* Welcome Banner */}
       <div className="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 rounded-2xl shadow-lg p-6 sm:p-8 text-white">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -133,39 +303,106 @@ const DashboardOverview = ({ token, products, orders, subAdmins, onAddProduct, o
         </div>
       </div>
 
+      {/* Live Status Bar */}
+      <div className="bg-white rounded-xl shadow-md p-4 flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center gap-3">
+          <div className={`w-3 h-3 rounded-full ${isRealTimeActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
+          <span className="text-sm font-semibold text-gray-700">
+            {isRealTimeActive ? '🟢 Live Updates Active' : '⊙ Live Updates Paused'}
+          </span>
+          <span className="text-xs text-gray-500">Last update: {lastUpdate.toLocaleTimeString()}</span>
+        </div>
+        <button
+          onClick={() => setIsRealTimeActive(!isRealTimeActive)}
+          className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
+            isRealTimeActive
+              ? 'bg-green-100 text-green-700 hover:bg-green-200'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }`}
+        >
+          {isRealTimeActive ? '⏸ Pause' : '▶ Live'}
+        </button>
+      </div>
+
       {/* Key Performance Indicators */}
       <div>
-        <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">Key Performance Indicators</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg sm:text-xl font-bold text-gray-900">Key Performance Indicators</h3>
+          <div className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2">
+            <span>📅 THIS MONTH</span>
+            <span className="text-xs text-blue-600">({new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })})</span>
+          </div>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           <MetricCard
             icon="💰"
             label="Total Revenue"
-            value={formatCurrency(stats.totalRevenue)}
-            subtext={`${stats.totalOrders} orders this month`}
+            value={resetStatus?.isReset ? formatCurrency(0) : formatCurrency(stats.totalRevenue)}
+            subtext={resetStatus?.isReset ? '0 orders' : `${stats.totalOrders} orders • This Month`}
             color="green"
-            trend={stats.revenueTrend}
+            trend={resetStatus?.isReset ? 0 : stats.revenueTrend}
           />
           <MetricCard
             icon="📦"
             label="Orders"
-            value={formatNumber(stats.totalOrders)}
-            subtext={`${formatNumber(stats.totalItemsSold)} items sold`}
+            value={resetStatus?.isReset ? formatNumber(0) : formatNumber(stats.totalOrders)}
+            subtext={resetStatus?.isReset ? '0 items sold' : `${formatNumber(stats.totalItemsSold)} items • This Month`}
             color="blue"
-            trend={stats.ordersTrend}
+            trend={resetStatus?.isReset ? 0 : stats.ordersTrend}
           />
           <MetricCard
             icon="💵"
             label="Avg Order Value"
-            value={formatCurrency(stats.averageOrderValue)}
+            value={resetStatus?.isReset ? formatCurrency(0) : formatCurrency(stats.averageOrderValue)}
             subtext="Per transaction"
             color="purple"
           />
           <MetricCard
             icon="👥"
             label="Sub-Admins"
-            value={subAdmins.length}
+            value={resetStatus?.isReset ? 0 : subAdmins.length}
             subtext="Active managers"
             color="orange"
+          />
+        </div>
+      </div>
+
+      {/* Customer Metrics */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg sm:text-xl font-bold text-gray-900">Customer Analytics</h3>
+          <div className="bg-pink-100 text-pink-700 px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2">
+            <span>👥 REGISTERED USERS</span>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <MetricCard
+            icon="👥"
+            label="Total Customers"
+            value={resetStatus?.isReset ? formatNumber(0) : formatNumber(customers?.length || 0)}
+            subtext={`Registered on platform`}
+            color="pink"
+          />
+          <MetricCard
+            icon="💳"
+            label="Active Installments"
+            value={resetStatus?.isReset ? formatNumber(0) : formatNumber(installmentStats?.activeInstallments || 0)}
+            subtext={`Payment plans in progress`}
+            color="purple"
+          />
+          <MetricCard
+            icon="💰"
+            label="Total Installment Value"
+            value={resetStatus?.isReset ? formatCurrency(0) : formatCurrency(installmentStats?.totalInstallmentAmount || 0)}
+            subtext={`Combined plan amounts`}
+            color="green"
+          />
+          <MetricCard
+            icon="📊"
+            label="Installment Conversion"
+            value={resetStatus?.isReset ? '0%' : `${installmentStats?.conversionRate || 0}%`}
+            subtext={`Of customers using plans`}
+            color="indigo"
           />
         </div>
       </div>
@@ -177,28 +414,28 @@ const DashboardOverview = ({ token, products, orders, subAdmins, onAddProduct, o
           <MetricCard
             icon="📊"
             label="Total Products"
-            value={formatNumber(products.length)}
-            subtext={`${formatNumber(totalStock)} items in stock`}
+            value={resetStatus?.isReset ? formatNumber(0) : formatNumber(products.length)}
+            subtext={resetStatus?.isReset ? '0 items in stock' : `${formatNumber(totalStock)} items in stock`}
             color="indigo"
           />
           <MetricCard
             icon="💎"
             label="Inventory Value"
-            value={formatCurrency(totalInventoryValue)}
+            value={resetStatus?.isReset ? formatCurrency(0) : formatCurrency(totalInventoryValue)}
             subtext="Total stock value"
             color="cyan"
           />
           <MetricCard
             icon="⚠️"
             label="Low Stock"
-            value={lowStockProducts}
+            value={resetStatus?.isReset ? 0 : lowStockProducts}
             subtext={`Less than 10 units`}
             color="orange"
           />
           <MetricCard
             icon="🚨"
             label="Out of Stock"
-            value={outOfStockProducts}
+            value={resetStatus?.isReset ? 0 : outOfStockProducts}
             subtext="Need replenishment"
             color="red"
           />
@@ -249,6 +486,102 @@ const DashboardOverview = ({ token, products, orders, subAdmins, onAddProduct, o
           })}
         </div>
       </div>
+
+      {/* Active Installment Plans */}
+      {customers && customers.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900">Active Installment Plans</h3>
+            <div className="bg-purple-100 text-purple-700 px-4 py-2 rounded-full font-bold text-sm">
+              💳 {installmentStats?.activeInstallments || 0} Active Plans
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-md overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-gradient-to-r from-purple-50 to-pink-50 border-b-2 border-purple-200">
+                    <th className="px-6 py-4 text-left text-sm font-bold text-gray-900">Customer</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold text-gray-900">Duration</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold text-gray-900">Total Amount</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold text-gray-900">Paid</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold text-gray-900">Progress</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold text-gray-900">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {customers
+                    .filter(c => c.activeInstallments > 0)
+                    .slice(0, 10)
+                    .map((customer) => (
+                      customer.installmentPlans
+                        .filter(plan => plan.status === 'active')
+                        .map((plan, idx) => {
+                          const progress = Math.min((plan.paid / plan.totalAmount) * 100, 100)
+                          return (
+                            <tr
+                              key={`${customer.id}-${plan.id}-${idx}`}
+                              className="border-b hover:bg-purple-50 transition"
+                            >
+                              <td className="px-6 py-4">
+                                <div>
+                                  <p className="font-semibold text-gray-900">{customer.name}</p>
+                                  <p className="text-xs text-gray-500">{customer.email}</p>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-semibold">
+                                  {plan.duration} months
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 font-semibold text-gray-900">
+                                {formatCurrency(plan.totalAmount)}
+                              </td>
+                              <td className="px-6 py-4">
+                                <div>
+                                  <p className="font-semibold text-green-600">{formatCurrency(plan.paid)}</p>
+                                  <p className="text-xs text-gray-500">Remaining: {formatCurrency(plan.remaining)}</p>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                  <div
+                                    className="h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-300"
+                                    style={{ width: `${progress}%` }}
+                                  ></div>
+                                </div>
+                                <p className="text-xs text-gray-600 mt-1">{progress.toFixed(0)}% Paid</p>
+                              </td>
+                              <td className="px-6 py-4">
+                                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                                  progress === 100
+                                    ? 'bg-green-100 text-green-700'
+                                    : progress > 50
+                                    ? 'bg-blue-100 text-blue-700'
+                                    : 'bg-yellow-100 text-yellow-700'
+                                }`}>
+                                  {progress === 100 ? '✅ Complete' : progress > 50 ? '📊 Mid-way' : '⏳ Started'}
+                                </span>
+                              </td>
+                            </tr>
+                          )
+                        })
+                    ))}
+                </tbody>
+              </table>
+            </div>
+            
+            {customers.filter(c => c.activeInstallments > 0).length === 0 && (
+              <div className="p-8 text-center">
+                <div className="text-4xl mb-2">💳</div>
+                <p className="text-gray-600 font-semibold">No active installment plans yet</p>
+                <p className="text-sm text-gray-500 mt-1">Installment plans will appear here once customers start using them</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Quick Stats and Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -342,6 +675,256 @@ const DashboardOverview = ({ token, products, orders, subAdmins, onAddProduct, o
                 color={['blue', 'green', 'orange', 'purple'][idx % 4]}
               />
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Data Management Section */}
+      <div className="bg-white rounded-xl shadow-md p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+            <span className="text-2xl">🗑️</span> Data Management
+          </h3>
+          <button
+            onClick={() => setShowDataMgmt(!showDataMgmt)}
+            className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold hover:bg-blue-200 transition"
+          >
+            {showDataMgmt ? '▼ Hide' : '▶ Show'}
+          </button>
+        </div>
+
+        {dataMgmtStats && (
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="text-xs text-gray-600 mb-1">Total Deleted Items</p>
+              <p className="text-2xl font-bold text-gray-900">{dataMgmtStats.totalDeleted}</p>
+            </div>
+            <div className="bg-green-50 rounded-lg p-4">
+              <p className="text-xs text-green-600 mb-1">Recoverable (48h)</p>
+              <p className="text-2xl font-bold text-green-700">{dataMgmtStats.deletedInLast48h}</p>
+            </div>
+            <div className="bg-orange-50 rounded-lg p-4">
+              <p className="text-xs text-orange-600 mb-1">Permanent Delete Ready</p>
+              <p className="text-2xl font-bold text-orange-700">{dataMgmtStats.deletedOlderThan48h}</p>
+            </div>
+            <div className="bg-blue-50 rounded-lg p-4">
+              <p className="text-xs text-blue-600 mb-1">Breakdown</p>
+              <p className="text-sm text-gray-600">P:{dataMgmtStats.breakdown.products} O:{dataMgmtStats.breakdown.orders} L:{dataMgmtStats.breakdown.locations}</p>
+            </div>
+          </div>
+        )}
+
+        {showDataMgmt && (
+          <div className="space-y-6 border-t pt-6">
+            {/* Clear Old Data */}
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-3">📅 Clear Old Data</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {['week', 'month', 'year'].map(period => (
+                  <div key={period} className="bg-gray-50 rounded-lg p-4">
+                    <p className="text-sm font-semibold text-gray-900 mb-3">Last {period === 'year' ? '12 months' : period}</p>
+                    <div className="space-y-2">
+                      <button
+                        onClick={() => handleClearPeriodData('products', period)}
+                        className="w-full text-left px-3 py-2 bg-red-50 text-red-700 text-xs font-semibold rounded hover:bg-red-100 transition"
+                      >
+                        🗑️ Products
+                      </button>
+                      <button
+                        onClick={() => handleClearPeriodData('orders', period)}
+                        className="w-full text-left px-3 py-2 bg-red-50 text-red-700 text-xs font-semibold rounded hover:bg-red-100 transition"
+                      >
+                        📦 Orders
+                      </button>
+                      <button
+                        onClick={() => handleClearPeriodData('activities', period)}
+                        className="w-full text-left px-3 py-2 bg-red-50 text-red-700 text-xs font-semibold rounded hover:bg-red-100 transition"
+                      >
+                        📋 Activities
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Recover Deleted Items */}
+            {deletedItems.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-semibold text-gray-900">♻️ Recover Deleted Items (48h Window)</h4>
+                  <div className="text-sm text-gray-600">
+                    {selectedRestoreItems.size > 0 && (
+                      <span className="font-semibold text-blue-600">{selectedRestoreItems.size} selected</span>
+                    )}
+                  </div>
+                </div>
+                
+                {selectedRestoreItems.size > 0 && (
+                  <div className="mb-4 flex gap-2 justify-end">
+                    <button
+                      onClick={handleBulkRestore}
+                      className="px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded hover:bg-green-700 transition"
+                    >
+                      ✓ Restore {selectedRestoreItems.size} Items
+                    </button>
+                    <button
+                      onClick={handleBulkPermanentDelete}
+                      className="px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded hover:bg-red-700 transition"
+                    >
+                      🗑️ Delete {selectedRestoreItems.size} Forever
+                    </button>
+                    <button
+                      onClick={() => setSelectedRestoreItems(new Set())}
+                      className="px-4 py-2 bg-gray-300 text-gray-700 text-sm font-semibold rounded hover:bg-gray-400 transition"
+                    >
+                      Clear Selection
+                    </button>
+                  </div>
+                )}
+
+                <div className="bg-gray-50 rounded-lg p-3 mb-3 flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={selectedRestoreItems.size === deletedItems.length && deletedItems.length > 0}
+                    onChange={toggleSelectAll}
+                    className="w-4 h-4 cursor-pointer"
+                  />
+                  <span className="text-sm font-semibold text-gray-900">Select All</span>
+                </div>
+
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {deletedItems.map((item, idx) => {
+                    const deleteTime = new Date(item.deletedAt);
+                    const now = new Date();
+                    const hoursSince = Math.floor((now - deleteTime) / (1000 * 60 * 60));
+                    const hoursLeft = 48 - hoursSince;
+                    const canRestore = hoursLeft > 0;
+                    const isSelected = selectedRestoreItems.has(item.id);
+
+                    return (
+                      <div key={idx} className={`rounded-lg p-3 flex items-center gap-3 ${isSelected ? 'bg-blue-50 border-2 border-blue-300' : 'bg-gray-50'}`}>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleSelectItem(item.id)}
+                          className="w-4 h-4 cursor-pointer"
+                        />
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-gray-900">
+                            {item.type.toUpperCase()}: {item.data.name || item.data.id || 'Unnamed'}
+                          </p>
+                          <p className="text-xs text-gray-600">Deleted by: {item.deletedByName} • {hoursSince}h ago</p>
+                          {canRestore && <p className="text-xs text-green-600">✓ Recoverable for {hoursLeft}h</p>}
+                          {!canRestore && <p className="text-xs text-red-600">✗ Available for permanent delete only</p>}
+                        </div>
+                        <div className="flex gap-2">
+                          {canRestore && (
+                            <button
+                              onClick={() => handleRestoreItem(item.id)}
+                              className="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded hover:bg-green-200 transition"
+                            >
+                              Restore
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handlePermanentDelete(item.id)}
+                            className="px-3 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded hover:bg-red-200 transition"
+                          >
+                            Delete Forever
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {deletedItems.length === 0 && (
+              <p className="text-center text-gray-500 py-4">✓ No deleted items - Your data is clean!</p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Active Installment Plans */}
+      {(installmentStats?.activeInstallments || 0) > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900">💳 Active Installment Plans</h3>
+            <div className="bg-purple-100 text-purple-700 px-4 py-2 rounded-full font-bold text-sm">
+              {installmentStats?.activeInstallments || 0} Active Plans
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-md overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gradient-to-r from-purple-50 to-pink-50 border-b-2 border-purple-200">
+                  <tr>
+                    <th className="px-4 sm:px-6 py-3 text-left text-sm font-bold text-gray-900">Customer</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-sm font-bold text-gray-900">Duration</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-sm font-bold text-gray-900">Total Amount</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-sm font-bold text-gray-900">Progress</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-sm font-bold text-gray-900">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {customers && customers.slice(0, 10).map((customer, idx) => {
+                    if (!customer.activeInstallments || customer.activeInstallments === 0) return null;
+                    
+                    return customer.installmentPlans
+                      .filter(plan => plan.status === 'active')
+                      .slice(0, 3)
+                      .map((plan, planIdx) => {
+                        const progress = plan.totalAmount > 0 ? (plan.paid / plan.totalAmount) * 100 : 0;
+                        const progressColor = progress < 33 ? 'bg-orange-500' : progress < 66 ? 'bg-yellow-500' : 'bg-green-500';
+                        
+                        return (
+                          <tr key={`${idx}-${planIdx}`} className="hover:bg-gray-50 transition">
+                            <td className="px-4 sm:px-6 py-3">
+                              <div>
+                                <p className="text-sm font-semibold text-gray-900">{customer.name}</p>
+                                <p className="text-xs text-gray-500">{customer.email}</p>
+                              </div>
+                            </td>
+                            <td className="px-4 sm:px-6 py-3">
+                              <span className="text-sm font-semibold text-gray-900">{plan.duration} months</span>
+                            </td>
+                            <td className="px-4 sm:px-6 py-3">
+                              <div>
+                                <p className="text-sm font-bold text-gray-900">{formatCurrency(plan.totalAmount)}</p>
+                                <p className="text-xs text-gray-500">{formatCurrency(plan.paid)} paid</p>
+                              </div>
+                            </td>
+                            <td className="px-4 sm:px-6 py-3">
+                              <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                                <div 
+                                  className={`h-full ${progressColor} transition-all duration-300`}
+                                  style={{ width: `${progress}%` }}
+                                ></div>
+                              </div>
+                              <p className="text-xs text-gray-600 mt-1">{Math.round(progress)}% Complete</p>
+                            </td>
+                            <td className="px-4 sm:px-6 py-3">
+                              <span className="inline-block px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">
+                                ✓ On Track
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      });
+                  })}
+                </tbody>
+              </table>
+            </div>
+            
+            {(!customers || customers.every(c => !c.activeInstallments || c.activeInstallments === 0)) && (
+              <div className="p-6 text-center text-gray-500">
+                No active installment plans at the moment
+              </div>
+            )}
           </div>
         </div>
       )}

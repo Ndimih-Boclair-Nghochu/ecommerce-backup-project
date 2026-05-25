@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import axios from 'axios'
+import AgencySelectModal from './AgencySelectModal'
 
-export default function OrderManagement({ orders = [], onOrderUpdate, token, onViewReceipt = () => {} }) {
+export default function OrderManagement({ orders = [], onOrderUpdate, token, onViewReceipt = () => {}, resetStatus = null }) {
   const [activeFilter, setActiveFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState('newest')
@@ -10,6 +11,32 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
   const [bulkAction, setBulkAction] = useState('')
   const [expandedOrderId, setExpandedOrderId] = useState(null)
   const [message, setMessage] = useState({ type: '', text: '' })
+  const [agencyModalOpen, setAgencyModalOpen] = useState(false)
+  const [orderForAgency, setOrderForAgency] = useState(null)
+  const [pendingStatusChange, setPendingStatusChange] = useState(null)
+  const [lastUpdate, setLastUpdate] = useState(new Date())
+  const [isRealTimeActive, setIsRealTimeActive] = useState(true)
+
+  // Real-time polling for orders - 1 second
+  useEffect(() => {
+    if (!isRealTimeActive) return
+
+    const refreshOrders = async () => {
+      try {
+        // Trigger parent component refresh or call API
+        if (onOrderUpdate) {
+          onOrderUpdate();
+        }
+        setLastUpdate(new Date())
+      } catch (err) {
+        console.error('Error refreshing orders:', err)
+      }
+    }
+
+    // Poll every 1 second for real-time updates
+    const intervalId = setInterval(refreshOrders, 1000)
+    return () => clearInterval(intervalId)
+  }, [isRealTimeActive, onOrderUpdate])
 
   // Status colors and icons
   const statusConfig = {
@@ -99,18 +126,47 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
 
   // Handle status update
   const handleStatusChange = async (orderId, newStatus, order) => {
+    console.debug('🔍 handleStatusChange called', { 
+      orderId, 
+      newStatus, 
+      currentStatus: order.status,
+      hasAgencies: order.buyer?.agencies?.length || 0,
+      agencies: order.buyer?.agencies
+    })
+    
+    // If changing FROM pending TO another status, show agency selection modal
+    if (order.status === 'pending' && newStatus !== 'pending') {
+      console.debug('✅ Showing agency modal for pending order')
+      setOrderForAgency(order)
+      setPendingStatusChange({ orderId, newStatus })
+      setAgencyModalOpen(true)
+      return
+    }
+
+    console.debug('⏭️ Proceeding with direct status change')
+    // Otherwise, proceed with the status change directly
+    await completeStatusChange(orderId, newStatus, order)
+  }
+
+  // Complete the status change (either directly or after agency selection)
+  const completeStatusChange = async (orderId, newStatus, order, selectedAgency = null) => {
     try {
-      console.log('🔄 Status change initiated')
-      console.log('Updating order:', { orderId, newStatus, token: !!token })
-      console.log('📝 Order object:', order)
+      console.debug('🔄 Status change initiated')
+      console.debug('Updating order:', { orderId, newStatus, token: !!token, agency: selectedAgency })
+      console.debug('📝 Order object:', order)
+      
+      const updateData = {
+        status: newStatus,
+        deliveryAgency: selectedAgency || order.deliveryAgency || ''
+      }
+      
       const resp = await axios.put(`/api/admin/orders/${orderId}`, 
-        { status: newStatus, deliveryAgency: order.deliveryAgency || '' }, 
+        updateData, 
         { headers: { Authorization: `Bearer ${token}` } }
       )
-      console.log('Status update response:', resp.data)
-      console.log('✅ Response received, calling onOrderUpdate')
+      console.debug('Status update response:', resp.data)
+      console.debug('✅ Response received, calling onOrderUpdate')
       onOrderUpdate(orderId, resp.data, false)
-      showMessage('success', 'Order status updated ✓')
     } catch (err) {
       console.error('❌ Status update error:', err)
       console.error('Error response:', err.response?.data)
@@ -119,11 +175,66 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
     }
   }
 
+  // Handle payment status update
+  const handlePaymentStatusUpdate = async (orderId, isPaid, paidAmount) => {
+    try {
+      console.debug('💳 Payment status update initiated', { orderId, isPaid, paidAmount })
+      
+      const updateData = {
+        isPaid,
+        paidAmount: isPaid ? (paidAmount || 0) : 0
+      }
+      
+      const resp = await axios.put(`/api/admin/orders/${orderId}`, 
+        updateData, 
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      console.debug('Payment update response:', resp.data)
+      onOrderUpdate(orderId, resp.data, false)
+      showMessage('success', `Payment status updated to ${isPaid ? 'Paid' : 'Pending'}`)
+    } catch (err) {
+      console.error('❌ Payment update error:', err)
+      showMessage('error', err.response?.data?.error || 'Failed to update payment status')
+    }
+  }
+
+  // Handle agency selection from modal
+  const handleAgencySelect = async (agencyIndex) => {
+    if (!pendingStatusChange || !orderForAgency) return
+
+    let agencyName = ''
+    const agencies = orderForAgency.buyer?.agencies || []
+    
+    if (agencies[agencyIndex]) {
+      const selectedAgency = agencies[agencyIndex]
+      // Handle both string and object formats
+      if (typeof selectedAgency === 'string') {
+        agencyName = selectedAgency
+      } else if (typeof selectedAgency === 'object' && selectedAgency.name) {
+        agencyName = selectedAgency.name
+      } else {
+        agencyName = `Agency ${agencyIndex + 1}`
+      }
+    }
+
+    await completeStatusChange(
+      pendingStatusChange.orderId,
+      pendingStatusChange.newStatus,
+      orderForAgency,
+      agencyName
+    )
+
+    // Close modal and reset
+    setAgencyModalOpen(false)
+    setOrderForAgency(null)
+    setPendingStatusChange(null)
+  }
+
   // Handle bulk actions
   const handleBulkAction = async () => {
     if (!bulkAction || selectedOrders.length === 0) return
     try {
-      console.log('Bulk updating orders:', { count: selectedOrders.length, newStatus: bulkAction })
+      console.debug('Bulk updating orders:', { count: selectedOrders.length, newStatus: bulkAction })
       const responses = []
       for (const orderId of selectedOrders) {
         const resp = await axios.put(`/api/admin/orders/${orderId}`, 
@@ -132,11 +243,10 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
         )
         responses.push(resp.data)
       }
-      console.log('Bulk update completed:', responses.length, 'orders')
+      console.debug('Bulk update completed:', responses.length, 'orders')
       setSelectedOrders([])
       setBulkAction('')
       onOrderUpdate(null, null, false)
-      showMessage('success', `✓ Updated ${selectedOrders.length} order(s) successfully`)
     } catch (err) {
       console.error('Bulk update error:', err.response?.data || err.message)
       showMessage('error', err.response?.data?.error || 'Failed to perform bulk action')
@@ -147,13 +257,12 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
   const handleDeleteOrder = async (orderId) => {
     if (!window.confirm('Are you sure you want to delete this order?')) return
     try {
-      console.log('Deleting order:', orderId)
+      console.debug('Deleting order:', orderId)
       await axios.delete(`/api/admin/orders/${orderId}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
-      console.log('Order deleted successfully')
+      console.debug('Order deleted successfully')
       onOrderUpdate(orderId, null, true)
-      showMessage('success', 'Order deleted successfully ✓')
     } catch (err) {
       console.error('Delete error:', err.response?.data || err.message)
       showMessage('error', err.response?.data?.error || 'Failed to delete order')
@@ -162,7 +271,8 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
 
   const showMessage = (type, text) => {
     setMessage({ type, text })
-    setTimeout(() => setMessage({ type: '', text: '' }), 3000)
+    // Auto-hide after 1.5 seconds
+    setTimeout(() => setMessage({ type: '', text: '' }), 1500)
   }
 
   const toggleSelectOrder = (orderId) => {
@@ -183,6 +293,26 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
 
   return (
     <div className="space-y-6">
+      {/* Agency Selection Modal */}
+      <AgencySelectModal
+        isOpen={agencyModalOpen}
+        order={orderForAgency}
+        onClose={() => {
+          setAgencyModalOpen(false)
+          setOrderForAgency(null)
+          setPendingStatusChange(null)
+        }}
+        onSelectAgency={handleAgencySelect}
+      />
+
+      {/* Platform Reset Notice */}
+      {resetStatus?.isReset && (
+        <div className="bg-orange-100 border-l-4 border-orange-600 p-4 rounded-lg">
+          <p className="font-bold text-orange-900">🔄 Platform Reset Active</p>
+          <p className="text-sm text-orange-800 mt-1">All orders are temporarily hidden. Restore your data to display them again.</p>
+        </div>
+      )}
+
       {/* Message Alert */}
       {message.text && (
         <div className={`p-4 rounded-lg font-semibold ${
@@ -193,6 +323,27 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
           {message.text}
         </div>
       )}
+
+      {/* Live Status Bar */}
+      <div className="bg-white rounded-lg shadow-md p-4 flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center gap-3">
+          <div className={`w-3 h-3 rounded-full ${isRealTimeActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
+          <span className="text-sm font-semibold text-gray-700">
+            {isRealTimeActive ? '🟢 Live Orders' : '⊙ Paused'}
+          </span>
+          <span className="text-xs text-gray-500">Updated: {lastUpdate.toLocaleTimeString()}</span>
+        </div>
+        <button
+          onClick={() => setIsRealTimeActive(!isRealTimeActive)}
+          className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
+            isRealTimeActive
+              ? 'bg-green-100 text-green-700 hover:bg-green-200'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }`}
+        >
+          {isRealTimeActive ? '⏸ Pause' : '▶ Live'}
+        </button>
+      </div>
 
       {/* Order Statistics Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
@@ -284,6 +435,23 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
             </select>
           </div>
 
+          {/* Status Filter */}
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-2">Filter by Status</label>
+            <select
+              value={activeFilter}
+              onChange={(e) => setActiveFilter(e.target.value || '')}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">All Orders</option>
+              <option value="pending">Pending</option>
+              <option value="processing">Processing</option>
+              <option value="shipped">Shipped</option>
+              <option value="delivered">Delivered</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+
           {/* Bulk Action */}
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">Bulk Update Status</label>
@@ -316,10 +484,13 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
       <div className="bg-white rounded-xl shadow-md overflow-hidden">
         {filteredOrders.length === 0 ? (
           <div className="p-12 text-center">
-            <div className="text-6xl mb-4">📭</div>
+            <div className="text-6xl mb-4">{resetStatus?.isReset ? '🔄' : '📭'}</div>
             <p className="text-gray-600 text-lg font-semibold">
-              {searchQuery || activeFilter !== 'all' ? 'No orders match your filters' : 'No orders yet'}
+              {resetStatus?.isReset ? 'All Orders Temporarily Deleted' : (searchQuery || activeFilter !== 'all' ? 'No orders match your filters' : 'No orders yet')}
             </p>
+            {resetStatus?.isReset && (
+              <p className="text-sm text-gray-500 mt-2">Your orders will reappear when you restore the platform data.</p>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -338,6 +509,8 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
                   <th className="px-4 py-4 text-left font-bold">Buyer</th>
                   <th className="px-4 py-4 text-left font-bold">Items</th>
                   <th className="px-4 py-4 text-left font-bold">Total</th>
+                  <th className="px-4 py-4 text-left font-bold">Delivery</th>
+                  <th className="px-4 py-4 text-left font-bold">Payment</th>
                   <th className="px-4 py-4 text-left font-bold">Status</th>
                   <th className="px-4 py-4 text-left font-bold">Actions</th>
                 </tr>
@@ -376,9 +549,32 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
                         <div className="text-xs text-gray-600">Shipping: XAF {(order.shippingFee || 0).toLocaleString()}</div>
                       </td>
                       <td className="px-4 py-4">
+                        <span className={`inline-block px-2 py-1 rounded-lg text-xs font-bold ${
+                          order.deliveryOption === 'ship' 
+                            ? 'bg-purple-100 text-purple-800' 
+                            : 'bg-orange-100 text-orange-800'
+                        }`}>
+                          {order.deliveryOption === 'ship' ? '🚚 Shipping' : '🏪 Pickup'}
+                        </span>
+                        {order.region && <div className="text-xs text-gray-600 mt-1">{order.region}</div>}
+                      </td>
+                      <td className="px-4 py-4">
+                        <span className={`inline-block px-2 py-1 rounded-lg text-xs font-bold ${
+                          order.isPaid
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {order.isPaid ? '✅ Paid' : '⏳ Pending'}
+                        </span>
+                        {order.paymentMethod && <div className="text-xs text-gray-600 mt-1">{order.paymentMethod.toUpperCase()}</div>}
+                      </td>
+                      <td className="px-4 py-4">
                         <select
                           value={order.status}
-                          onChange={(e) => handleStatusChange(order.id, e.target.value, order)}
+                          onChange={(e) => {
+                            console.debug('📌 Status dropdown changed for order', order.id, 'from', order.status, 'to', e.target.value)
+                            handleStatusChange(order.id, e.target.value, order)
+                          }}
                           className={`px-3 py-2 rounded-lg font-semibold text-sm border-2 ${statusConfig[order.status]?.badge}`}
                         >
                           {Object.entries(statusConfig).map(([key, config]) => (
@@ -405,7 +601,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
                     {/* Expanded Order Details */}
                     {expandedOrderId === order.id && (
                       <tr className="bg-gray-50">
-                        <td colSpan="7" className="px-6 py-6">
+                        <td colSpan="9" className="px-6 py-6">
                           <div className="space-y-6">
                             {/* Order Header */}
                             <div className="flex justify-between items-start mb-4">
@@ -426,22 +622,135 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
 
                             {/* Buyer Information */}
                             <div className="grid grid-cols-2 gap-6">
-                              <div>
-                                <h5 className="font-bold text-gray-900 mb-3">Buyer Information</h5>
+                              <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg p-4 border border-blue-200">
+                                <h5 className="font-bold text-blue-900 mb-3 flex items-center gap-2">👤 Buyer Information</h5>
                                 <div className="space-y-2 text-sm text-gray-700">
                                   <div><span className="font-semibold">Name:</span> {order.buyer?.name}</div>
                                   <div><span className="font-semibold">Email:</span> {order.buyer?.email}</div>
                                   <div><span className="font-semibold">Phone:</span> {order.buyer?.phone}</div>
-                                  <div><span className="font-semibold">Address:</span> {order.buyer?.address}</div>
+                                  <div><span className="font-semibold">Address:</span> {order.buyer?.address || 'N/A'}</div>
+                                  <div className="pt-2 border-t border-blue-200">
+                                    <span className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">
+                                      📧 {order.buyer?.email ? 'Email Available' : 'No Email'}
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
-                              <div>
-                                <h5 className="font-bold text-gray-900 mb-3">Delivery Information</h5>
+                              <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200">
+                                <h5 className="font-bold text-green-900 mb-3 flex items-center gap-2">📦 Delivery Information</h5>
                                 <div className="space-y-2 text-sm text-gray-700">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-semibold">Delivery Method:</span>
+                                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
+                                      order.deliveryOption === 'ship' 
+                                        ? 'bg-purple-100 text-purple-800' 
+                                        : 'bg-orange-100 text-orange-800'
+                                    }`}>
+                                      {order.deliveryOption === 'ship' ? '🚚 Shipping' : '🏪 Pickup in Store'}
+                                    </span>
+                                  </div>
                                   <div><span className="font-semibold">Region:</span> {order.region}</div>
                                   <div><span className="font-semibold">Shipping Fee:</span> XAF {(order.shippingFee || 0).toLocaleString()}</div>
-                                  <div><span className="font-semibold">Date:</span> {new Date(order.createdAt).toLocaleDateString()}</div>
-                                  <div><span className="font-semibold">Agency:</span> {order.deliveryAgency || 'Not selected'}</div>
+                                  <div><span className="font-semibold">Date Ordered:</span> {new Date(order.createdAt).toLocaleDateString()} {new Date(order.createdAt).toLocaleTimeString()}</div>
+                                  <div><span className="font-semibold">Agency:</span> {order.deliveryAgency || 'Not yet assigned'}</div>
+                                  {order.deliveryOption === 'pickup' && order.buyer?.pickupLocation && (
+                                    <div className="pt-2 border-t border-green-200">
+                                      <span className="font-semibold">Pickup Location:</span> {order.buyer.pickupLocation}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Special Instructions */}
+                            {order.specialInstructions && (
+                              <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-lg p-4 border-2 border-violet-300">
+                                <h5 className="font-bold text-violet-900 mb-3 flex items-center gap-2">📝 Special Instructions</h5>
+                                <div className="text-sm text-gray-700 bg-white rounded-lg p-3 border border-violet-200 italic">
+                                  {order.specialInstructions}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Payment & Status Information */}
+                            <div className="grid grid-cols-3 gap-4">
+                              <div className="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-lg p-4 border border-yellow-200">
+                                <h5 className="font-bold text-yellow-900 mb-3 flex items-center gap-2">💳 Payment Status</h5>
+                                <div className="space-y-3 text-sm">
+                                  <div className="flex items-center gap-2">
+                                    <span className={`inline-block w-3 h-3 rounded-full ${order.isPaid ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                                    <span className="font-bold">{order.isPaid ? '✅ Payment Received' : '⏳ Awaiting Payment'}</span>
+                                  </div>
+                                  <div><span className="font-semibold">Payment Method:</span> {order.paymentMethod ? order.paymentMethod.toUpperCase() : 'Cash on Delivery'}</div>
+                                  {order.paidAmount > 0 && (
+                                    <div><span className="font-semibold">Paid Amount:</span> XAF {order.paidAmount.toLocaleString()}</div>
+                                  )}
+                                  
+                                  {/* Payment Update Controls for Pickup Orders */}
+                                  {order.deliveryOption === 'pickup' && order.paymentMethod?.toLowerCase() === 'cash' && (
+                                    <div className="pt-2 border-t border-yellow-300 space-y-2">
+                                      <p className="text-xs text-yellow-900 font-semibold">💰 Update Payment:</p>
+                                      {!order.isPaid ? (
+                                        <button
+                                          onClick={() => handlePaymentStatusUpdate(order.id, true, order.totals?.total || 0)}
+                                          className="w-full bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg font-semibold text-xs transition"
+                                        >
+                                          ✅ Mark as Paid
+                                        </button>
+                                      ) : (
+                                        <button
+                                          onClick={() => handlePaymentStatusUpdate(order.id, false, 0)}
+                                          className="w-full bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded-lg font-semibold text-xs transition"
+                                        >
+                                          ⏳ Mark as Pending
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-lg p-4 border border-indigo-200">
+                                <h5 className="font-bold text-indigo-900 mb-3 flex items-center gap-2">📊 Order Status</h5>
+                                <div className="space-y-3 text-sm">
+                                  {/* For pickup orders, show payment focus instead of delivery status */}
+                                  {order.deliveryOption === 'pickup' ? (
+                                    <div>
+                                      <div><span className="font-semibold">Order Number:</span> {order.orderNumber || order.id.slice(0, 8)}</div>
+                                      <div className="pt-2 mt-2 border-t border-indigo-200">
+                                        <p className="text-xs font-semibold text-indigo-700 mb-2">Payment Priority:</p>
+                                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
+                                          order.isPaid
+                                            ? 'bg-green-100 text-green-800'
+                                            : 'bg-red-100 text-red-800'
+                                        }`}>
+                                          {order.isPaid ? '✅ PAID' : '🔴 NOT PAID'}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-2xl">{statusConfig[order.status]?.icon}</span>
+                                        <span className="font-bold text-indigo-900">{statusConfig[order.status]?.label}</span>
+                                      </div>
+                                      <div><span className="font-semibold">Order Number:</span> {order.orderNumber || order.id.slice(0, 8)}</div>
+                                      <div className="pt-1 text-xs text-indigo-700">{getOrderAge(order.createdAt)}</div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="bg-gradient-to-br from-rose-50 to-pink-50 rounded-lg p-4 border border-rose-200">
+                                <h5 className="font-bold text-rose-900 mb-3 flex items-center gap-2">💰 Financial Summary</h5>
+                                <div className="space-y-2 text-sm">
+                                  <div><span className="font-semibold">Subtotal:</span> XAF {(order.totals?.subtotal || 0).toLocaleString()}</div>
+                                  {order.totals?.discount > 0 && (
+                                    <div className="text-green-700"><span className="font-semibold">Discount:</span> -XAF {(order.totals?.discount || 0).toLocaleString()}</div>
+                                  )}
+                                  <div className="border-t border-rose-200 pt-2 font-bold text-lg text-rose-900">
+                                    Total: XAF {(order.totals?.total || 0).toLocaleString()}
+                                  </div>
                                 </div>
                               </div>
                             </div>

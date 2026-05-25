@@ -1,0 +1,12 @@
+node_modules
+.env
+.env.*
+!.env.example
+server/.env
+client/.env
+client/dist
+.local-postgres
+server.log
+server/uploads/*
+!server/uploads/.gitkeep
+npm-debug.log*

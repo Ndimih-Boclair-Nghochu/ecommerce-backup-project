@@ -8,8 +8,10 @@
   ],
   "scripts": {
     "dev": "concurrently \"npm:dev --workspace=server\" \"npm:dev --workspace=client\"",
+    "build": "npm --workspace=client run build",
     "start": "node server/index.js",
-    "build": "npm --workspace=client run build"
+    "migrate": "node server/migrate.js",
+    "setup": "npm install --workspaces && npm run migrate"
   },
   "dependencies": {
     "concurrently": "^8.0.0"

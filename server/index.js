@@ -1,1980 +1,1437 @@
 const express = require('express');
 const cors = require('cors');
-const fs = require('fs');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const { body, validationResult } = require('express-validator');
 const path = require('path');
-const { v4: uuid } = require('uuid');
+const fs = require('fs');
+const multer = require('multer');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const multer = require('multer');
+const nodemailer = require('nodemailer');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+
+const { pool } = require('./db');
+const migrate = require('./migrate');
 
 const app = express();
-app.use(cors());
-app.use(express.json());
+const PORT = Number(process.env.PORT || 4000);
+const JWT_SECRET = process.env.JWT_SECRET;
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'ndimihboclair4@gmail.com';
+const CLIENT_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:5173';
 
-// Serve client build
-const clientBuildPath = path.join(__dirname, '../client/dist');
-app.use(express.static(clientBuildPath));
-
-// Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-// Ensure uploads directory exists
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
-}
-
-const dataFile = path.join(__dirname, 'data.json');
-let data = { 
-  products: [], 
-  orders: [], 
-  receipts: [],
-  users: [], 
-  categories: [],
-  admin: {
-    name: '🏪 SHOP OWNER',
-    email: 'ndimihboclair4@gmail.com',
-    password: bcrypt.hashSync('boclair444', 10),
-    role: 'super_admin'
-  },
-  subAdmins: [],
-  subAdminActivities: [],
-  mainShopTown: 'Douala',
-  freeShippingThreshold: 50000,
-  regionFreeShipping: {},
-  shippingFees: {
-    Douala: 0,
-    "Yaoundé": 3000,
-    Bafoussam: 5000,
-    Bamenda: 6000,
-    Garoua: 8000,
-    Maroua: 9000,
-    "Ngaoundéré": 7000,
-    Bertoua: 6500,
-    Buea: 2000,
-    Limbe: 2500
-  },
-  chatMessages: [],
-  locations: [
-    {
-      id: uuid(),
-      name: 'Main Store - Douala',
-      city: 'Douala',
-      address: '123 Boulevard de la Liberté, Douala, Cameroon',
-      phone: '+237 6 XX XXX XXX',
-      email: 'douala@store.cm',
-      lat: 4.0511,
-      lng: 9.7679,
-      isMainStore: true,
-      hours: 'Mon-Sun: 8AM-8PM',
-      description: 'Our flagship store in the heart of Douala'
-    }
-  ]
+const REAL_SHIPPING_FEES = {
+  Bamenda: 0,
+  Douala: 1016,
+  'Yaoundé': 3000,
+  Bafoussam: 5000,
+  Garoua: 8000,
+  Maroua: 9000,
+  'Ngaoundéré': 7000,
+  Bertoua: 6500,
+  Buea: 2000,
+  Limbe: 2500,
+  Bafang: 2001,
+  Nkong: 2000
 };
 
-if (fs.existsSync(dataFile)) {
-  const fileData = JSON.parse(fs.readFileSync(dataFile));
-  data = { ...data, ...fileData };
+const DEFAULT_HERO_SECTION = {
+  badge: 'New arrivals in Cameroon',
+  title: 'MyShop',
+  description: 'Shop premium electronics and accessories with delivery across Cameroon.',
+  primaryButtonText: 'Shop Now',
+  secondaryButtonText: 'Browse Products',
+  backgroundImage: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1920'
+};
+
+const DEFAULT_PAYMENT_ACCOUNTS = {
+  cash: {
+    accountName: 'Pay after confirmation',
+    notes: 'Your order is received first. The shop will contact you shortly to confirm payment and delivery.',
+    isActive: true
+  },
+  card: { accountName: '', accountNumber: '', bankName: '', accountHolder: '', isActive: false },
+  momo: {
+    mtn: { accountName: '', phoneNumber: '', accountHolder: '', isActive: false },
+    orange: { accountName: '', phoneNumber: '', accountHolder: '', isActive: false }
+  }
+};
+
+app.set('trust proxy', 1);
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' }
+}));
+app.use(cors({ origin: CLIENT_ORIGIN }));
+app.use(express.json({ limit: '2mb' }));
+
+const generalLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200 });
+const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, message: 'Too many login attempts' });
+const orderLimiter = rateLimit({ windowMs: 60 * 1000, max: 5 });
+
+app.use('/api/', generalLimiter);
+app.use('/api/admin/login', authLimiter);
+app.use('/api/sub-admin/login', authLimiter);
+app.use('/api/orders', orderLimiter);
+
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => {
+    const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
+    cb(null, `${Date.now()}_${safeName}`);
+  }
+});
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'];
+    cb(allowed.includes(file.mimetype) ? null : new Error('Unsupported file type'), allowed.includes(file.mimetype));
+  }
+});
+
+app.use('/uploads', express.static(uploadDir));
+
+function requireJwtSecret() {
+  if (!JWT_SECRET || JWT_SECRET.length < 32) {
+    const err = new Error('JWT_SECRET must be configured');
+    err.status = 500;
+    throw err;
+  }
 }
 
-function save() { fs.writeFileSync(dataFile, JSON.stringify(data, null, 2)); }
+function asyncHandler(fn) {
+  return (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
+}
 
-// One-time migration to fix missing admin names in activities
-let hasMigrated = false;
-if (data.subAdminActivities && Array.isArray(data.subAdminActivities)) {
-  const needsMigration = data.subAdminActivities.some(activity => 
-    (activity.subAdminId === null || activity.subAdminId === 'admin') && 
-    (!activity.subAdminName || activity.subAdminName === 'Unknown')
-  );
-  
-  if (needsMigration) {
-    data.subAdminActivities = data.subAdminActivities.map(activity => {
-      // Fix admin activities (subAdminId is null or 'admin')
-      if ((activity.subAdminId === null || activity.subAdminId === 'admin') && 
-          (!activity.subAdminName || activity.subAdminName === 'Unknown')) {
-        return {
-          ...activity,
-          subAdminName: data.admin?.name || '🏪 SHOP OWNER',
-          subAdminEmail: data.admin?.email || 'ndimihboclair4@gmail.com'
-        };
+function validate(rules) {
+  return [
+    ...rules,
+    (req, res, next) => {
+      const result = validationResult(req);
+      if (!result.isEmpty()) {
+        return res.status(400).json({
+          errors: result.array().map((error) => ({
+            field: error.path || error.param,
+            message: error.msg
+          }))
+        });
       }
-      return activity;
-    });
-    save();
-    hasMigrated = true;
-    console.log('✅ Migrated admin activities - populated missing names/emails');
+      next();
+    }
+  ];
+}
+
+function normalizeNumber(value, fallback = 0) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
+}
+
+function normalizeArray(value, fallback = []) {
+  if (Array.isArray(value)) return value.filter((item) => item !== undefined && item !== null);
+  if (typeof value === 'string' && value.trim()) return [value.trim()];
+  return fallback;
+}
+
+function productFromRow(row) {
+  if (!row) return null;
+  const images = Array.isArray(row.images) ? row.images : [];
+  const image = row.image_url || images[0]?.url || '';
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description || '',
+    price: Number(row.price || 0),
+    stock: Number(row.stock || 0),
+    category: row.category || '',
+    isNew: Boolean(row.is_new),
+    mostOrdered: Boolean(row.most_ordered),
+    availableRegions: row.available_regions || ['ALL'],
+    image,
+    imageUrl: image,
+    image_url: image,
+    images,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function orderFromRow(row) {
+  if (!row) return null;
+  const items = Array.isArray(row.items) ? row.items : [];
+  return {
+    id: row.id,
+    orderNumber: row.id,
+    buyer: {
+      name: row.buyer_name,
+      email: row.buyer_email,
+      phone: row.buyer_phone,
+      address: row.buyer_address,
+      agencies: row.buyer_agencies || []
+    },
+    buyerName: row.buyer_name,
+    buyerEmail: row.buyer_email,
+    buyerPhone: row.buyer_phone,
+    region: row.region,
+    shippingFee: Number(row.shipping_fee || 0),
+    subtotal: Number(row.subtotal || 0),
+    total: Number(row.total || 0),
+    totals: {
+      subtotal: Number(row.subtotal || 0),
+      shipping: Number(row.shipping_fee || 0),
+      shippingFee: Number(row.shipping_fee || 0),
+      total: Number(row.total || 0)
+    },
+    items,
+    status: row.status,
+    deliveryAgency: row.delivery_agency || '',
+    notes: row.notes || '',
+    paymentMethod: row.payment_method || '',
+    isInStoreSale: Boolean(row.is_in_store_sale),
+    discountPercent: Number(row.discount_percent || 0),
+    paidAmount: Number(row.paid_amount || 0),
+    changeAmount: Number(row.change_amount || 0),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    timeline: [
+      { status: 'pending', timestamp: row.created_at, note: 'Order received' },
+      ...(row.status !== 'pending'
+        ? [{ status: row.status, timestamp: row.updated_at, note: `Order marked as ${row.status}` }]
+        : [])
+    ]
+  };
+}
+
+function locationFromRow(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    city: row.city,
+    address: row.address,
+    phone: row.phone,
+    email: row.email,
+    lat: row.lat === null ? null : Number(row.lat),
+    lng: row.lng === null ? null : Number(row.lng),
+    isMainStore: Boolean(row.is_main_store),
+    hours: row.hours,
+    description: row.description,
+    createdAt: row.created_at
+  };
+}
+
+function adminFromRow(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    role: row.role,
+    permissions: row.permissions || {},
+    isActive: row.is_active,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function activityFromRow(row) {
+  return {
+    id: row.id,
+    subAdminId: row.admin_id,
+    subAdminName: row.admin_name,
+    subAdminEmail: row.admin_email,
+    action: row.action,
+    details: typeof row.details === 'string' ? row.details : JSON.stringify(row.details || {}),
+    timestamp: row.created_at,
+    ipAddress: row.details?.ipAddress || ''
+  };
+}
+
+async function getSettings() {
+  const result = await pool.query('SELECT key, value FROM settings');
+  const settings = {
+    shop_name: 'MyShop',
+    main_shop_town: 'Bamenda',
+    free_shipping_threshold: '100000',
+    shop_phone: '+237 6 52 882 753',
+    shop_email: 'ndimihboclair4@gmail.com'
+  };
+  for (const row of result.rows) settings[row.key] = row.value;
+  return settings;
+}
+
+async function getShippingFees() {
+  const result = await pool.query('SELECT city, fee FROM shipping_fees ORDER BY city ASC');
+  return Object.fromEntries(result.rows.map((row) => [row.city, Number(row.fee)]));
+}
+
+async function logActivity(req, action, details = {}) {
+  if (!req.admin) return;
+  try {
+    await pool.query(
+      `INSERT INTO admin_activities (admin_id, admin_name, admin_email, action, details)
+       VALUES ($1, $2, $3, $4, $5::jsonb)`,
+      [
+        req.admin.id,
+        req.admin.name,
+        req.admin.email,
+        action,
+        JSON.stringify({ ...details, ipAddress: req.ip })
+      ]
+    );
+  } catch (err) {
+    console.error('Failed to log admin activity:', err.message);
   }
 }
 
-// Middleware to authenticate admin/subadmin
-function authenticate(req, res, next) {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) {
-    return res.status(401).json({ error: 'No token provided' });
-  }
-  
+async function authenticate(req, res, next) {
   try {
-    const decoded = jwt.verify(token, 'secret_key');
-    req.user = decoded;
+    requireJwtSecret();
+    const header = req.headers.authorization || '';
+    const [scheme, token] = header.split(' ');
+    if (scheme !== 'Bearer' || !token) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const adminResult = await pool.query(
+      `SELECT id, name, email, role, permissions, is_active
+       FROM admins
+       WHERE id = $1 AND is_active = true`,
+      [decoded.id]
+    );
+    if (adminResult.rowCount === 0) {
+      return res.status(401).json({ error: 'Invalid or inactive admin token' });
+    }
+
+    req.admin = adminFromRow(adminResult.rows[0]);
+    next();
+  } catch (err) {
+    if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+    next(err);
+  }
+}
+
+function authenticateCustomer(req, res, next) {
+  try {
+    requireJwtSecret();
+    const header = req.headers.authorization || '';
+    const [scheme, token] = header.split(' ');
+    if (scheme !== 'Bearer' || !token) return res.status(401).json({ error: 'Authentication required' });
+    req.customer = jwt.verify(token, JWT_SECRET);
     next();
   } catch (err) {
     return res.status(401).json({ error: 'Invalid token' });
   }
 }
 
-// Helper to validate numeric fees
-function isValidFee(val) {
-  const num = Number(val);
-  return !Number.isNaN(num) && num >= 0;
+function checkPermission(permissionKey) {
+  return (req, res, next) => {
+    if (req.admin?.role === 'super_admin') return next();
+    if (req.admin?.permissions?.[permissionKey]) return next();
+    return res.status(403).json({ error: 'Permission denied' });
+  };
 }
 
-// Sample products with mostOrdered and isNew flags
-const sampleProducts = [
-  { id: '1', name: 'Wireless Headphones', price: 15000, image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500', description: 'Premium sound quality with noise cancellation', stock: 50, category: 'Electronics', mostOrdered: true, isNew: false, availableRegions: ['ALL'], images: [{ color: 'default', url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500' }] },
-  { id: '2', name: 'Smart Watch', price: 25000, image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500', description: 'Track your fitness and stay connected', stock: 100, category: 'Electronics', mostOrdered: false, isNew: true, availableRegions: ['ALL'], images: [{ color: 'default', url: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500' }] },
-  { id: '3', name: 'Laptop Backpack', price: 8000, image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500', description: 'Durable and spacious for daily commute', stock: 75, category: 'Accessories', mostOrdered: true, isNew: false, availableRegions: ['ALL'], images: [{ color: 'default', url: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500' }] },
-  { id: '4', name: 'Bluetooth Speaker', price: 12000, image: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=500', description: 'Portable speaker with powerful bass', stock: 200, category: 'Electronics', mostOrdered: true, isNew: false, availableRegions: ['ALL'], images: [{ color: 'default', url: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=500' }] },
-  { id: '5', name: 'Wireless Mouse', price: 4500, image: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=500', description: 'Ergonomic design with precision tracking', stock: 40, category: 'Electronics', mostOrdered: false, isNew: true, availableRegions: ['ALL'], images: [{ color: 'default', url: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=500' }] },
-  { id: '6', name: 'USB-C Hub', price: 6000, image: 'https://images.unsplash.com/photo-1625948515291-69613efd103f?w=500', description: 'Multi-port adapter for all your devices', stock: 60, category: 'Accessories', mostOrdered: true, isNew: false, availableRegions: ['ALL'], images: [{ color: 'default', url: 'https://images.unsplash.com/photo-1625948515291-69613efd103f?w=500' }] },
-  { id: '7', name: 'Mechanical Keyboard', price: 18000, image: 'https://images.unsplash.com/photo-1595225476474-87563907a212?w=500', description: 'RGB backlit mechanical gaming keyboard', stock: 45, category: 'Electronics', mostOrdered: false, isNew: true, availableRegions: ['ALL'], images: [{ color: 'default', url: 'https://images.unsplash.com/photo-1595225476474-87563907a212?w=500' }] },
-  { id: '8', name: 'Wireless Earbuds', price: 22000, image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=500', description: 'True wireless earbuds with charging case', stock: 85, category: 'Electronics', mostOrdered: true, isNew: false, availableRegions: ['ALL'], images: [{ color: 'default', url: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=500' }] },
-  { id: '9', name: 'Portable Charger', price: 7500, image: 'https://images.unsplash.com/photo-1609592806519-3d0ad8ba3a1d?w=500', description: 'High capacity power bank for all devices', stock: 120, category: 'Accessories', mostOrdered: false, isNew: true, availableRegions: ['ALL'], images: [{ color: 'default', url: 'https://images.unsplash.com/photo-1609592806519-3d0ad8ba3a1d?w=500' }] },
-  { id: '10', name: 'Phone Stand', price: 3500, image: 'https://images.unsplash.com/photo-1556656793-08538906a9f8?w=500', description: 'Adjustable aluminum phone holder', stock: 90, category: 'Accessories', mostOrdered: false, isNew: false, availableRegions: ['ALL'], images: [{ color: 'default', url: 'https://images.unsplash.com/photo-1556656793-08538906a9f8?w=500' }] },
-  { id: '11', name: 'Webcam HD', price: 16000, image: 'https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04?w=500', description: '1080p webcam for video calls and streaming', stock: 55, category: 'Electronics', mostOrdered: true, isNew: false, availableRegions: ['ALL'], images: [{ color: 'default', url: 'https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04?w=500' }] },
-  { id: '12', name: 'Gaming Mouse Pad', price: 5000, image: 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=500', description: 'Large RGB gaming mouse pad', stock: 150, category: 'Accessories', mostOrdered: false, isNew: true, availableRegions: ['ALL'], images: [{ color: 'default', url: 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=500' }] },
-  { id: '13', name: 'USB Flash Drive', price: 4000, image: 'https://images.unsplash.com/photo-1624823183493-ed5832f48f18?w=500', description: '128GB high-speed USB 3.0 flash drive', stock: 200, category: 'Accessories', mostOrdered: false, isNew: false, availableRegions: ['ALL'], images: [{ color: 'default', url: 'https://images.unsplash.com/photo-1624823183493-ed5832f48f18?w=500' }] },
-  { id: '14', name: 'Laptop Stand', price: 9500, image: 'https://images.unsplash.com/photo-1625225233840-695456021cde?w=500', description: 'Ergonomic aluminum laptop stand', stock: 65, category: 'Accessories', mostOrdered: true, isNew: false, availableRegions: ['ALL'], images: [{ color: 'default', url: 'https://images.unsplash.com/photo-1625225233840-695456021cde?w=500' }] },
-  { id: '15', name: 'Desk Lamp LED', price: 8500, image: 'https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?w=500', description: 'Adjustable LED desk lamp with USB charging', stock: 70, category: 'Accessories', mostOrdered: false, isNew: true, availableRegions: ['ALL'], images: [{ color: 'default', url: 'https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?w=500' }] }
-];
-
-if (data.products.length === 0) {
-  data.products = sampleProducts;
-  save();
+function requireSuperAdmin(req, res, next) {
+  if (req.admin?.role === 'super_admin') return next();
+  return res.status(403).json({ error: 'Only the super admin can perform this action' });
 }
 
-// Health check
-app.get('/api/health', (req, res) => res.json({ ok: true }));
-
-// Debug endpoint - check subadmins (temporary)
-app.get('/api/debug/subadmins', (req, res) => {
-  res.json({
-    subAdminsCount: data.subAdmins.length,
-    subAdmins: data.subAdmins.map(sa => ({
-      id: sa.id,
-      email: sa.email,
-      name: sa.name,
-      hasPassword: !!sa.password
-    }))
+function getTransporter() {
+  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
+  if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS) return null;
+  return nodemailer.createTransport({
+    host: SMTP_HOST,
+    port: Number(SMTP_PORT),
+    secure: Number(SMTP_PORT) === 465,
+    auth: { user: SMTP_USER, pass: SMTP_PASS }
   });
-});
+}
 
-// Get platform statistics
-app.get('/api/stats', (req, res) => {
-  const totalProducts = data.products.length;
-  const totalInStock = data.stats?.totalInStock ?? data.products.reduce((sum, p) => sum + (parseInt(p.stock) || 0), 0);
-  const totalOrders = data.orders.length;
-  const totalItemsSold = data.orders.reduce((sum, order) => {
-    return sum + (order.items?.reduce((itemSum, item) => itemSum + (item.quantity || 0), 0) || 0);
-  }, 0);
-  const totalRevenue = data.orders.reduce((sum, order) => sum + (order.totals?.total || 0), 0);
-  const averageRating = data.stats?.averageRating ?? 4.8;
-  const deliveryTime = data.stats?.deliveryTime ?? '24-48h';
-  
-  res.json({
-    totalProducts,
-    totalInStock,
-    totalOrders,
-    totalItemsSold,
-    totalRevenue,
-    averageRating,
-    deliveryTime
-  });
-});
-
-// Update statistics from admin panel
-app.post('/api/stats/update', (req, res) => {
+async function sendMailSafe(message) {
+  const transporter = getTransporter();
+  if (!transporter) return;
   try {
-    console.log('Stats update request received:', req.body);
-    const { totalInStock, averageRating, deliveryTime } = req.body;
-    
-    if (totalInStock !== undefined) {
-      data.stats = data.stats || {};
-      data.stats.totalInStock = parseInt(totalInStock);
-    }
-    if (averageRating !== undefined) {
-      data.stats = data.stats || {};
-      data.stats.averageRating = parseFloat(averageRating);
-    }
-    if (deliveryTime !== undefined) {
-      data.stats = data.stats || {};
-      data.stats.deliveryTime = deliveryTime;
-    }
-    
-    console.log('Updated stats:', data.stats);
-    fs.writeFileSync(dataFilePath, JSON.stringify(data, null, 2));
-    console.log('Stats saved to file');
-    res.json({ success: true, message: 'Statistics updated' });
+    await transporter.sendMail(message);
   } catch (err) {
-    console.error('Error updating statistics:', err);
-    res.status(500).json({ error: 'Failed to update statistics' });
+    console.error('Email notification failed:', err.message);
   }
-});
+}
 
-// Get real-time statistics
-app.get('/api/admin/real-time-stats', authenticate, (req, res) => {
+function orderEmailText(order) {
+  const itemLines = (order.items || [])
+    .map((item) => `- ${item.name} x ${item.quantity}: ${Number(item.price || 0).toLocaleString()} XAF`)
+    .join('\n');
+  return [
+    `Order ID: ${order.id}`,
+    `Customer: ${order.buyer.name}`,
+    `Phone: ${order.buyer.phone}`,
+    `Email: ${order.buyer.email}`,
+    `Region: ${order.region}`,
+    '',
+    'Items:',
+    itemLines,
+    '',
+    `Subtotal: ${order.totals.subtotal.toLocaleString()} XAF`,
+    `Shipping: ${order.totals.shipping.toLocaleString()} XAF`,
+    `Total: ${order.totals.total.toLocaleString()} XAF`,
+    '',
+    'Your order has been received. We will contact you shortly to confirm payment and delivery.'
+  ].join('\n');
+}
+
+function queueOrderEmails(order) {
+  setImmediate(() => {
+    const from = process.env.SMTP_FROM || process.env.SMTP_USER || ADMIN_EMAIL;
+    sendMailSafe({
+      from,
+      to: order.buyer.email,
+      subject: `Order received - ${order.id}`,
+      text: orderEmailText(order)
+    });
+    sendMailSafe({
+      from,
+      to: ADMIN_EMAIL,
+      subject: `New order received - ${order.id}`,
+      text: orderEmailText(order)
+    });
+  });
+}
+
+function queueStatusEmail(order, oldStatus) {
+  if (!order.buyer?.email || oldStatus === order.status) return;
+  setImmediate(() => {
+    sendMailSafe({
+      from: process.env.SMTP_FROM || process.env.SMTP_USER || ADMIN_EMAIL,
+      to: order.buyer.email,
+      subject: `Order status updated - ${order.id}`,
+      text: [
+        `Hello ${order.buyer.name},`,
+        '',
+        `Your order ${order.id} status is now: ${order.status}.`,
+        '',
+        'Thank you for shopping with us.'
+      ].join('\n')
+    });
+  });
+}
+
+const loginValidation = validate([
+  body('email').isEmail().withMessage('Enter a valid email address').normalizeEmail(),
+  body('password').notEmpty().withMessage('Password is required')
+]);
+
+const productValidation = validate([
+  body('name').trim().notEmpty().withMessage('Product name is required'),
+  body('price').isInt({ min: 1 }).withMessage('Price must be a positive integer'),
+  body('stock').isInt({ min: 0 }).withMessage('Stock must be a non-negative integer')
+]);
+
+const orderValidation = validate([
+  body('buyer.name').trim().notEmpty().withMessage('Buyer name is required'),
+  body('buyer.phone').trim().notEmpty().withMessage('Buyer phone is required'),
+  body('buyer.email').custom((value, { req }) => {
+    if (req.body.isInStoreSale) return true;
+    if (!value || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) throw new Error('Enter a valid email address');
+    return true;
+  }),
+  body('buyer.address').custom((value, { req }) => {
+    if (req.body.isInStoreSale || req.body.deliveryOption === 'pickup') return true;
+    if (!value || !String(value).trim()) throw new Error('Buyer address is required');
+    return true;
+  }),
+  body('items').isArray({ min: 1 }).withMessage('Order must contain at least one item'),
+  body('items.*.id').notEmpty().withMessage('Each item must include an id'),
+  body('items.*.name').notEmpty().withMessage('Each item must include a name'),
+  body('items.*.price').isInt({ min: 1 }).withMessage('Each item price must be a positive integer'),
+  body('items.*.quantity').isInt({ min: 1 }).withMessage('Each item quantity must be at least 1')
+]);
+
+const chatValidation = validate([
+  body('deviceId').trim().notEmpty().withMessage('Device ID is required'),
+  body('message').trim().notEmpty().withMessage('Message is required')
+]);
+
+app.get('/api/health', (req, res) => res.json({ ok: true, database: 'postgresql' }));
+
+app.get('/api/settings', asyncHandler(async (req, res) => {
+  const settings = await getSettings();
+  res.json({
+    shopName: settings.shop_name,
+    mainShopTown: settings.main_shop_town,
+    freeShippingThreshold: Number(settings.free_shipping_threshold),
+    shopPhone: settings.shop_phone,
+    shopEmail: settings.shop_email
+  });
+}));
+
+app.get('/api/platform-name', asyncHandler(async (req, res) => {
+  const settings = await getSettings();
+  res.json({ platformName: settings.shop_name || 'MyShop' });
+}));
+
+app.get('/api/hero-section', asyncHandler(async (req, res) => {
+  const settings = await getSettings();
+  const result = await pool.query("SELECT value FROM settings WHERE key = 'hero_section'");
+  const hero = result.rowCount ? JSON.parse(result.rows[0].value) : DEFAULT_HERO_SECTION;
+  res.json({ ...hero, title: hero.title === 'MyShop' ? settings.shop_name : hero.title });
+}));
+
+app.get('/api/stats', asyncHandler(async (req, res) => {
+  const productStats = await pool.query(`
+    SELECT COUNT(*)::int AS total_products, COALESCE(SUM(stock), 0)::int AS total_in_stock
+    FROM products
+  `);
+  const orderStats = await pool.query(`
+    SELECT COUNT(*)::int AS total_orders,
+           COALESCE(SUM(total), 0)::int AS total_revenue,
+           COALESCE(SUM((
+             SELECT SUM((item->>'quantity')::int)
+             FROM jsonb_array_elements(items) AS item
+           )), 0)::int AS total_items_sold
+    FROM orders
+    WHERE status IN ('processing', 'shipped', 'delivered', 'completed')
+  `);
+
+  res.json({
+    totalProducts: productStats.rows[0].total_products,
+    totalInStock: productStats.rows[0].total_in_stock,
+    totalOrders: orderStats.rows[0].total_orders,
+    totalRevenue: orderStats.rows[0].total_revenue,
+    totalItemsSold: orderStats.rows[0].total_items_sold,
+    deliveryTime: 'We will contact you shortly'
+  });
+}));
+
+app.get('/api/products', asyncHandler(async (req, res) => {
+  const result = await pool.query('SELECT * FROM products ORDER BY created_at DESC');
+  res.json(result.rows.map(productFromRow));
+}));
+
+app.get('/api/categories', asyncHandler(async (req, res) => {
+  const result = await pool.query(`
+    SELECT DISTINCT category AS name
+    FROM products
+    WHERE category IS NOT NULL AND BTRIM(category) <> ''
+    ORDER BY category ASC
+  `);
+  res.json(result.rows.map((row) => row.name));
+}));
+
+app.get('/api/products/:id', asyncHandler(async (req, res) => {
+  const result = await pool.query('SELECT * FROM products WHERE id = $1', [req.params.id]);
+  if (result.rowCount === 0) return res.status(404).json({ error: 'Product not found' });
+  res.json(productFromRow(result.rows[0]));
+}));
+
+app.post('/api/orders', orderValidation, asyncHandler(async (req, res) => {
+  const client = await pool.connect();
   try {
-    const period = req.query.period || 'month';
-    const now = new Date();
-    
-    // Helper function to get date range based on period
-    const getDateRange = () => {
-      const start = new Date(now);
-      switch(period) {
-        case 'day':
-          start.setHours(0, 0, 0, 0);
-          return { start, end: now, label: 'Today' };
-        case 'week':
-          start.setDate(now.getDate() - now.getDay());
-          start.setHours(0, 0, 0, 0);
-          return { start, end: now, label: 'This Week' };
-        case 'month':
-          start.setDate(1);
-          start.setHours(0, 0, 0, 0);
-          return { start, end: now, label: 'This Month' };
-        case 'year':
-          start.setMonth(0, 1);
-          start.setHours(0, 0, 0, 0);
-          return { start, end: now, label: 'This Year' };
-        default:
-          return { start, end: now, label: 'This Month' };
+    await client.query('BEGIN');
+    const settings = await getSettings();
+    const shippingFees = await getShippingFees();
+    const buyer = req.body.buyer || {};
+    const isInStoreSale = Boolean(req.body.isInStoreSale || req.body.is_in_store_sale);
+    const region = req.body.region || settings.main_shop_town || 'Bamenda';
+    const items = req.body.items || [];
+    const orderItems = [];
+    let subtotal = 0;
+
+    for (const item of items) {
+      const quantity = Number(item.quantity);
+      const update = await client.query(
+        `UPDATE products
+         SET stock = stock - $1, updated_at = NOW()
+         WHERE id = $2 AND stock >= $1
+         RETURNING id, name, price, image_url, images, stock`,
+        [quantity, item.id]
+      );
+
+      if (update.rowCount === 0) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: `Insufficient stock for: ${item.name}` });
       }
-    };
 
-    const { start, end } = getDateRange();
-
-    // Filter orders within period
-    const ordersInPeriod = data.orders.filter(order => {
-      const orderDate = new Date(order.createdAt);
-      return orderDate >= start && orderDate <= end;
-    });
-
-    // Filter POS receipts within period
-    const receiptsInPeriod = (data.receipts || []).filter(receipt => {
-      const receiptDate = new Date(receipt.timestamp);
-      return receiptDate >= start && receiptDate <= end;
-    });
-
-    // Calculate metrics from orders
-    const ordersRevenue = ordersInPeriod.reduce((sum, order) => sum + (order.totals?.total || 0), 0);
-    const ordersCount = ordersInPeriod.length;
-    
-    // Calculate metrics from POS receipts
-    const posRevenue = receiptsInPeriod.reduce((sum, receipt) => sum + (receipt.totals?.total || 0), 0);
-    const posCount = receiptsInPeriod.length;
-    
-    // Combined metrics
-    const totalRevenue = ordersRevenue + posRevenue;
-    const totalOrders = ordersCount + posCount;
-    const totalItemsSold = ordersInPeriod.reduce((sum, order) => {
-      return sum + (order.items?.reduce((itemSum, item) => itemSum + (item.quantity || 0), 0) || 0);
-    }, 0) + receiptsInPeriod.reduce((sum, receipt) => {
-      return sum + (receipt.items?.reduce((itemSum, item) => itemSum + (item.quantity || 0), 0) || 0);
-    }, 0);
-    const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-
-    // Calculate trends (compare with previous period)
-    const getPreviousPeriodRange = () => {
-      const prevEnd = new Date(start);
-      prevEnd.setDate(prevEnd.getDate() - 1);
-      const prevStart = new Date(prevEnd);
-      
-      switch(period) {
-        case 'day':
-          prevStart.setDate(prevStart.getDate() - 1);
-          break;
-        case 'week':
-          prevStart.setDate(prevStart.getDate() - 7);
-          break;
-        case 'month':
-          prevStart.setMonth(prevStart.getMonth() - 1);
-          break;
-        case 'year':
-          prevStart.setFullYear(prevStart.getFullYear() - 1);
-          break;
-      }
-      prevStart.setHours(0, 0, 0, 0);
-      return { start: prevStart, end: prevEnd };
-    };
-
-    const { start: prevStart, end: prevEnd } = getPreviousPeriodRange();
-    const prevOrders = data.orders.filter(order => {
-      const orderDate = new Date(order.createdAt);
-      return orderDate >= prevStart && orderDate <= prevEnd;
-    });
-    const prevReceipts = (data.receipts || []).filter(receipt => {
-      const receiptDate = new Date(receipt.timestamp);
-      return receiptDate >= prevStart && receiptDate <= prevEnd;
-    });
-    const prevOrderRevenue = prevOrders.reduce((sum, order) => sum + (order.totals?.total || 0), 0);
-    const prevReceiptRevenue = prevReceipts.reduce((sum, receipt) => sum + (receipt.totals?.total || 0), 0);
-    const prevRevenue = prevOrderRevenue + prevReceiptRevenue;
-    const prevOrdersCount = prevOrders.length + prevReceipts.length;
-
-    const revenueTrend = prevRevenue > 0 ? ((totalRevenue - prevRevenue) / prevRevenue * 100) : 0;
-    const ordersTrend = prevOrdersCount > 0 ? ((totalOrders - prevOrdersCount) / prevOrdersCount * 100) : 0;
-    const prevItemsTrend = prevOrders.reduce((sum, order) => sum + (order.items?.reduce((itemSum, item) => itemSum + (item.quantity || 0), 0) || 0), 0) + 
-                           prevReceipts.reduce((sum, receipt) => sum + (receipt.items?.reduce((itemSum, item) => itemSum + (item.quantity || 0), 0) || 0), 0);
-    const itemsTrendPercent = prevItemsTrend > 0 ? ((totalItemsSold - prevItemsTrend) / prevItemsTrend * 100) : 0;
-    const avgTrend = prevOrdersCount > 0 ? (((averageOrderValue - prevRevenue/prevOrdersCount) / (prevRevenue/prevOrdersCount)) * 100) : 0;
-
-    // Sales by day/week/month
-    const salesByDay = [];
-    if (period === 'day') {
-      // Hourly breakdown for day
-      for (let i = 0; i < 24; i++) {
-        const hourStart = new Date(start);
-        hourStart.setHours(i, 0, 0, 0);
-        const hourEnd = new Date(hourStart);
-        hourEnd.setHours(i + 1, 0, 0, 0);
-        const hourOrders = ordersInPeriod.filter(order => {
-          const orderDate = new Date(order.createdAt);
-          return orderDate >= hourStart && orderDate < hourEnd;
-        });
-        const hourReceipts = receiptsInPeriod.filter(receipt => {
-          const receiptDate = new Date(receipt.timestamp);
-          return receiptDate >= hourStart && receiptDate < hourEnd;
-        });
-        const hourOrderRevenue = hourOrders.reduce((sum, order) => sum + (order.totals?.total || 0), 0);
-        const hourReceiptRevenue = hourReceipts.reduce((sum, receipt) => sum + (receipt.totals?.total || 0), 0);
-        const hourRevenue = hourOrderRevenue + hourReceiptRevenue;
-        if (hourRevenue > 0 || i % 3 === 0) {
-          salesByDay.push({
-            label: `${i}:00`,
-            value: hourRevenue
-          });
-        }
-      }
-    } else if (period === 'week') {
-      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-      for (let i = 0; i < 7; i++) {
-        const dayStart = new Date(start);
-        dayStart.setDate(dayStart.getDate() + i);
-        dayStart.setHours(0, 0, 0, 0);
-        const dayEnd = new Date(dayStart);
-        dayEnd.setHours(24, 0, 0, 0);
-        const dayOrders = ordersInPeriod.filter(order => {
-          const orderDate = new Date(order.createdAt);
-          return orderDate >= dayStart && orderDate < dayEnd;
-        });
-        const dayReceipts = receiptsInPeriod.filter(receipt => {
-          const receiptDate = new Date(receipt.timestamp);
-          return receiptDate >= dayStart && receiptDate < dayEnd;
-        });
-        const dayOrderRevenue = dayOrders.reduce((sum, order) => sum + (order.totals?.total || 0), 0);
-        const dayReceiptRevenue = dayReceipts.reduce((sum, receipt) => sum + (receipt.totals?.total || 0), 0);
-        const dayRevenue = dayOrderRevenue + dayReceiptRevenue;
-        salesByDay.push({
-          label: days[dayStart.getDay()],
-          value: dayRevenue
-        });
-      }
-    } else if (period === 'month') {
-      // Weekly breakdown
-      for (let i = 0; i < 4; i++) {
-        const weekStart = new Date(start);
-        weekStart.setDate(weekStart.getDate() + (i * 7));
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekEnd.getDate() + 7);
-        const weekOrders = ordersInPeriod.filter(order => {
-          const orderDate = new Date(order.createdAt);
-          return orderDate >= weekStart && orderDate < weekEnd;
-        });
-        const weekReceipts = receiptsInPeriod.filter(receipt => {
-          const receiptDate = new Date(receipt.timestamp);
-          return receiptDate >= weekStart && receiptDate < weekEnd;
-        });
-        const weekOrderRevenue = weekOrders.reduce((sum, order) => sum + (order.totals?.total || 0), 0);
-        const weekReceiptRevenue = weekReceipts.reduce((sum, receipt) => sum + (receipt.totals?.total || 0), 0);
-        const weekRevenue = weekOrderRevenue + weekReceiptRevenue;
-        salesByDay.push({
-          label: `Week ${i + 1}`,
-          value: weekRevenue
-        });
-      }
-    } else {
-      // Monthly breakdown for year
-      for (let i = 0; i < 12; i++) {
-        const monthStart = new Date(start.getFullYear(), i, 1);
-        const monthEnd = new Date(start.getFullYear(), i + 1, 0);
-        const monthOrders = data.orders.filter(order => {
-          const orderDate = new Date(order.createdAt);
-          return orderDate >= monthStart && orderDate <= monthEnd;
-        });
-        const monthReceipts = (data.receipts || []).filter(receipt => {
-          const receiptDate = new Date(receipt.timestamp);
-          return receiptDate >= monthStart && receiptDate <= monthEnd;
-        });
-        const monthOrderRevenue = monthOrders.reduce((sum, order) => sum + (order.totals?.total || 0), 0);
-        const monthReceiptRevenue = monthReceipts.reduce((sum, receipt) => sum + (receipt.totals?.total || 0), 0);
-        const monthRevenue = monthOrderRevenue + monthReceiptRevenue;
-        salesByDay.push({
-          label: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][i],
-          value: monthRevenue
-        });
-      }
-    }
-
-    // Sales by region
-    const regionMap = {};
-    ordersInPeriod.forEach(order => {
-      const region = order.region || 'Unknown';
-      if (!regionMap[region]) {
-        regionMap[region] = 0;
-      }
-      regionMap[region] += order.totals?.total || 0;
-    });
-
-    const salesByRegion = Object.entries(regionMap)
-      .map(([label, value]) => ({ label, value }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 8);
-
-    // Town breakdown with detailed stats
-    const townMap = {};
-    ordersInPeriod.forEach(order => {
-      const town = order.region || 'Unknown';
-      if (!townMap[town]) {
-        townMap[town] = { orders: 0, items: 0, revenue: 0 };
-      }
-      townMap[town].orders += 1;
-      townMap[town].revenue += order.totals?.total || 0;
-      townMap[town].items += order.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0;
-    });
-
-    const townBreakdown = Object.entries(townMap)
-      .map(([name, stats]) => ({
-        name,
-        ...stats,
-        percentage: totalRevenue > 0 ? (stats.revenue / totalRevenue) * 100 : 0
-      }))
-      .sort((a, b) => b.revenue - a.revenue);
-
-    // Top region and product
-    const topRegion = salesByRegion.length > 0 ? { name: salesByRegion[0].label, revenue: salesByRegion[0].value } : null;
-
-    const productMap = {};
-    ordersInPeriod.forEach(order => {
-      order.items?.forEach(item => {
-        if (!productMap[item.id]) {
-          productMap[item.id] = { name: item.name, quantity: 0 };
-        }
-        productMap[item.id].quantity += item.quantity || 0;
+      const product = update.rows[0];
+      const price = Number(product.price);
+      subtotal += price * quantity;
+      orderItems.push({
+        id: product.id,
+        name: product.name,
+        price,
+        quantity,
+        selectedVariant: item.selectedVariant || item.selected_variant || '',
+        selectedImageUrl: item.selectedImageUrl || item.selected_image_url || product.image_url || '',
+        image: item.image || product.image_url || ''
       });
-    });
+    }
 
-    const topProduct = Object.entries(productMap)
-      .map(([id, data]) => data)
-      .sort((a, b) => b.quantity - a.quantity)[0] || null;
+    const threshold = Number(settings.free_shipping_threshold || 100000);
+    const baseShipping = isInStoreSale ? 0 : Number(shippingFees[region] ?? 0);
+    const shippingFee = !isInStoreSale && subtotal >= threshold ? 0 : baseShipping;
+    const discountPercent = Math.max(0, Number(req.body.discountPercent || req.body.discount_percent || 0));
+    const discountAmount = Math.round(subtotal * (discountPercent / 100));
+    const total = Math.max(0, subtotal - discountAmount + shippingFee);
+    const status = isInStoreSale ? (req.body.status || 'completed') : 'pending';
+    const email = buyer.email || (isInStoreSale ? 'pos-sale@local.invalid' : '');
+    const address = buyer.address || buyer.pickupLocation || (isInStoreSale ? 'In-store sale' : '');
 
-    // Recent orders
-    const recentOrders = ordersInPeriod
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-      .slice(0, 10)
-      .map(order => ({
-        buyerName: order.buyer?.name || 'Unknown',
-        region: order.region || 'Unknown',
-        total: order.totals?.total || 0,
-        items: order.items?.length || 0
-      }));
+    const inserted = await client.query(
+      `INSERT INTO orders (
+        buyer_name, buyer_email, buyer_phone, buyer_address, buyer_agencies,
+        region, shipping_fee, subtotal, total, items, status, delivery_agency,
+        notes, payment_method, is_in_store_sale, discount_percent, paid_amount, change_amount
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11, $12, $13, $14, $15, $16, $17, $18)
+      RETURNING *`,
+      [
+        buyer.name,
+        email,
+        buyer.phone,
+        address,
+        normalizeArray(buyer.agencies),
+        region,
+        shippingFee,
+        subtotal,
+        total,
+        JSON.stringify(orderItems),
+        status,
+        req.body.deliveryAgency || req.body.delivery_agency || '',
+        buyer.specialInstructions || req.body.notes || '',
+        req.body.paymentMethod || req.body.payment_method || '',
+        isInStoreSale,
+        discountPercent,
+        normalizeNumber(req.body.paidAmount || req.body.paid_amount, 0),
+        normalizeNumber(req.body.changeAmount || req.body.change_amount, 0)
+      ]
+    );
 
-    res.json({
-      totalRevenue,
-      totalOrders,
-      totalItemsSold,
-      averageOrderValue,
-      revenueTrend: Math.round(revenueTrend),
-      ordersTrend: Math.round(ordersTrend),
-      itemsTrend: Math.round(itemsTrendPercent),
-      avgTrend: Math.round(avgTrend),
-      salesByDay,
-      salesByRegion,
-      townBreakdown,
-      topRegion,
-      topProduct,
-      recentOrders,
-      period
+    await client.query('COMMIT');
+    const order = orderFromRow(inserted.rows[0]);
+    if (!isInStoreSale) queueOrderEmails(order);
+    res.status(201).json({
+      ...order,
+      message: 'Your order has been received. We will contact you shortly to confirm payment and delivery.'
     });
   } catch (err) {
-    console.error('Error fetching real-time stats:', err);
-    res.status(500).json({ error: 'Failed to fetch statistics' });
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
   }
-});
+}));
 
-// Get detailed stats for specific day/week/month/year
-app.get('/api/admin/period-stats', authenticate, (req, res) => {
-  try {
-    const period = req.query.period || 'month';
-    const specificValue = req.query.value; // e.g., 'Monday', 'Week 1', 'January', '2024'
-    
-    if (!specificValue) {
-      return res.status(400).json({ error: 'Missing value parameter' });
-    }
+app.get('/api/orders/search', asyncHandler(async (req, res) => {
+  const email = (req.query.email || '').trim();
+  const phone = (req.query.phone || '').trim();
+  if (!email && !phone) return res.status(400).json({ error: 'Email or phone is required' });
 
-    const now = new Date();
-    let startDate, endDate;
-    let monthWeeks = undefined;
-
-    if (period === 'day') {
-      // Specific day of week (Monday, Tuesday, etc.)
-      const daysMap = { 'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6 };
-      const targetDay = daysMap[specificValue];
-      if (targetDay === undefined) return res.status(400).json({ error: 'Invalid day' });
-      
-      // Find the most recent occurrence of this day
-      const current = new Date(now);
-      const day = current.getDay();
-      const diff = (targetDay - day + 7) % 7 || 7;
-      current.setDate(current.getDate() - diff);
-      current.setHours(0, 0, 0, 0);
-      startDate = current;
-      endDate = new Date(current);
-      endDate.setHours(23, 59, 59, 999);
-    } else if (period === 'week') {
-      // Specific week of month (Week 1, Week 2, etc.)
-      const weekNum = parseInt(specificValue.split(' ')[1]);
-      if (!weekNum || weekNum < 1 || weekNum > 4) return res.status(400).json({ error: 'Invalid week' });
-      
-      startDate = new Date(now.getFullYear(), now.getMonth(), (weekNum - 1) * 7 + 1);
-      endDate = new Date(now.getFullYear(), now.getMonth(), weekNum * 7, 23, 59, 59, 999);
-    } else if (period === 'month') {
-      // Specific month (January, February, etc.)
-      const monthsMap = { 'January': 0, 'February': 1, 'March': 2, 'April': 3, 'May': 4, 'June': 5, 'July': 6, 'August': 7, 'September': 8, 'October': 9, 'November': 10, 'December': 11 };
-      const monthNum = monthsMap[specificValue];
-      if (monthNum === undefined) return res.status(400).json({ error: 'Invalid month' });
-      
-      startDate = new Date(now.getFullYear(), monthNum, 1);
-      endDate = new Date(now.getFullYear(), monthNum + 1, 0, 23, 59, 59, 999);
-      
-      // Calculate week breakdown for this month
-      const daysInMonth = endDate.getDate(); // Get the last day of the month
-      const weeks = [];
-      
-      for (let week = 1; week <= 4; week++) {
-        const weekStartDay = (week - 1) * 7 + 1;
-        let weekEndDay;
-        
-        // For the last week, extend to the end of month instead of stopping at day 28
-        if (week < 4) {
-          weekEndDay = week * 7;
-        } else {
-          // Last week goes to the actual end of month (28, 29, 30, or 31)
-          weekEndDay = daysInMonth;
-        }
-        
-        if (weekStartDay <= daysInMonth) {
-          const weekStart = new Date(now.getFullYear(), monthNum, weekStartDay);
-          const weekEnd = new Date(now.getFullYear(), monthNum, weekEndDay, 23, 59, 59, 999);
-          
-          // Get orders for this week
-          const weekOrders = data.orders.filter(order => {
-            const orderDate = new Date(order.createdAt);
-            return orderDate >= weekStart && orderDate <= weekEnd;
-          });
-          
-          const weekRevenue = weekOrders.reduce((sum, order) => sum + (order.totals?.total || 0), 0);
-          const weekOrdersCount = weekOrders.length;
-          const weekItems = weekOrders.reduce((sum, order) => {
-            return sum + (order.items?.reduce((itemSum, item) => itemSum + (item.quantity || 0), 0) || 0);
-          }, 0);
-          
-          weeks.push({
-            weekNumber: week,
-            label: `Week ${week} (${weekStartDay}-${weekEndDay})`,
-            startDate: weekStart.toISOString().split('T')[0],
-            endDate: weekEnd.toISOString().split('T')[0],
-            startDay: weekStartDay,
-            endDay: weekEndDay,
-            revenue: Math.round(weekRevenue),
-            orders: weekOrdersCount,
-            items: weekItems
-          });
-        }
-      }
-      
-      // Attach weeks to return for month view
-      monthWeeks = weeks;
-    } else if (period === 'year') {
-      // Specific year
-      const year = parseInt(specificValue);
-      if (!year) return res.status(400).json({ error: 'Invalid year' });
-      
-      startDate = new Date(year, 0, 1);
-      endDate = new Date(year, 11, 31, 23, 59, 59, 999);
-    }
-
-    // Filter orders for this specific period
-    const filteredOrders = data.orders.filter(order => {
-      const orderDate = new Date(order.createdAt);
-      return orderDate >= startDate && orderDate <= endDate;
-    });
-
-    // Calculate metrics
-    const totalRevenue = filteredOrders.reduce((sum, order) => sum + (order.totals?.total || 0), 0);
-    const totalOrders = filteredOrders.length;
-    const totalItemsSold = filteredOrders.reduce((sum, order) => {
-      return sum + (order.items?.reduce((itemSum, item) => itemSum + (item.quantity || 0), 0) || 0);
-    }, 0);
-    const activeUsers = new Set(filteredOrders.map(o => o.buyer?.email || o.buyer?.phone)).size;
-    const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-    const conversionRate = activeUsers > 0 ? (totalOrders / activeUsers * 100).toFixed(1) : 0;
-
-    // Calculate by region
-    const regionBreakdown = {};
-    filteredOrders.forEach(order => {
-      const region = order.region || 'Unknown';
-      if (!regionBreakdown[region]) {
-        regionBreakdown[region] = { revenue: 0, orders: 0, items: 0 };
-      }
-      regionBreakdown[region].revenue += order.totals?.total || 0;
-      regionBreakdown[region].orders += 1;
-      regionBreakdown[region].items += order.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0;
-    });
-
-    const townBreakdown = Object.entries(regionBreakdown)
-      .map(([name, stats]) => ({
-        name,
-        revenue: stats.revenue,
-        orders: stats.orders,
-        items: stats.items,
-        share: totalRevenue > 0 ? ((stats.revenue / totalRevenue) * 100).toFixed(1) : 0
-      }))
-      .sort((a, b) => b.revenue - a.revenue);
-
-    res.json({
-      period: `${period}:${specificValue}`,
-      dateRange: {
-        start: startDate.toISOString().split('T')[0],
-        end: endDate.toISOString().split('T')[0]
-      },
-      totalRevenue: Math.round(totalRevenue),
-      totalOrders,
-      totalItemsSold,
-      activeUsers,
-      averageOrderValue: Math.round(averageOrderValue),
-      conversionRate,
-      weeks: monthWeeks || undefined, // Include weeks only for month view
-      townBreakdown,
-      recentOrders: filteredOrders
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-        .slice(0, 10)
-        .map(order => ({
-          id: order.id,
-          buyerName: order.buyer?.name || 'Unknown',
-          region: order.region || 'Unknown',
-          total: order.totals?.total || 0,
-          items: order.items?.length || 0,
-          date: new Date(order.createdAt).toLocaleDateString()
-        }))
-    });
-  } catch (err) {
-    console.error('Error fetching period stats:', err);
-    res.status(500).json({ error: 'Failed to fetch period statistics' });
-  }
-});
-
-// Get products
-app.get('/api/products', (req, res) => res.json(data.products));
-
-// Get single product
-app.get('/api/products/:id', (req, res) => {
-  const product = data.products.find(p => p.id === req.params.id);
-  if (!product) return res.status(404).json({ error: 'Not found' });
-  res.json(product);
-});
-
-// Create order
-app.post('/api/orders', (req, res) => {
-  const { buyer, items, region, shippingFee, totals, notes, paymentMethod, isInStoreSale, discountPercent, change, paidAmount, status } = req.body || {};
-  if (!buyer || !items || !Array.isArray(items) || items.length === 0) {
-    return res.status(400).json({ error: 'Missing buyer or items' });
-  }
-  const order = {
-    id: uuid(),
-    buyer: {
-      name: buyer.name || '',
-      email: buyer.email || '',
-      phone: buyer.phone || '',
-      address: buyer.address || '',
-      agencies: buyer.agencies || []
-    },
-    region: region || 'Unknown',
-    shippingFee: typeof shippingFee === 'number' ? shippingFee : 0,
-    items: items.map(i => ({
-      id: i.id,
-      name: i.name,
-      price: i.price,
-      quantity: i.quantity,
-      selectedVariant: i.selectedVariant || null,
-      selectedImageUrl: i.selectedImageUrl || i.image || null
-    })),
-    totals: {
-      subtotal: totals?.subtotal ?? 0,
-      discount: totals?.discount ?? 0,
-      subtotalAfterDiscount: totals?.subtotalAfterDiscount ?? 0,
-      tax: totals?.tax ?? 0,
-      shipping: totals?.shipping ?? shippingFee ?? 0,
-      total: totals?.total ?? 0
-    },
-    status: status || 'pending',
-    paymentMethod: paymentMethod || null,
-    isInStoreSale: isInStoreSale === true,
-    discountPercent: discountPercent || 0,
-    change: change || 0,
-    paidAmount: paidAmount || 0,
-    deliveryAgency: '',
-    notes: notes || '',
-    createdAt: new Date().toISOString()
-  };
-  data.orders.push(order);
-  save();
-  res.json({ id: order.id, ...order });
-});
-
-
-// Search orders by email or phone (for customers to track orders)
-app.get('/api/orders/search', (req, res) => {
-  const { email, phone } = req.query;
-  if (!email && !phone) {
-    return res.status(400).json({ error: 'Email or phone required' });
-  }
-  
-  const matchingOrders = data.orders.filter(order => {
-    if (email && order.buyer?.email?.toLowerCase() === email.toLowerCase()) return true;
-    if (phone && order.buyer?.phone === phone) return true;
-    return false;
-  });
-  
-  // Sort by most recent first
-  matchingOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  
-  res.json(matchingOrders);
-});
-
-// Chat API endpoints
-
-// Get chat history for a device
-app.get('/api/chat/:deviceId', (req, res) => {
-  const { deviceId } = req.params;
-  const messages = data.chatMessages.filter(msg => msg.deviceId === deviceId);
-  res.json(messages);
-});
-
-// Send a new chat message
-app.post('/api/chat', (req, res) => {
-  const { deviceId, userName, sender, message, imageUrl } = req.body;
-  
-  // Message is required, but can be just a file attachment
-  if (!deviceId || !sender) {
-    console.error('Missing required fields:', { deviceId, sender });
-    return res.status(400).json({ error: 'Missing deviceId or sender' });
-  }
-  
-  if (!message && !imageUrl) {
-    console.error('Message or file is required');
-    return res.status(400).json({ error: 'Message or file is required' });
-  }
-  
-  const newMessage = {
-    id: data.chatMessages.length + 1,
-    deviceId,
-    userName: userName || 'Guest',
-    sender, // 'customer' or 'admin'
-    message: message || '',
-    imageUrl: imageUrl || null,
-    timestamp: new Date().toISOString(),
-    read: false
-  };
-  
-  data.chatMessages.push(newMessage);
-  save();
-  res.json(newMessage);
-});
-
-// Get all chat conversations (admin only)
-app.get('/api/admin/chats', authenticate, (req, res) => {
-  // Group messages by deviceId
-  const conversations = {};
-  data.chatMessages.forEach(msg => {
-    if (!conversations[msg.deviceId]) {
-      conversations[msg.deviceId] = {
-        deviceId: msg.deviceId,
-        userName: msg.userName,
-        messages: [],
-        unreadCount: 0,
-        lastMessage: null
-      };
-    }
-    conversations[msg.deviceId].messages.push(msg);
-    if (!msg.read && msg.sender === 'customer') {
-      conversations[msg.deviceId].unreadCount++;
-    }
-    conversations[msg.deviceId].lastMessage = msg;
-  });
-  
-  // Convert to array and sort by most recent
-  const conversationArray = Object.values(conversations);
-  conversationArray.sort((a, b) => 
-    new Date(b.lastMessage.timestamp) - new Date(a.lastMessage.timestamp)
+  const result = await pool.query(
+    `SELECT * FROM orders
+     WHERE ($1::text <> '' AND LOWER(buyer_email) = LOWER($1))
+        OR ($2::text <> '' AND buyer_phone = $2)
+     ORDER BY created_at DESC`,
+    [email, phone]
   );
-  
-  res.json(conversationArray);
+  res.json(result.rows.map(orderFromRow));
+}));
+
+app.get('/api/orders/:id', asyncHandler(async (req, res) => {
+  const result = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
+  if (result.rowCount === 0) return res.status(404).json({ error: 'Order not found' });
+  res.json(orderFromRow(result.rows[0]));
+}));
+
+app.get('/api/shipping-fees', asyncHandler(async (req, res) => {
+  res.json(await getShippingFees());
+}));
+
+app.get('/api/pickup-locations', asyncHandler(async (req, res) => {
+  const result = await pool.query('SELECT * FROM locations ORDER BY is_main_store DESC, city ASC, name ASC');
+  res.json(result.rows.map(locationFromRow));
+}));
+
+app.get('/api/locations', asyncHandler(async (req, res) => {
+  const result = await pool.query('SELECT * FROM locations ORDER BY is_main_store DESC, city ASC, name ASC');
+  res.json(result.rows.map(locationFromRow));
+}));
+
+app.get('/api/payment-accounts', (req, res) => {
+  res.json(DEFAULT_PAYMENT_ACCOUNTS);
 });
 
-// Admin reply to chat
-app.post('/api/admin/chats/:deviceId/reply', authenticate, (req, res) => {
-  const { deviceId } = req.params;
-  const { message, imageUrl } = req.body;
-  
-  if (!message) {
-    return res.status(400).json({ error: 'Message required' });
-  }
-  
-  const newMessage = {
-    id: data.chatMessages.length + 1,
-    deviceId,
-    userName: 'Admin',
-    sender: 'admin',
-    message,
-    imageUrl: imageUrl || null,
-    timestamp: new Date().toISOString(),
-    read: false
-  };
-  
-  data.chatMessages.push(newMessage);
-  save();
-  res.json(newMessage);
-});
+app.get('/api/chat/:deviceId', asyncHandler(async (req, res) => {
+  const result = await pool.query(
+    `SELECT id, device_id, customer_name, message, sender, image_url, is_read, created_at
+     FROM chat_messages
+     WHERE device_id = $1
+     ORDER BY created_at ASC`,
+    [req.params.deviceId]
+  );
+  res.json(result.rows.map((row) => ({
+    id: row.id,
+    deviceId: row.device_id,
+    userName: row.customer_name,
+    message: row.message,
+    sender: row.sender,
+    imageUrl: row.image_url,
+    read: row.is_read,
+    timestamp: row.created_at,
+    createdAt: row.created_at
+  })));
+}));
 
-// Mark messages as read
-app.put('/api/admin/chats/:deviceId/read', authenticate, (req, res) => {
-  const { deviceId } = req.params;
-  
-  data.chatMessages.forEach(msg => {
-    if (msg.deviceId === deviceId && msg.sender === 'customer') {
-      msg.read = true;
-    }
+app.post('/api/chat', chatValidation, asyncHandler(async (req, res) => {
+  const result = await pool.query(
+    `INSERT INTO chat_messages (device_id, customer_name, message, sender, image_url, is_read)
+     VALUES ($1, $2, $3, 'customer', $4, false)
+     RETURNING *`,
+    [req.body.deviceId, req.body.userName || req.body.customerName || '', req.body.message, req.body.imageUrl || null]
+  );
+  const row = result.rows[0];
+  res.status(201).json({
+    id: row.id,
+    deviceId: row.device_id,
+    userName: row.customer_name,
+    message: row.message,
+    sender: row.sender,
+    imageUrl: row.image_url,
+    read: row.is_read,
+    timestamp: row.created_at,
+    createdAt: row.created_at
   });
-  
-  save();
-  res.json({ success: true });
+}));
+
+app.post('/api/chat/upload', upload.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+  res.json({ imageUrl: `/uploads/${req.file.filename}` });
 });
 
-// Clear all messages in a chat
-app.delete('/api/admin/chats/:deviceId', authenticate, (req, res) => {
-  const { deviceId } = req.params;
-  
-  // Remove all messages for this device
-  data.chatMessages = data.chatMessages.filter(msg => msg.deviceId !== deviceId);
-  
-  save();
-  res.json({ success: true, message: 'Chat cleared successfully' });
-});
+app.post('/api/admin/login', loginValidation, asyncHandler(async (req, res) => {
+  requireJwtSecret();
+  const { email, password } = req.body;
+  const result = await pool.query(
+    `SELECT * FROM admins WHERE LOWER(email) = LOWER($1) AND is_active = true`,
+    [email]
+  );
+  if (result.rowCount === 0) return res.status(401).json({ error: 'Invalid credentials' });
 
-// Delete entire conversation
-app.delete('/api/admin/chats/:deviceId/delete', authenticate, (req, res) => {
-  const { deviceId } = req.params;
-  
-  // Remove all messages for this device
-  data.chatMessages = data.chatMessages.filter(msg => msg.deviceId !== deviceId);
-  
-  save();
-  res.json({ success: true, message: 'Conversation deleted successfully' });
-});
+  const admin = result.rows[0];
+  const valid = await bcrypt.compare(password, admin.password_hash);
+  if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
 
-// Chat image upload
-app.post('/api/chat/upload', (req, res) => {
-  upload.single('file')(req, res, (err) => {
-    if (err) {
-      console.error('Upload error:', err);
-      return res.status(400).json({ error: 'Upload failed: ' + err.message });
-    }
-    if (!req.file) {
-      console.error('No file provided');
-      return res.status(400).json({ error: 'No file provided' });
-    }
-    const imageUrl = `/uploads/${req.file.filename}`;
-    console.log('File uploaded successfully:', imageUrl);
-    res.json({ imageUrl });
+  const token = jwt.sign(
+    { id: admin.id, email: admin.email, role: admin.role },
+    JWT_SECRET,
+    { expiresIn: '12h' }
+  );
+  const safeAdmin = adminFromRow(admin);
+  await logActivity({ admin: safeAdmin, ip: req.ip }, 'login', { details: 'Admin login' });
+  res.json({ token, admin: safeAdmin, email: admin.email, role: admin.role, permissions: admin.permissions || {} });
+}));
+
+app.post('/api/sub-admin/login', loginValidation, asyncHandler(async (req, res) => {
+  requireJwtSecret();
+  const { email, password } = req.body;
+  const result = await pool.query(
+    `SELECT * FROM admins WHERE LOWER(email) = LOWER($1) AND role = 'sub_admin' AND is_active = true`,
+    [email]
+  );
+  if (result.rowCount === 0) return res.status(401).json({ error: 'Invalid credentials' });
+
+  const admin = result.rows[0];
+  const valid = await bcrypt.compare(password, admin.password_hash);
+  if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
+
+  const token = jwt.sign(
+    { id: admin.id, email: admin.email, role: admin.role },
+    JWT_SECRET,
+    { expiresIn: '12h' }
+  );
+  const safeAdmin = adminFromRow(admin);
+  await logActivity({ admin: safeAdmin, ip: req.ip }, 'login', { details: 'Sub-admin login' });
+  res.json({ token, admin: safeAdmin, email: admin.email, role: admin.role, permissions: admin.permissions || {} });
+}));
+
+app.use('/api/admin', authenticate);
+
+app.get('/api/admin/real-time-stats', asyncHandler(async (req, res) => {
+  const orders = await pool.query('SELECT * FROM orders ORDER BY created_at DESC');
+  const mapped = orders.rows.map(orderFromRow);
+  const completed = mapped.filter((order) => ['delivered', 'completed'].includes(order.status));
+  const totalRevenue = completed.reduce((sum, order) => sum + order.total, 0);
+  const totalItemsSold = completed.reduce(
+    (sum, order) => sum + order.items.reduce((inner, item) => inner + Number(item.quantity || 0), 0),
+    0
+  );
+  res.json({
+    totalRevenue,
+    totalOrders: mapped.length,
+    totalItemsSold,
+    averageOrderValue: mapped.length ? Math.round(mapped.reduce((sum, order) => sum + order.total, 0) / mapped.length) : 0,
+    revenueTrend: 0,
+    ordersTrend: 0,
+    recentOrders: mapped.slice(0, 10).map((order) => ({
+      id: order.id,
+      buyerName: order.buyer.name,
+      region: order.region,
+      total: order.total,
+      status: order.status,
+      createdAt: order.createdAt
+    })),
+    byStatus: mapped.reduce((acc, order) => {
+      acc[order.status] = (acc[order.status] || 0) + 1;
+      return acc;
+    }, {})
   });
+}));
+
+app.get('/api/admin/period-stats', asyncHandler(async (req, res) => {
+  const stats = await pool.query(`
+    SELECT COUNT(*)::int AS total_orders, COALESCE(SUM(total), 0)::int AS total_revenue
+    FROM orders
+    WHERE created_at >= NOW() - INTERVAL '30 days'
+  `);
+  res.json(stats.rows[0]);
+}));
+
+app.get('/api/admin/products', checkPermission('manageProducts'), asyncHandler(async (req, res) => {
+  const result = await pool.query('SELECT * FROM products ORDER BY created_at DESC');
+  res.json(result.rows.map(productFromRow));
+}));
+
+app.post('/api/admin/products', checkPermission('manageProducts'), productValidation, asyncHandler(async (req, res) => {
+  const images = normalizeArray(req.body.images).filter((image) => image && image.url);
+  const imageUrl = req.body.image_url || req.body.image || images[0]?.url || '';
+  const regions = normalizeArray(req.body.availableRegions || req.body.available_regions, ['ALL']);
+  const result = await pool.query(
+    `INSERT INTO products (name, description, price, stock, category, is_new, most_ordered, available_regions, image_url, images)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb)
+     RETURNING *`,
+    [
+      req.body.name,
+      req.body.description || '',
+      Number(req.body.price),
+      Number(req.body.stock),
+      req.body.category || '',
+      Boolean(req.body.isNew || req.body.is_new),
+      Boolean(req.body.mostOrdered || req.body.most_ordered),
+      regions.length ? regions : ['ALL'],
+      imageUrl,
+      JSON.stringify(images)
+    ]
+  );
+  await logActivity(req, 'create_product', { productId: result.rows[0].id, name: result.rows[0].name });
+  res.status(201).json(productFromRow(result.rows[0]));
+}));
+
+app.put('/api/admin/products/:id', checkPermission('manageProducts'), productValidation, asyncHandler(async (req, res) => {
+  const images = normalizeArray(req.body.images).filter((image) => image && image.url);
+  const imageUrl = req.body.image_url || req.body.image || images[0]?.url || '';
+  const regions = normalizeArray(req.body.availableRegions || req.body.available_regions, ['ALL']);
+  const result = await pool.query(
+    `UPDATE products
+     SET name = $1, description = $2, price = $3, stock = $4, category = $5,
+         is_new = $6, most_ordered = $7, available_regions = $8, image_url = $9,
+         images = $10::jsonb, updated_at = NOW()
+     WHERE id = $11
+     RETURNING *`,
+    [
+      req.body.name,
+      req.body.description || '',
+      Number(req.body.price),
+      Number(req.body.stock),
+      req.body.category || '',
+      Boolean(req.body.isNew || req.body.is_new),
+      Boolean(req.body.mostOrdered || req.body.most_ordered),
+      regions.length ? regions : ['ALL'],
+      imageUrl,
+      JSON.stringify(images),
+      req.params.id
+    ]
+  );
+  if (result.rowCount === 0) return res.status(404).json({ error: 'Product not found' });
+  await logActivity(req, 'update_product', { productId: req.params.id, name: req.body.name });
+  res.json(productFromRow(result.rows[0]));
+}));
+
+app.delete('/api/admin/products/:id', checkPermission('manageProducts'), asyncHandler(async (req, res) => {
+  const result = await pool.query('DELETE FROM products WHERE id = $1 RETURNING *', [req.params.id]);
+  if (result.rowCount === 0) return res.status(404).json({ error: 'Product not found' });
+  await logActivity(req, 'delete_product', { productId: req.params.id, name: result.rows[0].name });
+  res.json({ message: 'Product deleted' });
+}));
+
+app.get('/api/admin/orders', checkPermission('manageOrders'), asyncHandler(async (req, res) => {
+  const result = await pool.query('SELECT * FROM orders ORDER BY created_at DESC');
+  res.json(result.rows.map(orderFromRow));
+}));
+
+app.put('/api/admin/orders/:id', checkPermission('manageOrders'), validate([
+  body('status').optional().isIn(['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'completed']).withMessage('Invalid order status'),
+  body('deliveryAgency').optional().isString(),
+  body('paidAmount').optional().isInt({ min: 0 })
+]), asyncHandler(async (req, res) => {
+  const current = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
+  if (current.rowCount === 0) return res.status(404).json({ error: 'Order not found' });
+
+  const existing = current.rows[0];
+  const status = req.body.status || existing.status;
+  const deliveryAgency = req.body.deliveryAgency ?? req.body.delivery_agency ?? existing.delivery_agency;
+  const paidAmount = req.body.paidAmount ?? req.body.paid_amount ?? existing.paid_amount;
+  const changeAmount = req.body.changeAmount ?? req.body.change_amount ?? existing.change_amount;
+  const paymentMethod = req.body.paymentMethod ?? req.body.payment_method ?? existing.payment_method;
+
+  const result = await pool.query(
+    `UPDATE orders
+     SET status = $1, delivery_agency = $2, paid_amount = $3, change_amount = $4,
+         payment_method = $5, updated_at = NOW()
+     WHERE id = $6
+     RETURNING *`,
+    [status, deliveryAgency, paidAmount, changeAmount, paymentMethod, req.params.id]
+  );
+  const order = orderFromRow(result.rows[0]);
+  await logActivity(req, 'update_order', { orderId: req.params.id, oldStatus: existing.status, newStatus: status });
+  queueStatusEmail(order, existing.status);
+  res.json(order);
+}));
+
+app.post('/api/admin/orders/:id/status', checkPermission('manageOrders'), asyncHandler(async (req, res) => {
+  req.body = { ...req.body, status: req.body.status };
+  const current = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
+  if (current.rowCount === 0) return res.status(404).json({ error: 'Order not found' });
+  const result = await pool.query(
+    `UPDATE orders SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+    [req.body.status || 'pending', req.params.id]
+  );
+  const order = orderFromRow(result.rows[0]);
+  queueStatusEmail(order, current.rows[0].status);
+  res.json(order);
+}));
+
+app.post('/api/admin/orders/:id/cancel', checkPermission('manageOrders'), asyncHandler(async (req, res) => {
+  const result = await pool.query(
+    `UPDATE orders SET status = 'cancelled', updated_at = NOW() WHERE id = $1 RETURNING *`,
+    [req.params.id]
+  );
+  if (result.rowCount === 0) return res.status(404).json({ error: 'Order not found' });
+  await logActivity(req, 'cancel_order', { orderId: req.params.id });
+  res.json(orderFromRow(result.rows[0]));
+}));
+
+app.delete('/api/admin/orders/:id', checkPermission('manageOrders'), asyncHandler(async (req, res) => {
+  const result = await pool.query('DELETE FROM orders WHERE id = $1 RETURNING *', [req.params.id]);
+  if (result.rowCount === 0) return res.status(404).json({ error: 'Order not found' });
+  await logActivity(req, 'delete_order', { orderId: req.params.id });
+  res.json({ message: 'Order deleted' });
+}));
+
+app.get('/api/admin/shipping-fees', checkPermission('manageLocations'), asyncHandler(async (req, res) => {
+  res.json(await getShippingFees());
+}));
+
+app.put('/api/admin/shipping-fees', checkPermission('manageLocations'), asyncHandler(async (req, res) => {
+  const updates = req.body || {};
+  for (const [city, fee] of Object.entries(updates)) {
+    if (!city || normalizeNumber(fee, -1) < 0) continue;
+    await pool.query(
+      `INSERT INTO shipping_fees (city, fee)
+       VALUES ($1, $2)
+       ON CONFLICT (city) DO UPDATE SET fee = EXCLUDED.fee`,
+      [city, Number(fee)]
+    );
+  }
+  await logActivity(req, 'update_shipping_fees', { cities: Object.keys(updates) });
+  res.json(await getShippingFees());
+}));
+
+app.get('/api/admin/main-shop-town', checkPermission('manageLocations'), asyncHandler(async (req, res) => {
+  const settings = await getSettings();
+  res.json({ mainShopTown: settings.main_shop_town });
+}));
+
+app.put('/api/admin/main-shop-town', checkPermission('manageLocations'), validate([
+  body('mainShopTown').trim().notEmpty().withMessage('Main shop town is required')
+]), asyncHandler(async (req, res) => {
+  if (req.body.mainShopTown !== 'Bamenda') {
+    return res.status(400).json({ error: 'The main shop town is configured as Bamenda and cannot be changed here.' });
+  }
+  await pool.query(
+    `UPDATE settings SET value = 'Bamenda', updated_at = NOW() WHERE key = 'main_shop_town'`
+  );
+  await logActivity(req, 'update_main_shop_town', { mainShopTown: 'Bamenda' });
+  res.json({ mainShopTown: 'Bamenda' });
+}));
+
+app.get('/api/admin/free-shipping', checkPermission('manageLocations'), asyncHandler(async (req, res) => {
+  const settings = await getSettings();
+  res.json({
+    threshold: Number(settings.free_shipping_threshold),
+    freeShippingThreshold: Number(settings.free_shipping_threshold),
+    regionFreeShipping: {}
+  });
+}));
+
+app.put('/api/admin/free-shipping', checkPermission('manageLocations'), validate([
+  body('threshold').optional().isInt({ min: 0 }).withMessage('Threshold must be a non-negative integer'),
+  body('freeShippingThreshold').optional().isInt({ min: 0 }).withMessage('Threshold must be a non-negative integer')
+]), asyncHandler(async (req, res) => {
+  const threshold = Number(req.body.threshold ?? req.body.freeShippingThreshold ?? 100000);
+  await pool.query(
+    `INSERT INTO settings (key, value)
+     VALUES ('free_shipping_threshold', $1)
+     ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`,
+    [String(threshold)]
+  );
+  await logActivity(req, 'update_free_shipping', { threshold });
+  res.json({ threshold, freeShippingThreshold: threshold, regionFreeShipping: {} });
+}));
+
+app.put('/api/admin/settings', requireSuperAdmin, asyncHandler(async (req, res) => {
+  if (req.body.platformName) {
+    await pool.query(
+      `INSERT INTO settings (key, value)
+       VALUES ('shop_name', $1)
+       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`,
+      [String(req.body.platformName)]
+    );
+  }
+  await logActivity(req, 'update_settings', { platformName: req.body.platformName || undefined });
+  res.json({ message: 'Settings updated' });
+}));
+
+app.put('/api/admin/hero-section', requireSuperAdmin, asyncHandler(async (req, res) => {
+  const hero = { ...DEFAULT_HERO_SECTION, ...req.body };
+  await pool.query(
+    `INSERT INTO settings (key, value)
+     VALUES ('hero_section', $1)
+     ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`,
+    [JSON.stringify(hero)]
+  );
+  await logActivity(req, 'update_hero_section', {});
+  res.json(hero);
+}));
+
+app.post('/api/admin/upload', checkPermission('manageProducts'), upload.single('image'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+  res.json({ imageUrl: `/uploads/${req.file.filename}` });
 });
 
-// Admin login (works for both main admin and sub-admins)
-app.post('/api/admin/login', (req, res) => {
-  const { email, password } = req.body;
-  
-  console.log('=== Login Attempt ===');
-  console.log('Email:', email);
-  console.log('Total sub-admins in system:', data.subAdmins.length);
-  console.log('Sub-admin emails:', data.subAdmins.map(sa => sa.email));
-  
-  // Check main admin
-  if (email === data.admin.email && bcrypt.compareSync(password, data.admin.password)) {
-    const token = jwt.sign({ email, isAdmin: true, role: 'super_admin' }, 'secret_key', { expiresIn: '24h' });
-    console.log('✅ Main admin login successful');
-    return res.json({ token, email, role: 'super_admin', name: data.admin.name });
-  }
-  
-  // Check sub-admins
-  const subAdmin = data.subAdmins.find(sa => sa.email === email);
-  if (subAdmin) {
-    console.log('Found sub-admin:', subAdmin.email);
-    const passwordMatch = bcrypt.compareSync(password, subAdmin.password);
-    console.log('Password match:', passwordMatch);
-    
-    if (passwordMatch) {
-      const token = jwt.sign({ email, isAdmin: true, role: 'sub_admin', subAdminId: subAdmin.id }, 'secret_key', { expiresIn: '24h' });
-      console.log('✅ Sub-admin login successful');
-      return res.json({ token, email, role: 'sub_admin', name: subAdmin.name });
-    } else {
-      console.log('❌ Password mismatch for sub-admin');
-    }
-  } else {
-    console.log('❌ Sub-admin not found with email:', email);
-  }
-  
-  // Invalid credentials
-  console.log('❌ Login failed - invalid credentials');
-  res.status(401).json({ error: 'Invalid credentials' });
-});
-
-// Admin products - GET all
-app.get('/api/admin/products', (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    jwt.verify(token, 'secret_key');
-    res.json(data.products);
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-});
-
-// Admin products - CREATE
-app.post('/api/admin/products', (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    jwt.verify(token, 'secret_key');
-    const newProduct = {
-      id: uuid(),
-      ...req.body,
-      createdAt: new Date().toISOString()
-    };
-    data.products.push(newProduct);
-    save();
-    res.json(newProduct);
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-});
-
-// Admin products - UPDATE
-app.put('/api/admin/products/:id', (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    jwt.verify(token, 'secret_key');
-    const index = data.products.findIndex(p => p.id === req.params.id);
-    if (index === -1) return res.status(404).json({ error: 'Product not found' });
-    data.products[index] = { ...data.products[index], ...req.body };
-    save();
-    res.json(data.products[index]);
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-});
-
-// Admin products - DELETE
-app.delete('/api/admin/products/:id', (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    jwt.verify(token, 'secret_key');
-    const index = data.products.findIndex(p => p.id === req.params.id);
-    if (index === -1) return res.status(404).json({ error: 'Product not found' });
-    const deleted = data.products.splice(index, 1);
-    save();
-    res.json(deleted[0]);
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-});
-
-// Admin settings - UPDATE email and password
-app.put('/api/admin/settings', (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    jwt.verify(token, 'secret_key');
-    const { email, password, platformName } = req.body;
-    if (email) data.admin.email = email;
-    if (password) data.admin.password = bcrypt.hashSync(password, 10);
-    if (platformName) data.admin.platformName = platformName;
-    save();
-    res.json({ message: 'Settings updated', email: data.admin.email, platformName: data.admin.platformName });
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-});
-
-// Get platform name
-app.get('/api/platform-name', (req, res) => {
-  try {
-    const platformName = data.admin?.platformName || 'MyShop';
-    res.json({ platformName });
-  } catch {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Get hero section
-app.get('/api/hero-section', (req, res) => {
-  try {
-    const heroSection = data.admin?.heroSection || {
-      badge: "✨ Special Offers This Season",
-      title: "Shop the Best Products Online",
-      description: "Discover thousands of quality products at unbeatable prices. Free shipping on orders over 10,000 XAF.",
-      primaryButtonText: "Shop Now →",
-      secondaryButtonText: "Learn More",
-      backgroundImage: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1920"
-    };
-    res.json(heroSection);
-  } catch {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Update hero section
-app.put('/api/admin/hero-section', (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    jwt.verify(token, 'secret_key');
-    const { badge, title, description, primaryButtonText, secondaryButtonText, backgroundImage } = req.body;
-    if (!data.admin) data.admin = {};
-    data.admin.heroSection = {
-      badge: badge || data.admin.heroSection?.badge || "✨ Special Offers This Season",
-      title: title || data.admin.heroSection?.title || "Shop the Best Products Online",
-      description: description || data.admin.heroSection?.description || "Discover thousands of quality products at unbeatable prices.",
-      primaryButtonText: primaryButtonText || data.admin.heroSection?.primaryButtonText || "Shop Now →",
-      secondaryButtonText: secondaryButtonText || data.admin.heroSection?.secondaryButtonText || "Learn More",
-      backgroundImage: backgroundImage || data.admin.heroSection?.backgroundImage || "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1920"
-    };
-    save();
-    res.json({ message: 'Hero section updated', heroSection: data.admin.heroSection });
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-});
-
-// Shipping fees - GET
-app.get('/api/admin/shipping-fees', (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    jwt.verify(token, 'secret_key');
-    res.json(data.shippingFees);
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-});
-
-// Shipping fees - UPDATE
-app.put('/api/admin/shipping-fees', (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    jwt.verify(token, 'secret_key');
-    const fees = req.body || {};
-    for (const region of Object.keys(fees)) {
-      if (!isValidFee(fees[region])) {
-        return res.status(400).json({ error: `Invalid fee for ${region}` });
-      }
-    }
-    data.shippingFees = { ...data.shippingFees, ...fees };
-    save();
-    res.json(data.shippingFees);
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-});
-
-// Public shipping fees - GET
-app.get('/api/shipping-fees', (req, res) => {
-  res.json(data.shippingFees);
-});
-
-// Main shop town - GET
-app.get('/api/admin/main-shop-town', (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    jwt.verify(token, 'secret_key');
-    res.json({ mainShopTown: data.mainShopTown });
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-});
-
-// Main shop town - PUT
-app.put('/api/admin/main-shop-town', (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    jwt.verify(token, 'secret_key');
-    const { mainShopTown } = req.body;
-    if (!mainShopTown || typeof mainShopTown !== 'string') {
-      return res.status(400).json({ error: 'Invalid mainShopTown' });
-    }
-    data.mainShopTown = mainShopTown;
-    save();
-    res.json({ mainShopTown: data.mainShopTown });
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-});
-
-// Free shipping settings - GET
-app.get('/api/admin/free-shipping', (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    jwt.verify(token, 'secret_key');
-    res.json({
-      platformThreshold: data.freeShippingThreshold,
-      regionThresholds: data.regionFreeShipping
-    });
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-});
-
-// Free shipping settings - PUT
-app.put('/api/admin/free-shipping', (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    jwt.verify(token, 'secret_key');
-    const { platformThreshold, regionThresholds } = req.body;
-    
-    if (platformThreshold !== undefined) {
-      const threshold = Number(platformThreshold);
-      if (isNaN(threshold) || threshold < 0) {
-        return res.status(400).json({ error: 'Invalid platform threshold' });
-      }
-      data.freeShippingThreshold = threshold;
-    }
-    
-    if (regionThresholds !== undefined) {
-      if (typeof regionThresholds !== 'object') {
-        return res.status(400).json({ error: 'Invalid region thresholds' });
-      }
-      // Validate each region threshold
-      for (const region of Object.keys(regionThresholds)) {
-        if (regionThresholds[region] !== undefined && regionThresholds[region] !== null) {
-          const threshold = Number(regionThresholds[region]);
-          if (isNaN(threshold) || threshold < 0) {
-            return res.status(400).json({ error: `Invalid threshold for region ${region}` });
-          }
-        }
-      }
-      data.regionFreeShipping = regionThresholds;
-    }
-    
-    save();
-    res.json({
-      platformThreshold: data.freeShippingThreshold,
-      regionThresholds: data.regionFreeShipping
-    });
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-});
-
-// Admin orders - GET all
-app.get('/api/admin/orders', (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    jwt.verify(token, 'secret_key');
-    res.json(data.orders);
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-});
-
-// Admin orders - UPDATE status
-app.put('/api/admin/orders/:id', (req, res) => {
-  try {
-    console.log('🔄 PUT request received for order update')
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) {
-      console.log('❌ Order update - No token provided')
-      return res.status(401).json({ error: 'Unauthorized - No token' });
-    }
-    
-    console.log('✅ Token received')
-    jwt.verify(token, 'secret_key');
-    console.log('✅ Token verified')
-    const { id } = req.params;
-    const { status, deliveryAgency } = req.body;
-    
-    console.log(`📝 Updating order ${id}:`, { status, deliveryAgency })
-    console.log(`📊 Total orders in system: ${data.orders.length}`)
-    
-    const index = data.orders.findIndex(o => o.id === id);
-    console.log(`🔍 Order found at index: ${index}`)
-    if (index === -1) {
-      console.log(`❌ Order ${id} not found`)
-      console.log(`📋 Available order IDs:`, data.orders.slice(0, 3).map(o => o.id))
-      return res.status(404).json({ error: 'Order not found' });
-    }
-    
-    if (status) {
-      data.orders[index].status = status;
-      console.log(`✅ Order ${id} status changed to: ${status}`)
-    }
-    if (deliveryAgency !== undefined) {
-      data.orders[index].deliveryAgency = deliveryAgency;
-      console.log(`✅ Order ${id} delivery agency set to: ${deliveryAgency}`)
-    }
-    
-    save();
-    console.log(`✅ Order ${id} saved successfully to disk`)
-    console.log(`📤 Sending response:`, { id: data.orders[index].id, status: data.orders[index].status })
-    res.json(data.orders[index]);
-  } catch (err) {
-    console.error('❌ Order update error:', err.message)
-    console.error('⚠️  Error stack:', err.stack)
-    res.status(401).json({ error: 'Invalid token or error: ' + err.message });
-  }
-});
-
-// Admin orders - DELETE
-app.delete('/api/admin/orders/:id', (req, res) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) {
-      console.log('❌ Order delete - No token provided')
-      return res.status(401).json({ error: 'Unauthorized - No token' });
-    }
-    
-    jwt.verify(token, 'secret_key');
-    const { id } = req.params;
-    
-    console.log(`🗑️  Deleting order ${id}`)
-    
-    const index = data.orders.findIndex(o => o.id === id);
-    if (index === -1) {
-      console.log(`❌ Order ${id} not found`)
-      return res.status(404).json({ error: 'Order not found' });
-    }
-    
-    const deleted = data.orders.splice(index, 1);
-    save();
-    console.log(`✅ Order ${id} deleted successfully`)
-    res.json(deleted[0]);
-  } catch (err) {
-    console.error('❌ Order delete error:', err.message)
-    res.status(401).json({ error: 'Invalid token or error: ' + err.message });
-  }
-});
-
-// Get POS Sales Report
-app.get('/api/admin/pos-stats', authenticate, (req, res) => {
-  try {
-    const posOrders = data.orders.filter(o => o.isInStoreSale === true);
-    const onlineOrders = data.orders.filter(o => o.isInStoreSale !== true);
-    
-    const posTotals = {
-      total: posOrders.length,
-      revenue: posOrders.reduce((sum, o) => sum + (o.totals?.total || 0), 0),
-      items: posOrders.reduce((sum, o) => sum + (o.items?.length || 0), 0),
-      avgTransaction: posOrders.length > 0 ? Math.round(posOrders.reduce((sum, o) => sum + (o.totals?.total || 0), 0) / posOrders.length) : 0,
-      discountGiven: posOrders.reduce((sum, o) => sum + (o.totals?.discount || 0), 0),
-      paymentMethods: {
-        cash: posOrders.filter(o => o.paymentMethod === 'cash').length,
-        card: posOrders.filter(o => o.paymentMethod === 'card').length,
-        transfer: posOrders.filter(o => o.paymentMethod === 'transfer').length,
-        momo: posOrders.filter(o => o.paymentMethod === 'momo').length
-      }
-    };
-    
-    const totals = {
-      all: data.orders.length,
-      revenue: data.orders.reduce((sum, o) => sum + (o.totals?.total || 0), 0),
-      onlineRevenue: onlineOrders.reduce((sum, o) => sum + (o.totals?.total || 0), 0),
-      posRevenue: posTotals.revenue,
-      onlinePct: data.orders.length > 0 ? Math.round((onlineOrders.length / data.orders.length) * 100) : 0,
-      posPct: data.orders.length > 0 ? Math.round((posOrders.length / data.orders.length) * 100) : 0
-    };
-    
-    res.json({ posOrders: posTotals, totals });
-  } catch (err) {
-    console.error('POS stats error:', err);
-    res.status(500).json({ error: 'Failed to fetch POS statistics' });
-  }
-});
-
-// Upload images (multer)
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, 'uploads')),
-  filename: (req, file, cb) => {
-    const safeName = file.originalname.replace(/[^a-zA-Z0-9.\-_]/g, '_');
-    cb(null, `${Date.now()}_${safeName}`);
-  }
-});
-// Allow files up to 20MB (for images and PDFs)
-const upload = multer({ 
-  storage,
-  limits: { fileSize: 20 * 1024 * 1024 }
-});
-
-app.post('/api/admin/upload', (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    jwt.verify(token, 'secret_key');
-    upload.single('file')(req, res, (err) => {
-      if (err) return res.status(400).json({ error: 'Upload failed' });
-      const filePath = `/uploads/${req.file.filename}`;
-      res.json({ url: filePath });
-    });
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-});
-
-// SUB-ADMIN ENDPOINTS
-// Get all sub-admins
-app.get('/api/admin/sub-admins', (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    jwt.verify(token, 'secret_key');
-    res.json(data.subAdmins);
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-});
-
-// Create sub-admin
-app.post('/api/admin/sub-admins', (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    jwt.verify(token, 'secret_key');
-    const { email, password, name, permissions } = req.body;
-    
-    if (!email || !password || !name) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    const newSubAdmin = {
-      id: uuid(),
-      email,
-      password: bcrypt.hashSync(password, 10),
-      name,
-      permissions: permissions || ['products'],
-      createdAt: new Date(),
-      status: 'active'
-    };
-
-    data.subAdmins.push(newSubAdmin);
-    save();
-    res.json({ id: newSubAdmin.id, email: newSubAdmin.email, name: newSubAdmin.name });
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-});
-
-// Update sub-admin
-app.put('/api/admin/sub-admins/:id', (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    jwt.verify(token, 'secret_key');
-    const { id } = req.params;
-    const { name, permissions, status } = req.body;
-    
-    const subAdmin = data.subAdmins.find(sa => sa.id === id);
-    if (!subAdmin) return res.status(404).json({ error: 'Sub-admin not found' });
-
-    if (name) subAdmin.name = name;
-    if (permissions) subAdmin.permissions = permissions;
-    if (status) subAdmin.status = status;
-
-    save();
-    res.json(subAdmin);
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-});
-
-// Delete sub-admin
-app.delete('/api/admin/sub-admins/:id', (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    jwt.verify(token, 'secret_key');
-    const { id } = req.params;
-    const index = data.subAdmins.findIndex(sa => sa.id === id);
-    if (index === -1) return res.status(404).json({ error: 'Sub-admin not found' });
-
-    const deleted = data.subAdmins.splice(index, 1);
-    save();
-    res.json(deleted[0]);
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-});
-
-// Sub-admin login (same as admin login but with role check)
-app.post('/api/sub-admin/login', (req, res) => {
-  const { email, password } = req.body;
-  const subAdmin = data.subAdmins.find(sa => sa.email === email && sa.status === 'active');
-  
-  if (subAdmin && bcrypt.compareSync(password, subAdmin.password)) {
-    const token = jwt.sign({ role: 'sub_admin', id: subAdmin.id }, 'secret_key', { expiresIn: '7d' });
-    res.json({ token, email: subAdmin.email, name: subAdmin.name, role: 'sub_admin', permissions: subAdmin.permissions });
-  } else {
-    res.status(401).json({ error: 'Invalid credentials' });
-  }
-});
-
-// ==================== CHAT ENDPOINTS ====================
-
-// Get all conversations for admin
-app.get('/api/admin/chat/conversations', (req, res) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: 'No token provided' });
-    
-    jwt.verify(token, 'secret_key');
-    
-    // Group messages by deviceId
-    const conversations = {};
-    if (data.chatMessages && Array.isArray(data.chatMessages)) {
-      data.chatMessages.forEach(msg => {
-        if (!conversations[msg.deviceId]) {
-          conversations[msg.deviceId] = {
-            deviceId: msg.deviceId,
-            messageCount: 0,
-            lastMessage: msg.timestamp
-          };
-        }
-        conversations[msg.deviceId].messageCount++;
-        conversations[msg.deviceId].lastMessage = msg.timestamp;
-      });
-    }
-    
-    res.json(Object.values(conversations).sort((a, b) => 
-      new Date(b.lastMessage) - new Date(a.lastMessage)
-    ));
-  } catch (err) {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-});
-
-// Mark message as read
-app.put('/api/chat/:messageId/read', (req, res) => {
-  try {
-    const { messageId } = req.params;
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: 'No token provided' });
-    
-    jwt.verify(token, 'secret_key');
-
-    const message = data.chatMessages.find(m => m.id === messageId);
-    if (!message) return res.status(404).json({ error: 'Message not found' });
-
-    message.read = true;
-    save();
-    res.json(message);
-  } catch (err) {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-});
-
-// Locations - PUBLIC GET all
-app.get('/api/locations', (req, res) => {
-  if (!data.locations) data.locations = [];
-  res.json(data.locations);
-});
-
-// Locations - Admin GET all
-app.get('/api/admin/locations', (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    jwt.verify(token, 'secret_key');
-    if (!data.locations) data.locations = [];
-    res.json(data.locations);
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-});
-
-// Locations - CREATE
-app.post('/api/admin/locations', (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    jwt.verify(token, 'secret_key');
-    const { name, city, address, phone, email, lat, lng, hours, description, isMainStore } = req.body;
-    
-    if (!name || !city || !address) {
-      return res.status(400).json({ error: 'Name, city, and address are required' });
-    }
-
-    if (!data.locations) data.locations = [];
-
-    const newLocation = {
-      id: uuid(),
-      name,
-      city,
-      address,
-      phone: phone || '',
-      email: email || '',
-      lat: lat || 0,
-      lng: lng || 0,
-      hours: hours || '',
-      description: description || '',
-      isMainStore: isMainStore || false,
-      createdAt: new Date().toISOString()
-    };
-
-    data.locations.push(newLocation);
-    save();
-    res.json(newLocation);
-  } catch (err) {
-    if (err.name === 'JsonWebTokenError') {
-      res.status(401).json({ error: 'Invalid token' });
-    } else {
-      res.status(400).json({ error: err.message });
-    }
-  }
-});
-
-// Locations - UPDATE
-app.put('/api/admin/locations/:id', (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    jwt.verify(token, 'secret_key');
-    if (!data.locations) data.locations = [];
-    
-    const index = data.locations.findIndex(l => l.id === req.params.id);
-    if (index === -1) return res.status(404).json({ error: 'Location not found' });
-
-    const { name, city, address, phone, email, lat, lng, hours, description, isMainStore } = req.body;
-    
-    if (!name || !city || !address) {
-      return res.status(400).json({ error: 'Name, city, and address are required' });
-    }
-
-    data.locations[index] = {
-      ...data.locations[index],
-      name,
-      city,
-      address,
-      phone: phone || '',
-      email: email || '',
-      lat: lat || 0,
-      lng: lng || 0,
-      hours: hours || '',
-      description: description || '',
-      isMainStore: isMainStore || false
-    };
-
-    save();
-    res.json(data.locations[index]);
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-});
-
-// Locations - DELETE
-app.delete('/api/admin/locations/:id', (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    jwt.verify(token, 'secret_key');
-    if (!data.locations) data.locations = [];
-    
-    const index = data.locations.findIndex(l => l.id === req.params.id);
-    if (index === -1) return res.status(404).json({ error: 'Location not found' });
-
-    const deleted = data.locations.splice(index, 1);
-    save();
-    res.json(deleted[0]);
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-});
-
-// ============================================
-// SUB-ADMIN MANAGEMENT ENDPOINTS
-// ============================================
-
-// Get all sub-admins
-app.get('/api/admin/subadmins', (req, res) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: 'Unauthorized' });
-    jwt.verify(token, 'secret_key');
-    
-    const subAdmins = data.subAdmins || [];
-    res.json(subAdmins.map(s => ({
-      ...s,
-      password: undefined // Never send password
-    })));
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-});
-
-// Create sub-admin
-app.post('/api/admin/subadmins', (req, res) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: 'Unauthorized' });
-    jwt.verify(token, 'secret_key');
-
-    const { name, email, password, permissions } = req.body;
-
-    // Check if email already exists
-    if (data.subAdmins.some(s => s.email === email)) {
-      return res.status(400).json({ error: 'Email already exists' });
-    }
-
-    const newSubAdmin = {
-      id: uuid(),
-      name,
-      email,
-      password: bcrypt.hashSync(password, 10),
-      permissions: permissions || {
-        manageProducts: true,
-        manageOrders: false,
-        manageLocations: false,
-        viewReports: false,
-        viewAnalytics: false,
-        manageCustomerService: false
-      },
-      createdAt: new Date().toISOString(),
-      isActive: true
-    };
-
-    data.subAdmins.push(newSubAdmin);
-    save();
-
-    // Log activity with admin ID (null) - admin performed this action
-    logSubAdminActivity('create_subadmin', `Created sub-admin: ${name} (${email})`, null);
-
-    res.json({ ...newSubAdmin, password: undefined });
-  } catch (err) {
-    console.error('Error creating sub-admin:', err);
-    res.status(500).json({ error: 'Failed to create sub-admin' });
-  }
-});
-
-// Update sub-admin
-app.put('/api/admin/subadmins/:id', (req, res) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: 'Unauthorized' });
-    jwt.verify(token, 'secret_key');
-
-    const { name, permissions } = req.body;
-    const index = data.subAdmins.findIndex(s => s.id === req.params.id);
-
-    if (index === -1) return res.status(404).json({ error: 'Sub-admin not found' });
-
-    const oldSubAdmin = { ...data.subAdmins[index] };
-    data.subAdmins[index] = {
-      ...data.subAdmins[index],
-      name: name || data.subAdmins[index].name,
-      permissions: permissions || data.subAdmins[index].permissions,
-      updatedAt: new Date().toISOString()
-    };
-
-    save();
-
-    // Log activity with admin ID (null) - admin performed this action
-    logSubAdminActivity('update_subadmin', `Updated sub-admin: ${name}`, null);
-
-    res.json({ ...data.subAdmins[index], password: undefined });
-  } catch (err) {
-    console.error('Error updating sub-admin:', err);
-    res.status(500).json({ error: 'Failed to update sub-admin' });
-  }
-});
-
-// Delete sub-admin
-app.delete('/api/admin/subadmins/:id', (req, res) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: 'Unauthorized' });
-    jwt.verify(token, 'secret_key');
-
-    const index = data.subAdmins.findIndex(s => s.id === req.params.id);
-    if (index === -1) return res.status(404).json({ error: 'Sub-admin not found' });
-
-    const deleted = data.subAdmins.splice(index, 1)[0];
-    save();
-
-    // Log activity with admin ID (null) - admin performed this action
-    logSubAdminActivity('delete_subadmin', `Deleted sub-admin: ${deleted.name}`, null);
-
-    res.json({ ...deleted, password: undefined });
-  } catch (err) {
-    console.error('Error deleting sub-admin:', err);
-    res.status(500).json({ error: 'Failed to delete sub-admin' });
-  }
-});
-
-// ============================================
-// SUB-ADMIN ACTIVITY LOGGING
-// ============================================
-
-// Function to log activity
-function logSubAdminActivity(action, details, subAdminId) {
-  if (!data.subAdminActivities) {
-    data.subAdminActivities = [];
-  }
-
-  // Find sub-admin to get their name and email for fallback
-  const subAdmin = data.subAdmins?.find(sa => sa.id === subAdminId);
-  
-  // Determine name and email
-  let subAdminName = subAdmin?.name;
-  let subAdminEmail = subAdmin?.email;
-  
-  // If it's an admin activity (null ID), always use admin info
-  if (subAdminId === null || subAdminId === 'admin') {
-    subAdminName = data.admin?.name || '🏪 SHOP OWNER';
-    subAdminEmail = data.admin?.email || 'ndimihboclair4@gmail.com';
-  }
-
-  const activity = {
-    id: uuid(),
-    subAdminId: subAdminId,
-    subAdminName: subAdminName || null,
-    subAdminEmail: subAdminEmail || null,
-    action: action,
-    details: details,
-    timestamp: new Date().toISOString(),
-    ipAddress: 'localhost'
-  };
-
-  data.subAdminActivities.push(activity);
-  
-  // Keep only last 1000 activities
-  if (data.subAdminActivities.length > 1000) {
-    data.subAdminActivities = data.subAdminActivities.slice(-1000);
-  }
-
-  save();
+app.get('/api/admin/locations', checkPermission('manageLocations'), asyncHandler(async (req, res) => {
+  const result = await pool.query('SELECT * FROM locations ORDER BY is_main_store DESC, city ASC, name ASC');
+  res.json(result.rows.map(locationFromRow));
+}));
+
+app.post('/api/admin/locations', checkPermission('manageLocations'), validate([
+  body('name').trim().notEmpty().withMessage('Location name is required'),
+  body('city').trim().notEmpty().withMessage('City is required'),
+  body('address').trim().notEmpty().withMessage('Address is required')
+]), asyncHandler(async (req, res) => {
+  const result = await pool.query(
+    `INSERT INTO locations (name, city, address, phone, email, lat, lng, is_main_store, hours, description)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+     RETURNING *`,
+    [
+      req.body.name,
+      req.body.city,
+      req.body.address,
+      req.body.phone || '',
+      req.body.email || '',
+      req.body.lat || null,
+      req.body.lng || null,
+      Boolean(req.body.isMainStore || req.body.is_main_store),
+      req.body.hours || '',
+      req.body.description || ''
+    ]
+  );
+  await logActivity(req, 'create_location', { locationId: result.rows[0].id, name: result.rows[0].name });
+  res.status(201).json(locationFromRow(result.rows[0]));
+}));
+
+app.put('/api/admin/locations/:id', checkPermission('manageLocations'), validate([
+  body('name').trim().notEmpty().withMessage('Location name is required'),
+  body('city').trim().notEmpty().withMessage('City is required'),
+  body('address').trim().notEmpty().withMessage('Address is required')
+]), asyncHandler(async (req, res) => {
+  const result = await pool.query(
+    `UPDATE locations
+     SET name = $1, city = $2, address = $3, phone = $4, email = $5,
+         lat = $6, lng = $7, is_main_store = $8, hours = $9, description = $10
+     WHERE id = $11
+     RETURNING *`,
+    [
+      req.body.name,
+      req.body.city,
+      req.body.address,
+      req.body.phone || '',
+      req.body.email || '',
+      req.body.lat || null,
+      req.body.lng || null,
+      Boolean(req.body.isMainStore || req.body.is_main_store),
+      req.body.hours || '',
+      req.body.description || '',
+      req.params.id
+    ]
+  );
+  if (result.rowCount === 0) return res.status(404).json({ error: 'Location not found' });
+  await logActivity(req, 'update_location', { locationId: req.params.id });
+  res.json(locationFromRow(result.rows[0]));
+}));
+
+app.delete('/api/admin/locations/:id', checkPermission('manageLocations'), asyncHandler(async (req, res) => {
+  const result = await pool.query('DELETE FROM locations WHERE id = $1 RETURNING *', [req.params.id]);
+  if (result.rowCount === 0) return res.status(404).json({ error: 'Location not found' });
+  await logActivity(req, 'delete_location', { locationId: req.params.id, name: result.rows[0].name });
+  res.json({ message: 'Location deleted' });
+}));
+
+async function listSubAdmins(req, res) {
+  const result = await pool.query(
+    `SELECT id, name, email, role, permissions, is_active, created_at, updated_at
+     FROM admins
+     WHERE role = 'sub_admin'
+     ORDER BY created_at DESC`
+  );
+  res.json(result.rows.map(adminFromRow));
 }
 
-// Get all sub-admin activities
-app.get('/api/admin/subadmin-activities', (req, res) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: 'Unauthorized' });
-    jwt.verify(token, 'secret_key');
-
-    const activities = (data.subAdminActivities || []).map(activity => {
-      // Ensure all activities have proper fallback data
-      let subAdminName = activity.subAdminName;
-      let subAdminEmail = activity.subAdminEmail;
-      
-      // If name/email are missing or null, try to find from sub-admins
-      if (!subAdminName || !subAdminEmail) {
-        const subAdmin = data.subAdmins?.find(sa => sa.id === activity.subAdminId);
-        if (subAdmin) {
-          subAdminName = subAdmin.name;
-          subAdminEmail = subAdmin.email;
-        }
-      }
-      
-      // If still missing and it's a main admin activity (null ID), use admin data
-      if ((!subAdminName || !subAdminEmail) && (activity.subAdminId === null || activity.subAdminId === 'admin')) {
-        subAdminName = data.admin?.name || '🏪 SHOP OWNER';
-        subAdminEmail = data.admin?.email || 'ndimihboclair4@gmail.com';
-      }
-      
-      return {
-        ...activity,
-        subAdminName: subAdminName || null,
-        subAdminEmail: subAdminEmail || null
-      };
-    });
-    
-    res.json(activities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)));
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
+async function createSubAdmin(req, res) {
+  if (!req.body.password || String(req.body.password).length < 8) {
+    return res.status(400).json({ errors: [{ field: 'password', message: 'Password must be at least 8 characters' }] });
   }
+  const passwordHash = await bcrypt.hash(req.body.password, 12);
+  const result = await pool.query(
+    `INSERT INTO admins (name, email, password_hash, role, permissions, is_active)
+     VALUES ($1, $2, $3, 'sub_admin', $4::jsonb, true)
+     RETURNING id, name, email, role, permissions, is_active, created_at, updated_at`,
+    [req.body.name, req.body.email, passwordHash, JSON.stringify(req.body.permissions || {})]
+  );
+  await logActivity(req, 'create_sub_admin', { subAdminId: result.rows[0].id, email: req.body.email });
+  res.status(201).json(adminFromRow(result.rows[0]));
+}
+
+async function updateSubAdmin(req, res) {
+  const current = await pool.query("SELECT * FROM admins WHERE id = $1 AND role = 'sub_admin'", [req.params.id]);
+  if (current.rowCount === 0) return res.status(404).json({ error: 'Sub-admin not found' });
+
+  let passwordHash = current.rows[0].password_hash;
+  if (req.body.password) passwordHash = await bcrypt.hash(req.body.password, 12);
+
+  const result = await pool.query(
+    `UPDATE admins
+     SET name = $1, email = $2, password_hash = $3, permissions = $4::jsonb,
+         is_active = $5, updated_at = NOW()
+     WHERE id = $6 AND role = 'sub_admin'
+     RETURNING id, name, email, role, permissions, is_active, created_at, updated_at`,
+    [
+      req.body.name || current.rows[0].name,
+      req.body.email || current.rows[0].email,
+      passwordHash,
+      JSON.stringify(req.body.permissions || current.rows[0].permissions || {}),
+      req.body.isActive ?? req.body.is_active ?? current.rows[0].is_active,
+      req.params.id
+    ]
+  );
+  await logActivity(req, 'update_sub_admin', { subAdminId: req.params.id });
+  res.json(adminFromRow(result.rows[0]));
+}
+
+async function deleteSubAdmin(req, res) {
+  const result = await pool.query("DELETE FROM admins WHERE id = $1 AND role = 'sub_admin' RETURNING *", [req.params.id]);
+  if (result.rowCount === 0) return res.status(404).json({ error: 'Sub-admin not found' });
+  await logActivity(req, 'delete_sub_admin', { subAdminId: req.params.id, email: result.rows[0].email });
+  res.json({ message: 'Sub-admin deleted' });
+}
+
+const subAdminValidation = validate([
+  body('name').trim().notEmpty().withMessage('Name is required'),
+  body('email').isEmail().withMessage('Enter a valid email address').normalizeEmail(),
+  body('password').if(body('password').exists()).isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
+]);
+
+app.get('/api/admin/sub-admins', requireSuperAdmin, asyncHandler(listSubAdmins));
+app.post('/api/admin/sub-admins', requireSuperAdmin, subAdminValidation, asyncHandler(createSubAdmin));
+app.put('/api/admin/sub-admins/:id', requireSuperAdmin, asyncHandler(updateSubAdmin));
+app.delete('/api/admin/sub-admins/:id', requireSuperAdmin, asyncHandler(deleteSubAdmin));
+app.get('/api/admin/subadmins', requireSuperAdmin, asyncHandler(listSubAdmins));
+app.post('/api/admin/subadmins', requireSuperAdmin, subAdminValidation, asyncHandler(createSubAdmin));
+app.put('/api/admin/subadmins/:id', requireSuperAdmin, asyncHandler(updateSubAdmin));
+app.delete('/api/admin/subadmins/:id', requireSuperAdmin, asyncHandler(deleteSubAdmin));
+
+app.get('/api/admin/subadmin-activities', requireSuperAdmin, asyncHandler(async (req, res) => {
+  const result = await pool.query('SELECT * FROM admin_activities ORDER BY created_at DESC LIMIT 50');
+  res.json(result.rows.map(activityFromRow));
+}));
+
+app.post('/api/admin/log-subadmin-activity', asyncHandler(async (req, res) => {
+  await logActivity(req, req.body.action || 'activity', { details: req.body.details || '' });
+  res.json({ message: 'Activity logged' });
+}));
+
+app.get('/api/admin/chats', checkPermission('manageCustomerService'), asyncHandler(async (req, res) => {
+  const result = await pool.query(`
+    SELECT device_id,
+           MAX(customer_name) FILTER (WHERE customer_name IS NOT NULL AND customer_name <> '') AS customer_name,
+           COUNT(*) FILTER (WHERE sender = 'customer' AND is_read = false)::int AS unread_count,
+           MAX(created_at) AS last_message_at
+    FROM chat_messages
+    GROUP BY device_id
+    ORDER BY last_message_at DESC
+  `);
+  const conversations = [];
+  for (const row of result.rows) {
+    const messages = await pool.query(
+      `SELECT * FROM chat_messages WHERE device_id = $1 ORDER BY created_at ASC`,
+      [row.device_id]
+    );
+    conversations.push({
+      deviceId: row.device_id,
+      userName: row.customer_name || row.device_id,
+      unreadCount: row.unread_count,
+      lastMessageAt: row.last_message_at,
+      messages: messages.rows.map((message) => ({
+        id: message.id,
+        deviceId: message.device_id,
+        userName: message.customer_name,
+        message: message.message,
+        sender: message.sender,
+        imageUrl: message.image_url,
+        read: message.is_read,
+        timestamp: message.created_at,
+        createdAt: message.created_at
+      }))
+    });
+  }
+  res.json(conversations);
+}));
+
+app.get('/api/admin/chat/conversations', checkPermission('manageCustomerService'), asyncHandler(async (req, res) => {
+  const result = await pool.query('SELECT DISTINCT device_id FROM chat_messages ORDER BY device_id ASC');
+  res.json(result.rows.map((row) => ({ deviceId: row.device_id })));
+}));
+
+app.post('/api/admin/chats/:deviceId/reply', checkPermission('manageCustomerService'), validate([
+  body('message').custom((value, { req }) => {
+    if (String(value || '').trim() || req.body.imageUrl) return true;
+    throw new Error('Message is required');
+  })
+]), asyncHandler(async (req, res) => {
+  const result = await pool.query(
+    `INSERT INTO chat_messages (device_id, customer_name, message, sender, image_url, is_read)
+     VALUES ($1, $2, $3, 'admin', $4, false)
+     RETURNING *`,
+    [req.params.deviceId, req.admin.name, req.body.message || '[Attachment]', req.body.imageUrl || null]
+  );
+  await logActivity(req, 'reply_chat', { deviceId: req.params.deviceId });
+  res.status(201).json({
+    id: result.rows[0].id,
+    message: result.rows[0].message,
+    sender: 'admin',
+    imageUrl: result.rows[0].image_url,
+    timestamp: result.rows[0].created_at
+  });
+}));
+
+app.put('/api/admin/chats/:deviceId/read', checkPermission('manageCustomerService'), asyncHandler(async (req, res) => {
+  await pool.query(
+    "UPDATE chat_messages SET is_read = true WHERE device_id = $1 AND sender = 'customer'",
+    [req.params.deviceId]
+  );
+  res.json({ message: 'Conversation marked as read' });
+}));
+
+app.delete('/api/admin/chats/:deviceId', checkPermission('manageCustomerService'), asyncHandler(async (req, res) => {
+  await pool.query('DELETE FROM chat_messages WHERE device_id = $1', [req.params.deviceId]);
+  await logActivity(req, 'clear_chat', { deviceId: req.params.deviceId });
+  res.json({ message: 'Chat cleared' });
+}));
+
+app.delete('/api/admin/chats/:deviceId/delete', checkPermission('manageCustomerService'), asyncHandler(async (req, res) => {
+  await pool.query('DELETE FROM chat_messages WHERE device_id = $1', [req.params.deviceId]);
+  await logActivity(req, 'delete_chat', { deviceId: req.params.deviceId });
+  res.json({ message: 'Conversation deleted' });
+}));
+
+app.put('/api/chat/:messageId/read', asyncHandler(async (req, res) => {
+  await pool.query('UPDATE chat_messages SET is_read = true WHERE id = $1', [req.params.messageId]);
+  res.json({ message: 'Message marked read' });
+}));
+
+app.post('/api/pos/save-receipt', authenticate, checkPermission('managePOS'), asyncHandler(async (req, res) => {
+  const receipt = req.body.receipt || req.body;
+  const totals = receipt.totals || {};
+  const result = await pool.query(
+    `INSERT INTO pos_receipts (
+      customer_name, customer_phone, items, subtotal, discount_percent, discount_amount,
+      total, paid_amount, change_amount, payment_method, cashier_name
+    )
+    VALUES ($1, $2, $3::jsonb, $4, $5, $6, $7, $8, $9, $10, $11)
+    RETURNING *`,
+    [
+      receipt.customer?.name || req.body.customerName || '',
+      receipt.customer?.phone || req.body.customerPhone || '',
+      JSON.stringify(receipt.items || []),
+      normalizeNumber(totals.subtotal, 0),
+      normalizeNumber(receipt.discountPercent, 0),
+      normalizeNumber(totals.discount, 0),
+      normalizeNumber(totals.total, 0),
+      normalizeNumber(receipt.paidAmount, 0),
+      normalizeNumber(receipt.changeAmount, 0),
+      receipt.paymentMethod || 'cash',
+      req.admin.name
+    ]
+  );
+  await logActivity(req, 'create_pos_receipt', { receiptId: result.rows[0].id });
+  res.status(201).json({ id: result.rows[0].id, message: 'Receipt saved' });
+}));
+
+app.get('/api/pos/receipts', authenticate, checkPermission('viewPOSAnalytics'), asyncHandler(async (req, res) => {
+  const limit = Math.min(Number(req.query.limit || 50), 100);
+  const result = await pool.query('SELECT * FROM pos_receipts ORDER BY created_at DESC LIMIT $1', [limit]);
+  res.json(result.rows.map((row) => ({
+    id: row.id,
+    customer: { name: row.customer_name, phone: row.customer_phone },
+    items: row.items || [],
+    totals: { subtotal: row.subtotal, discount: row.discount_amount, total: row.total },
+    discountPercent: row.discount_percent,
+    paymentMethod: row.payment_method,
+    cashierName: row.cashier_name,
+    createdAt: row.created_at
+  })));
+}));
+
+app.get('/api/pos/statistics', authenticate, checkPermission('viewPOSAnalytics'), asyncHandler(async (req, res) => {
+  const result = await pool.query(`
+    SELECT COUNT(*)::int AS total_receipts,
+           COALESCE(SUM(total), 0)::int AS total_revenue,
+           COALESCE(AVG(total), 0)::int AS average_receipt
+    FROM pos_receipts
+  `);
+  res.json({
+    totalReceipts: result.rows[0].total_receipts,
+    totalRevenue: result.rows[0].total_revenue,
+    averageReceipt: result.rows[0].average_receipt
+  });
+}));
+
+app.get('/api/admin/pos-stats', checkPermission('viewPOSAnalytics'), asyncHandler(async (req, res) => {
+  const result = await pool.query(`
+    SELECT COUNT(*)::int AS total_receipts,
+           COALESCE(SUM(total), 0)::int AS total_revenue
+    FROM pos_receipts
+  `);
+  res.json(result.rows[0]);
+}));
+
+app.post('/api/admin/payment-accounts', requireSuperAdmin, (req, res) => {
+  res.json({
+    ...DEFAULT_PAYMENT_ACCOUNTS,
+    message: 'Payment gateways are not enabled. Orders are received first and confirmed manually.'
+  });
 });
 
-// Log when products are created/updated/deleted by sub-admin
-app.post('/api/admin/log-subadmin-activity', (req, res) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: 'Unauthorized' });
-    
-    const decoded = jwt.verify(token, 'secret_key');
-    const { action, details, subAdminId } = req.body;
-
-    logSubAdminActivity(action, details, subAdminId || decoded.sub);
-
-    res.json({ success: true });
-  } catch (err) {
-    console.error('Error logging activity:', err);
-    res.status(500).json({ error: 'Failed to log activity' });
-  }
+app.get('/api/admin/customers-with-installments', checkPermission('viewAnalytics'), (req, res) => res.json([]));
+app.get('/api/admin/installment-stats', checkPermission('viewAnalytics'), (req, res) => {
+  res.json({ activeInstallments: 0, totalInstallmentAmount: 0, conversionRate: 0 });
 });
 
-// ===================== POS ENDPOINTS =====================
+app.get('/api/admin/data-management/deleted', (req, res) => res.json([]));
+app.get('/api/admin/data-management/stats', (req, res) => {
+  res.json({
+    totalDeleted: 0,
+    deletedInLast48h: 0,
+    deletedOlderThan48h: 0,
+    breakdown: { products: 0, orders: 0, receipts: 0, chats: 0 }
+  });
+});
+app.post('/api/admin/data-management/restore/:deleteId', (req, res) => res.json({ message: 'Nothing to restore' }));
+app.post('/api/admin/data-management/permanent-delete/:deleteId', (req, res) => res.json({ message: 'Nothing to delete' }));
+app.post('/api/admin/data-management/clear-period/:type/:period', (req, res) => res.json({ deletedCount: 0 }));
 
-// Save receipt/transaction
-app.post('/api/pos/save-receipt', (req, res) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (token) {
-      const decoded = jwt.verify(token, 'secret_key');
-      // Check if it's a sub-admin and if they have permission
-      if (decoded.isSubAdmin && !decoded.permissions?.managePOS) {
-        return res.status(403).json({ error: 'Sub-admin does not have POS management permission' });
-      }
-    }
-
-    const { receipt } = req.body;
-    
-    if (!receipt || !receipt.id) {
-      return res.status(400).json({ error: 'Invalid receipt data' });
-    }
-
-    const receiptData = {
-      ...receipt,
-      savedAt: new Date().toISOString(),
-      timestamp: Date.now()
-    };
-
-    data.receipts.push(receiptData);
-    save();
-
-    res.json({ success: true, receipt: receiptData });
-  } catch (err) {
-    console.error('Error saving receipt:', err);
-    res.status(500).json({ error: 'Failed to save receipt' });
-  }
+app.get('/api/admin/reset-status', (req, res) => res.json({ isReset: false, isExpired: false, hoursRemaining: 0 }));
+app.post('/api/admin/reset-platform', requireSuperAdmin, (req, res) => {
+  res.status(400).json({ error: 'Production reset is disabled. Use server/cleanup.js intentionally from the server shell.' });
+});
+app.post('/api/admin/restore-platform', requireSuperAdmin, (req, res) => res.json({ message: 'No reset data to restore' }));
+app.post('/api/admin/extend-recovery-window', requireSuperAdmin, (req, res) => res.json({ message: 'No reset window is active' }));
+app.post('/api/admin/clear-data', requireSuperAdmin, (req, res) => {
+  res.status(400).json({ error: 'Bulk data clearing is disabled in production. Use server/cleanup.js intentionally.' });
 });
 
-// Get POS statistics
-app.get('/api/pos/statistics', (req, res) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (token) {
-      const decoded = jwt.verify(token, 'secret_key');
-      // Check if it's a sub-admin and if they have permission
-      if (decoded.isSubAdmin && !decoded.permissions?.viewPOSAnalytics) {
-        return res.status(403).json({ error: 'Sub-admin does not have POS analytics viewing permission' });
-      }
-    }
+app.post('/api/customer/signup', validate([
+  body('name').trim().notEmpty().withMessage('Name is required'),
+  body('email').isEmail().withMessage('Enter a valid email address').normalizeEmail(),
+  body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
+]), asyncHandler(async (req, res) => {
+  const passwordHash = await bcrypt.hash(req.body.password, 12);
+  const result = await pool.query(
+    `INSERT INTO customers (name, email, phone, address, password_hash)
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING id, name, email, phone, address, created_at`,
+    [req.body.name, req.body.email, req.body.phone || '', req.body.address || '', passwordHash]
+  );
+  res.status(201).json({ customer: result.rows[0], message: 'Customer account created' });
+}));
 
-    const totalReceipts = data.receipts.length;
-    const totalRevenue = data.receipts.reduce((sum, receipt) => sum + receipt.totals.total, 0);
-    const averageTransaction = totalReceipts > 0 ? totalRevenue / totalReceipts : 0;
+app.post('/api/customer/login', loginValidation, asyncHandler(async (req, res) => {
+  requireJwtSecret();
+  const result = await pool.query('SELECT * FROM customers WHERE LOWER(email) = LOWER($1)', [req.body.email]);
+  if (result.rowCount === 0) return res.status(401).json({ error: 'Invalid credentials' });
+  const valid = await bcrypt.compare(req.body.password, result.rows[0].password_hash);
+  if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
+  const token = jwt.sign({ id: result.rows[0].id, email: result.rows[0].email, role: 'customer' }, JWT_SECRET, { expiresIn: '30d' });
+  res.json({ token, customer: { id: result.rows[0].id, name: result.rows[0].name, email: result.rows[0].email } });
+}));
 
-    // Items sold
-    const itemsSold = {};
-    data.receipts.forEach(receipt => {
-      receipt.items.forEach(item => {
-        if (!itemsSold[item.name]) {
-          itemsSold[item.name] = { name: item.name, quantity: 0, revenue: 0 };
-        }
-        itemsSold[item.name].quantity += item.quantity;
-        itemsSold[item.name].revenue += item.price * item.quantity;
-      });
-    });
-
-    // Top items
-    const topItems = Object.values(itemsSold)
-      .sort((a, b) => b.revenue - a.revenue)
-      .slice(0, 10);
-
-    // Daily sales
-    const dailySales = {};
-    data.receipts.forEach(receipt => {
-      const date = new Date(receipt.savedAt).toLocaleDateString();
-      if (!dailySales[date]) {
-        dailySales[date] = { date, count: 0, revenue: 0 };
-      }
-      dailySales[date].count += 1;
-      dailySales[date].revenue += receipt.totals.total;
-    });
-
-    const dailySalesArray = Object.values(dailySales).sort((a, b) => new Date(a.date) - new Date(b.date));
-
-    res.json({
-      totalReceipts,
-      totalRevenue,
-      averageTransaction: Math.round(averageTransaction),
-      topItems,
-      dailySales: dailySalesArray,
-      itemsSold: Object.values(itemsSold)
-    });
-  } catch (err) {
-    console.error('Error fetching POS statistics:', err);
-    res.status(500).json({ error: 'Failed to fetch statistics' });
-  }
+app.get('/api/customer/orders', authenticateCustomer, asyncHandler(async (req, res) => {
+  const result = await pool.query('SELECT * FROM orders WHERE LOWER(buyer_email) = LOWER($1) ORDER BY created_at DESC', [req.customer.email]);
+  res.json(result.rows.map(orderFromRow));
+}));
+app.get('/api/customer/installment-plans', authenticateCustomer, (req, res) => res.json([]));
+app.post('/api/customer/create-installment', authenticateCustomer, (req, res) => {
+  res.status(400).json({ error: 'Installment payments are not enabled.' });
 });
 
-// Get all receipts
-app.get('/api/pos/receipts', (req, res) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (token) {
-      const decoded = jwt.verify(token, 'secret_key');
-      // Check if it's a sub-admin and if they have permission
-      if (decoded.isSubAdmin && !decoded.permissions?.viewPOSAnalytics) {
-        return res.status(403).json({ error: 'Sub-admin does not have POS analytics viewing permission' });
-      }
-    }
-
-    const limit = parseInt(req.query.limit) || 50;
-    const offset = parseInt(req.query.offset) || 0;
-
-    const receipts = data.receipts
-      .sort((a, b) => b.timestamp - a.timestamp)
-      .slice(offset, offset + limit);
-
-    res.json({
-      receipts,
-      total: data.receipts.length,
-      limit,
-      offset
-    });
-  } catch (err) {
-    console.error('Error fetching receipts:', err);
-    res.status(500).json({ error: 'Failed to fetch receipts' });
-  }
+app.use((err, req, res, next) => {
+  console.error(err.stack || err.message);
+  const status = err.status || 500;
+  res.status(status).json({
+    error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
+  });
 });
 
-// Serve index.html for SPA routing
+const clientBuildPath = path.join(__dirname, '../client/dist');
+app.use(express.static(clientBuildPath));
 app.get('*', (req, res) => {
   res.sendFile(path.join(clientBuildPath, 'index.html'));
 });
 
-const PORT = 4000;
-app.listen(PORT, () => console.log(`✅ Server running on http://127.0.0.1:${PORT}`));
+async function start() {
+  if (!JWT_SECRET) console.warn('JWT_SECRET is not configured. Admin login will fail until it is set.');
+  await migrate({ close: false });
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+process.on('SIGTERM', async () => {
+  await pool.end();
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  await pool.end();
+  process.exit(0);
+});
+
+if (require.main === module) {
+  start().catch((err) => {
+    console.error('Server failed to start:', err);
+    process.exit(1);
+  });
+}
+
+module.exports = app;

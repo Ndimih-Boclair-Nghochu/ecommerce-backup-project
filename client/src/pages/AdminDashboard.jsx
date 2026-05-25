@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import axios from '../lib/api'
 import Receipt from '../components/Receipt'
 import AdminMessaging from '../components/AdminMessaging'
 import RealTimeStatistics from '../components/RealTimeStatistics'
@@ -9,10 +9,12 @@ import DashboardOverview from '../components/DashboardOverview'
 import OrderManagement from '../components/OrderManagement'
 import SubAdminManagement from '../components/SubAdminManagement'
 import PointOfSale from '../components/PointOfSale'
+import AgencySelectModal from '../components/AgencySelectModal'
 
 export default function AdminDashboard() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('overview')
+  const [mobileMoreOpen, setMobileMoreOpen] = useState(false)
   const [statisticsTab, setStatisticsTab] = useState('platform')
   const [products, setProducts] = useState([])
   const [subAdmins, setSubAdmins] = useState([])
@@ -27,6 +29,8 @@ export default function AdminDashboard() {
   const [shippingForm, setShippingForm] = useState({})
   const [loadingShipping, setLoadingShipping] = useState(false)
   const [orders, setOrders] = useState([])
+  const [customers, setCustomers] = useState([])
+  const [installmentStats, setInstallmentStats] = useState({})
   const [orderSearch, setOrderSearch] = useState('')
   const [orderSortBy, setOrderSortBy] = useState('newest')
   const [orderStatusFilter, setOrderStatusFilter] = useState('all')
@@ -36,6 +40,9 @@ export default function AdminDashboard() {
   const [newTownFee, setNewTownFee] = useState('')
   const [viewOrder, setViewOrder] = useState(null)
   const [receiptOrder, setReceiptOrder] = useState(null)
+  const [showAgencyModal, setShowAgencyModal] = useState(false)
+  const [agencyModalOrder, setAgencyModalOrder] = useState(null)
+  const [pendingStatusChange, setPendingStatusChange] = useState(null)
   const [mainShopTown, setMainShopTown] = useState('Douala')
   const [freeShippingThreshold, setFreeShippingThreshold] = useState(50000)
   const [regionFreeShipping, setRegionFreeShipping] = useState({})
@@ -43,12 +50,18 @@ export default function AdminDashboard() {
   const [locations, setLocations] = useState([])
   const [showLocationForm, setShowLocationForm] = useState(false)
   const [editingLocationId, setEditingLocationId] = useState(null)
-  const [platformStats, setPlatformStats] = useState({ totalInStock: 0, averageRating: 4.8, deliveryTime: '24-48h' })
-  const [statsForm, setStatsForm] = useState({ totalInStock: 0, averageRating: 4.8, deliveryTime: '24-48h' })
+  const [platformStats, setPlatformStats] = useState({ totalInStock: 0, averageRating: 0, deliveryTime: 'Manual confirmation' })
+  const [statsForm, setStatsForm] = useState({ totalInStock: 0, averageRating: 0, deliveryTime: 'Manual confirmation' })
   const [locationForm, setLocationForm] = useState({
     name: '', city: '', address: '', phone: '', email: '', 
     lat: '', lng: '', hours: '', description: '', isMainStore: false
   })
+  const [paymentAccounts, setPaymentAccounts] = useState({
+    card: { accountName: 'Merchant Account', accountNumber: '', bankName: '', accountHolder: '', isActive: false },
+    momo: { mtn: { accountName: 'MTN Mobile Money', phoneNumber: '', accountHolder: '', isActive: false }, orange: { accountName: 'Orange Money', phoneNumber: '', accountHolder: '', isActive: false } },
+    cash: { accountName: 'Cash at Pickup', notes: 'Collect cash when customer picks up order', isActive: true }
+  })
+  const [editingPaymentType, setEditingPaymentType] = useState(null)
 
   const shippingKeys = Object.keys(shippingForm || {})
 
@@ -101,8 +114,7 @@ export default function AdminDashboard() {
     name: '', price: '', description: '', stock: '', 
     category: 'Electronics', image: '', mostOrdered: false, isNew: false,
     availableRegions: ['ALL'],
-    images: [{ color: 'default', url: '' }],
-    rating: 4.5, sku: '', weight: '', dimensions: '',
+    images: [{ color: 'default', url: '' }], sku: '', weight: '', dimensions: '',
     storeAvailability: {}, // { storeId: quantity }
     specifications: [], // [{ key: 'Color', value: 'Black' }, ...]
     warranty: '', barcode: '', tax: 0
@@ -140,6 +152,10 @@ export default function AdminDashboard() {
 
   const [platformName, setPlatformName] = useState('MyShop')
 
+  const [resetStatus, setResetStatus] = useState(null)
+  const [showResetConfirm, setShowResetConfirm] = useState(false)
+  const [resetLoading, setResetLoading] = useState(false)
+
   const token = localStorage.getItem('adminToken')
 
   useEffect(() => {
@@ -154,10 +170,14 @@ export default function AdminDashboard() {
     fetchOrders()
     fetchLocations()
     fetchStats()
+    fetchResetStatus()
     fetchMainShopTown()
     fetchFreeShippingSettings()
     fetchPlatformName()
     fetchHeroSection()
+    fetchPaymentAccounts()
+    fetchCustomersWithInstallments()
+    fetchInstallmentStats()
   }, [token, navigate])
 
   useEffect(() => {
@@ -283,6 +303,28 @@ export default function AdminDashboard() {
     }
   }
 
+  const fetchCustomersWithInstallments = async () => {
+    try {
+      const response = await axios.get('/api/admin/customers-with-installments', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      setCustomers(response.data.customers || [])
+    } catch (err) {
+      console.error('Failed to fetch customers with installments:', err)
+    }
+  }
+
+  const fetchInstallmentStats = async () => {
+    try {
+      const response = await axios.get('/api/admin/installment-stats', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      setInstallmentStats(response.data.stats || {})
+    } catch (err) {
+      console.error('Failed to fetch installment stats:', err)
+    }
+  }
+
   const handleBulkOrderUpdate = async () => {
     if (!bulkOrderStatus || selectedOrders.length === 0) {
       setMessage({ type: 'error', text: '❌ Please select orders and a status' })
@@ -306,6 +348,71 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleStatusChange = async (order, newStatus) => {
+    // If changing to delivered, show agency selection modal
+    if (newStatus === 'delivered' && order.buyer?.agencies && order.buyer.agencies.length > 0) {
+      setAgencyModalOrder(order)
+      setPendingStatusChange(newStatus)
+      setShowAgencyModal(true)
+      return
+    }
+    
+    // Otherwise, update status directly
+    try {
+      await axios.put(`/api/admin/orders/${order.id}`, 
+        { status: newStatus }, 
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      setOrders(orders.map(o => o.id === order.id ? {...o, status: newStatus} : o))
+      setMessage({ type: 'success', text: `✅ Order status updated to ${newStatus}` })
+      setTimeout(() => setMessage({ type: '', text: '' }), 2000)
+    } catch (err) {
+      setMessage({ type: 'error', text: '❌ Failed to update status' })
+    }
+  }
+
+  const handleAgencySelect = async (agencyIndex) => {
+    if (!agencyModalOrder) return
+    
+    try {
+      const selectedAgency = agencyModalOrder.buyer.agencies[agencyIndex]
+      
+      // Update order with selected agency and new status
+      await axios.put(`/api/admin/orders/${agencyModalOrder.id}`, 
+        { 
+          status: pendingStatusChange,
+          selectedDeliveryAgency: selectedAgency,
+          deliveryAgencyIndex: agencyIndex
+        }, 
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      
+      // Update local state
+      setOrders(orders.map(o => 
+        o.id === agencyModalOrder.id 
+          ? {
+              ...o, 
+              status: pendingStatusChange,
+              selectedDeliveryAgency: selectedAgency,
+              deliveryAgencyIndex: agencyIndex
+            } 
+          : o
+      ))
+      
+      setMessage({ 
+        type: 'success', 
+        text: `✅ Order marked as delivered. Agency: ${selectedAgency.name}` 
+      })
+      setShowAgencyModal(false)
+      setAgencyModalOrder(null)
+      setPendingStatusChange(null)
+      setTimeout(() => setMessage({ type: '', text: '' }), 2000)
+    } catch (err) {
+      setMessage({ type: 'error', text: '❌ Failed to update order with agency' })
+      console.error('Agency selection error:', err)
+    }
+  }
+
   const fetchLocations = async () => {
     try {
       const response = await axios.get('/api/admin/locations', {
@@ -317,13 +424,40 @@ export default function AdminDashboard() {
     }
   }
 
+  const fetchPaymentAccounts = async () => {
+    try {
+      const response = await axios.get('/api/payment-accounts')
+      setPaymentAccounts(response.data)
+    } catch (err) {
+      console.error('Failed to fetch payment accounts:', err)
+    }
+  }
+
+  const savePaymentAccount = async (type, provider = null, accountData) => {
+    try {
+      setLoading(true)
+      const payload = { type, provider, ...accountData }
+      const response = await axios.post('/api/admin/payment-accounts', payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      setPaymentAccounts(response.data.paymentAccounts)
+      setMessage({ type: 'success', text: `${accountData.accountName} updated successfully` })
+      setEditingPaymentType(null)
+    } catch (err) {
+      setMessage({ type: 'error', text: err.response?.data?.error || 'Failed to save payment account' })
+    } finally {
+      setLoading(false)
+      setTimeout(() => setMessage({ type: '', text: '' }), 3000)
+    }
+  }
+
   const fetchStats = async () => {
     try {
       const response = await axios.get('/api/stats')
       setPlatformStats(response.data)
       setStatsForm({
         totalInStock: response.data.totalInStock || 0,
-        averageRating: response.data.averageRating || 4.8,
+        averageRating: response.data.averageRating || 0,
         deliveryTime: response.data.deliveryTime || '24-48h'
       })
     } catch (err) {
@@ -333,6 +467,14 @@ export default function AdminDashboard() {
 
   const handleProductSubmit = async (e) => {
     e.preventDefault()
+    
+    // Validate that an image has been provided
+    if (!productForm.image) {
+      setMessage({ type: 'error', text: 'Please upload or provide an image URL' })
+      setTimeout(() => setMessage({ type: '', text: '' }), 3000)
+      return
+    }
+    
     setLoading(true)
     try {
       if (editingProductId) {
@@ -346,7 +488,7 @@ export default function AdminDashboard() {
         })
         setMessage({ type: 'success', text: 'Product created successfully' })
       }
-      setProductForm({ name: '', price: '', description: '', stock: '', category: 'Electronics', image: '', mostOrdered: false, isNew: false, availableRegions: ['ALL'], images: [{ color: 'default', url: '' }], rating: 4.5, sku: '', weight: '', dimensions: '', storeAvailability: {}, specifications: [], warranty: '', barcode: '', tax: 0 })
+      setProductForm({ name: '', price: '', description: '', stock: '', category: 'Electronics', image: '', mostOrdered: false, isNew: false, availableRegions: ['ALL'], images: [{ color: 'default', url: '' }], sku: '', weight: '', dimensions: '', storeAvailability: {}, specifications: [], warranty: '', barcode: '', tax: 0 })
       setEditingProductId(null)
       setShowProductForm(false)
       fetchProducts()
@@ -426,7 +568,6 @@ export default function AdminDashboard() {
       isNew: !!product.isNew,
       availableRegions: product.availableRegions && product.availableRegions.length ? product.availableRegions : ['ALL'],
       images: product.images && product.images.length ? product.images : [{ color: 'default', url: product.image || '' }],
-      rating: product.rating || 4.5,
       sku: product.sku || '',
       weight: product.weight || '',
       dimensions: product.dimensions || '',
@@ -490,6 +631,109 @@ export default function AdminDashboard() {
       setLoading(false)
       setTimeout(() => setMessage({ type: '', text: '' }), 3000)
     }
+  }
+
+  const fetchResetStatus = async () => {
+    try {
+      const response = await axios.get('/api/admin/reset-status', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      setResetStatus(response.data)
+    } catch (err) {
+      console.error('Failed to fetch reset status:', err)
+    }
+  }
+
+  const handlePlatformReset = async () => {
+    setResetLoading(true)
+    try {
+      const response = await axios.post('/api/admin/reset-platform', {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      setMessage({ type: 'success', text: '✅ Platform reset initiated! Data will be permanently deleted in 48 hours.' })
+      setShowResetConfirm(false)
+      // Clear all data immediately on frontend
+      setProducts([])
+      setOrders([])
+      setUsers([])
+      setCategories([])
+      setSubAdmins([])
+      // Notify all other pages/tabs about reset
+      sessionStorage.setItem('platformReset', JSON.stringify({ timestamp: Date.now(), isReset: true }))
+      // Dispatch custom event for pages listening
+      window.dispatchEvent(new Event('platformReset'))
+      await fetchResetStatus()
+      // Force page reload after 1 second to ensure all changes are visible
+      setTimeout(() => {
+        window.location.reload()
+      }, 1500)
+    } catch (err) {
+      const errorMsg = err.response?.data?.error || err.message || 'Failed to reset platform'
+      console.error('Reset platform error:', errorMsg)
+      setMessage({ type: 'error', text: `❌ Reset failed: ${errorMsg}` })
+      setResetLoading(false)
+    }
+  }
+
+  const handleExtendRecoveryWindow = async () => {
+    if (!window.confirm('Extend recovery window by 48 more hours? This will allow you more time to restore your data.')) {
+      return
+    }
+    try {
+      const response = await axios.post('/api/admin/extend-recovery-window', {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      setMessage({ type: 'success', text: '✅ Recovery window extended by 48 hours!' })
+      fetchResetStatus()
+      setTimeout(() => setMessage({ type: '', text: '' }), 3000)
+    } catch (err) {
+      const errorMsg = err.response?.data?.error || err.message || 'Failed to extend recovery window'
+      console.error('Extend recovery error:', errorMsg)
+      setMessage({ type: 'error', text: `❌ Extension failed: ${errorMsg}` })
+      setTimeout(() => setMessage({ type: '', text: '' }), 4000)
+    }
+  }
+
+  const handleRestorePlatform = async () => {
+    if (!window.confirm('Are you sure you want to restore all your data from the reset backup? This cannot be undone.')) {
+      return
+    }
+    try {
+      const response = await axios.post('/api/admin/restore-platform', {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      setMessage({ type: 'success', text: '✅ Platform restored successfully! Refreshing data...' })
+      // Notify all other pages about restore
+      sessionStorage.removeItem('platformReset')
+      window.dispatchEvent(new Event('platformRestored'))
+      setTimeout(() => {
+        window.location.reload()
+      }, 1500)
+    } catch (err) {
+      const errorMsg = err.response?.data?.error || err.message || 'Failed to restore platform'
+      console.error('Restore platform error:', errorMsg)
+      setMessage({ type: 'error', text: `❌ ${errorMsg}` })
+      setTimeout(() => setMessage({ type: '', text: '' }), 4000)
+    }
+  }
+
+  const handlePermanentlyDeleteData = async () => {
+    if (!window.confirm('⚠️  FINAL WARNING: This will PERMANENTLY delete all your data. The 48-hour recovery window will expire. Are you absolutely certain? Type CONFIRM in the next step to proceed.')) {
+      return
+    }
+    const confirmation = window.prompt('Type "CONFIRM" to permanently delete all data:')
+    if (confirmation === 'CONFIRM') {
+      try {
+        // Just clear the reset status - data is already gone
+        setResetStatus(null)
+        setMessage({ type: 'success', text: '✅ All data has been permanently deleted.' })
+      } catch (err) {
+        setMessage({ type: 'error', text: '❌ Failed to complete deletion' })
+      }
+    } else {
+      setMessage({ type: 'error', text: '❌ Permanent deletion cancelled' })
+    }
+    setTimeout(() => setMessage({ type: '', text: '' }), 3000)
   }
 
   const handleLocationSubmit = async (e) => {
@@ -568,6 +812,21 @@ export default function AdminDashboard() {
     totalSubAdmins: subAdmins.length
   }
 
+  const adminTabs = [
+    { key: 'overview', label: 'Overview', icon: '📊' },
+    { key: 'products', label: 'Products', icon: '📦' },
+    { key: 'pos', label: 'POS', icon: '🏪' },
+    { key: 'shipping', label: 'Shipping', icon: '🚚' },
+    { key: 'orders', label: 'Orders', icon: '🧾' },
+    { key: 'sub-admins', label: 'Team', icon: '👥' },
+    { key: 'locations', label: 'Locations', icon: '📍' },
+    { key: 'statistics', label: 'Stats', icon: '📈' },
+    { key: 'chat', label: 'Chat', icon: '💬' },
+    { key: 'settings', label: 'Settings', icon: '⚙' }
+  ]
+  const mobilePrimaryTabs = adminTabs.slice(0, 4)
+  const mobileMoreTabs = adminTabs.slice(4)
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -590,29 +849,77 @@ export default function AdminDashboard() {
       </div>
 
       {/* Tabs Navigation */}
-      <div className="bg-white border-b border-gray-200 shadow-sm overflow-x-auto">
+      <div className="hidden md:block bg-white border-b border-gray-200 shadow-sm overflow-x-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex gap-2 sm:gap-8 min-w-max sm:min-w-0">
-            {['overview', 'products', 'pos', 'shipping', 'orders', 'sub-admins', 'locations', 'statistics', 'chat', 'settings'].map(tab => (
+            {adminTabs.map(tab => (
               <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
                 className={`py-3 sm:py-4 px-2 sm:px-3 font-semibold border-b-2 transition text-xs sm:text-sm md:text-base whitespace-nowrap ${
-                  activeTab === tab 
+                  activeTab === tab.key 
                     ? 'border-blue-600 text-blue-600' 
                     : 'border-transparent text-gray-600 hover:text-gray-900'
                 }`}
               >
-                {tab === 'overview' && '📊 Overview'}
-                {tab === 'products' && '📦 Products'}
-                {tab === 'pos' && '🏪 POS'}
-                {tab === 'shipping' && '🚚 Shipping'}
-                {tab === 'orders' && '🧾 Orders'}
-                {tab === 'sub-admins' && '👥 Sub-Admins'}
-                {tab === 'locations' && '🏪 Locations'}
-                {tab === 'statistics' && '📈 Statistics'}
-                {tab === 'chat' && '💬 Chat'}
-                {tab === 'settings' && '⚙️ Settings'}
+                <span className='mr-2'>{tab.icon}</span>{tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-gray-200 shadow-2xl">
+        <div className="grid grid-cols-5">
+          {mobilePrimaryTabs.map(tab => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => {
+                setActiveTab(tab.key)
+                setMobileMoreOpen(false)
+              }}
+              className={`py-2 text-xs font-semibold flex flex-col items-center gap-1 ${activeTab === tab.key ? 'text-blue-700' : 'text-gray-600'}`}
+            >
+              <span className="text-xl">{tab.icon}</span>
+              <span>{tab.label}</span>
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => setMobileMoreOpen(true)}
+            className="py-2 text-xs font-semibold flex flex-col items-center gap-1 text-gray-600"
+          >
+            <span className="text-xl">⋯</span>
+            <span>More</span>
+          </button>
+        </div>
+      </div>
+
+      <div className={`md:hidden fixed inset-0 z-50 ${mobileMoreOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+        <button
+          type="button"
+          aria-label="Close more admin navigation"
+          onClick={() => setMobileMoreOpen(false)}
+          className={`absolute inset-0 bg-black/40 transition-opacity ${mobileMoreOpen ? 'opacity-100' : 'opacity-0'}`}
+        />
+        <div className={`absolute inset-x-0 bottom-0 rounded-t-2xl bg-white p-5 shadow-2xl transition-transform duration-300 ${mobileMoreOpen ? 'translate-y-0' : 'translate-y-full'}`}>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-bold text-gray-900">More</h2>
+            <button type="button" onClick={() => setMobileMoreOpen(false)} className="rounded-lg border border-gray-300 px-3 py-2 text-xl leading-none">×</button>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {mobileMoreTabs.map(tab => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => {
+                  setActiveTab(tab.key)
+                  setMobileMoreOpen(false)
+                }}
+                className={`rounded-lg border p-4 text-left font-semibold ${activeTab === tab.key ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-700'}`}
+              >
+                <span className="mr-2">{tab.icon}</span>{tab.label}
               </button>
             ))}
           </div>
@@ -630,8 +937,28 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      {/* Platform Reset Banner */}
+      {resetStatus?.isReset && (
+        <div className="mx-4 sm:mx-6 mt-3 sm:mt-4 p-4 sm:p-6 rounded-lg border-2 border-orange-400 bg-gradient-to-r from-orange-50 to-yellow-50 shadow-md">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <p className="text-lg sm:text-xl font-bold text-orange-900">🔄 Platform in Reset Mode</p>
+              <p className="text-sm text-orange-800 mt-1">All data has been temporarily deleted. You have <span className={`font-bold ${resetStatus.isExpired ? 'text-red-600' : 'text-green-600'}`}>{resetStatus.isExpired ? '0 hours' : `${resetStatus.hoursRemaining} hours`}</span> to restore your data.</p>
+            </div>
+            {!resetStatus.isExpired && (
+              <button
+                onClick={handleRestorePlatform}
+                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-lg font-bold text-sm sm:text-base transition shadow-md whitespace-nowrap"
+              >
+                ✓ Restore Data Now
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 pb-24 md:pb-8">
         {/* OVERVIEW TAB */}
         {activeTab === 'overview' && (
           <DashboardOverview 
@@ -639,6 +966,9 @@ export default function AdminDashboard() {
             products={products}
             orders={orders}
             subAdmins={subAdmins}
+            customers={customers}
+            installmentStats={installmentStats}
+            resetStatus={resetStatus}
             onAddProduct={() => setActiveTab('products')}
             onViewAnalytics={() => setActiveTab('statistics')}
             onManageTeam={() => setActiveTab('sub-admins')}
@@ -657,7 +987,7 @@ export default function AdminDashboard() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-6 mb-4 sm:mb-6">
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Product Management</h2>
               {!showProductForm && (
-                <button onClick={() => { setShowProductForm(true); setEditingProductId(null); setProductForm({ name: '', price: '', description: '', stock: '', category: 'Electronics', image: '', mostOrdered: false, isNew: false, availableRegions: ['ALL'], images: [{ color: 'default', url: '' }], rating: 4.5, sku: '', weight: '', dimensions: '', storeAvailability: {}, specifications: [], warranty: '', barcode: '', tax: 0 }); }} 
+                <button onClick={() => { setShowProductForm(true); setEditingProductId(null); setProductForm({ name: '', price: '', description: '', stock: '', category: 'Electronics', image: '', mostOrdered: false, isNew: false, availableRegions: ['ALL'], images: [{ color: 'default', url: '' }], sku: '', weight: '', dimensions: '', storeAvailability: {}, specifications: [], warranty: '', barcode: '', tax: 0 }); }} 
                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold text-sm sm:text-base transition shadow-md">
                   ➕ Add Product
                 </button>
@@ -715,14 +1045,6 @@ export default function AdminDashboard() {
                         <label className="block text-xs font-semibold text-gray-700 mb-1">SKU</label>
                         <input type="text" placeholder="e.g., PROD-001" value={productForm.sku} onChange={(e) => setProductForm({...productForm, sku: e.target.value})} className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm transition" />
                         <p className="text-xs text-gray-500 mt-1">Unique product identifier for inventory</p>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1">Initial Rating</label>
-                        <div className="flex items-center gap-2">
-                          <input type="number" placeholder="0" min="0" max="5" step="0.1" value={productForm.rating} onChange={(e) => setProductForm({...productForm, rating: e.target.value})} className="flex-1 px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm transition" />
-                          <span className="text-2xl">⭐</span>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-1">0-5 stars (affects customer view)</p>
                       </div>
                     </div>
                     <div>
@@ -843,7 +1165,7 @@ export default function AdminDashboard() {
                         <div className="flex flex-col sm:flex-row gap-4">
                           <div className="flex-1">
                             <label className="block text-xs text-gray-600 mb-2">📥 Upload or paste URL:</label>
-                            <input type="url" placeholder="https://example.com/product.jpg" value={productForm.image} onChange={(e) => setProductForm({...productForm, image: e.target.value})} required className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm transition" />
+                            <input type="url" placeholder="https://example.com/product.jpg" value={productForm.image} onChange={(e) => setProductForm({...productForm, image: e.target.value})} required={!productForm.image} className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm transition" />
                             <p className="text-xs text-gray-500 mt-1">High-quality image for product listing</p>
                           </div>
                           {productForm.image && (
@@ -896,13 +1218,13 @@ export default function AdminDashboard() {
                               }} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 text-sm" />
                             </div>
                             <div className="sm:col-span-3">
-                              <label className="block text-xs font-semibold text-gray-700 mb-1">Image URL</label>
-                              <input type="url" placeholder="https://example.com/image.jpg" value={img.url} onChange={(e) => {
+                              <label className="block text-xs font-semibold text-gray-700 mb-1">Image URL or File</label>
+                              <input type="text" placeholder="https://example.com/image.jpg or choose file" value={img.url} onChange={(e) => {
                                 const arr = [...productForm.images]; arr[idx] = { ...arr[idx], url: e.target.value }; setProductForm({ ...productForm, images: arr })
                               }} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 text-sm" />
                             </div>
                             <div className="flex gap-2">
-                              <label className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-2 rounded-lg font-semibold cursor-pointer text-sm transition">
+                              <label className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg font-semibold cursor-pointer text-sm transition">
                                 📤
                                 <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
                                   const file = e.target.files?.[0]
@@ -1072,9 +1394,16 @@ export default function AdminDashboard() {
 
             {/* Products Grid */}
             {!showProductForm && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {(() => {
-                  let filtered = products
+              <div>
+                {resetStatus?.isReset && (
+                  <div className="bg-orange-100 border-l-4 border-orange-600 p-4 rounded-lg mb-6">
+                    <p className="font-bold text-orange-900">🔄 Platform Reset Active</p>
+                    <p className="text-sm text-orange-800 mt-1">All products are temporarily hidden. Restore your data to display them again.</p>
+                  </div>
+                )}
+                <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${products.length === 0 && resetStatus?.isReset ? 'opacity-50' : ''}`}>
+                  {(() => {
+                    let filtered = products
                   
                   // Apply search filter
                   if (productSearch) {
@@ -1159,7 +1488,22 @@ export default function AdminDashboard() {
                     </div>
                   ))
                 })()}
+                {products.length === 0 && resetStatus?.isReset && (
+                  <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
+                    <p className="text-6xl mb-4">🔄</p>
+                    <p className="text-lg font-bold text-gray-600">All Products Temporarily Deleted</p>
+                    <p className="text-sm text-gray-500 mt-2">Your products will reappear when you restore the platform data.</p>
+                  </div>
+                )}
+                {products.length === 0 && !resetStatus?.isReset && (
+                  <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
+                    <p className="text-6xl mb-4">📦</p>
+                    <p className="text-lg font-bold text-gray-600">No Products Yet</p>
+                    <p className="text-sm text-gray-500 mt-2">Start by adding your first product to the catalog.</p>
+                  </div>
+                )}
               </div>
+            </div>
             )}
           </div>
         )}
@@ -1452,299 +1796,19 @@ export default function AdminDashboard() {
 
         {/* ORDERS TAB */}
         {activeTab === 'orders' && (
-          <div>
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-6 mb-6">
-              <div>
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">📋 Order Management</h2>
-                <p className="text-sm text-gray-600 mt-1">Track, manage and fulfill customer orders</p>
-              </div>
-              <button onClick={fetchOrders} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-semibold text-sm sm:text-base transition shadow-md flex items-center gap-2">
-                🔄 Refresh Orders
-              </button>
-            </div>
-
-            {/* Statistics Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 sm:gap-4 mb-6">
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border-2 border-blue-200">
-                <p className="text-xs text-blue-700 font-bold mb-1">📊 Total Orders</p>
-                <p className="text-3xl font-bold text-blue-600">{orderStats.total}</p>
-              </div>
-              <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg p-4 border-2 border-yellow-200">
-                <p className="text-xs text-yellow-700 font-bold mb-1">⏳ Pending</p>
-                <p className="text-3xl font-bold text-yellow-600">{orderStats.pending}</p>
-              </div>
-              <div className="bg-gradient-to-br from-blue-50 to-cyan-100 rounded-lg p-4 border-2 border-blue-200">
-                <p className="text-xs text-blue-700 font-bold mb-1">⚙️ Processing</p>
-                <p className="text-3xl font-bold text-blue-600">{orderStats.processing}</p>
-              </div>
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border-2 border-purple-200">
-                <p className="text-xs text-purple-700 font-bold mb-1">📦 Shipped</p>
-                <p className="text-3xl font-bold text-purple-600">{orderStats.shipped}</p>
-              </div>
-              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border-2 border-green-200">
-                <p className="text-xs text-green-700 font-bold mb-1">✓ Delivered</p>
-                <p className="text-3xl font-bold text-green-600">{orderStats.delivered}</p>
-              </div>
-              <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-4 border-2 border-red-200">
-                <p className="text-xs text-red-700 font-bold mb-1">✕ Cancelled</p>
-                <p className="text-3xl font-bold text-red-600">{orderStats.cancelled}</p>
-              </div>
-            </div>
-
-            {/* Revenue Stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <div className="bg-white rounded-xl shadow-md p-6 border-2 border-green-200">
-                <p className="text-sm text-gray-600 font-semibold mb-2">💰 Total Revenue</p>
-                <p className="text-3xl font-bold text-green-600">XAF {orderStats.totalRevenue.toLocaleString()}</p>
-              </div>
-              <div className="bg-white rounded-xl shadow-md p-6 border-2 border-blue-200">
-                <p className="text-sm text-gray-600 font-semibold mb-2">💵 Avg Order Value</p>
-                <p className="text-3xl font-bold text-blue-600">XAF {orderStats.averageOrderValue.toLocaleString()}</p>
-              </div>
-              <div className="bg-white rounded-xl shadow-md p-6 border-2 border-orange-200">
-                <p className="text-sm text-gray-600 font-semibold mb-2">🆕 New Orders (24h)</p>
-                <p className="text-3xl font-bold text-orange-600">{orderStats.newOrders}</p>
-              </div>
-              <div className="bg-white rounded-xl shadow-md p-6 border-2 border-purple-200">
-                <p className="text-sm text-gray-600 font-semibold mb-2">📦 Total Items</p>
-                <p className="text-3xl font-bold text-purple-600">{orderStats.totalItems}</p>
-              </div>
-            </div>
-
-            {/* Filters and Search */}
-            <div className="bg-white rounded-xl shadow-md p-4 sm:p-6 mb-6 border-2 border-gray-200">
-              <div className="space-y-4">
-                {/* Search */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-2">🔍 Search Orders</label>
-                  <input 
-                    type="text" 
-                    value={orderSearch}
-                    onChange={(e) => setOrderSearch(e.target.value)}
-                    placeholder="Name, email, phone, or ID..."
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 font-semibold"
-                  />
-                </div>
-
-                {/* Filters Row */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {/* Status Filter */}
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-2">Status</label>
-                    <select 
-                      value={orderStatusFilter}
-                      onChange={(e) => setOrderStatusFilter(e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 font-semibold"
-                    >
-                      <option value="all">All Orders</option>
-                      <option value="pending">Pending</option>
-                      <option value="processing">Processing</option>
-                      <option value="shipped">Shipped</option>
-                      <option value="delivered">Delivered</option>
-                      <option value="cancelled">Cancelled</option>
-                    </select>
-                  </div>
-
-                  {/* Sort */}
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-2">Sort By</label>
-                    <select 
-                      value={orderSortBy}
-                      onChange={(e) => setOrderSortBy(e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 font-semibold"
-                    >
-                      <option value="newest">Newest First</option>
-                      <option value="oldest">Oldest First</option>
-                      <option value="highest">Highest Value</option>
-                      <option value="lowest">Lowest Value</option>
-                    </select>
-                  </div>
-
-                  {/* Bulk Update */}
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-2">Bulk Update Status</label>
-                    <select 
-                      value={bulkOrderStatus}
-                      onChange={(e) => setBulkOrderStatus(e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 font-semibold"
-                    >
-                      <option value="">Select status...</option>
-                      <option value="pending">Pending</option>
-                      <option value="processing">Processing</option>
-                      <option value="shipped">Shipped</option>
-                      <option value="delivered">Delivered</option>
-                      <option value="cancelled">Cancelled</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Bulk Action Button */}
-                {selectedOrders.length > 0 && (
-                  <div className="flex gap-3 pt-2">
-                    <button 
-                      onClick={handleBulkOrderUpdate}
-                      className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-bold transition flex items-center gap-2 text-sm"
-                    >
-                      ✓ Apply to {selectedOrders.length}
-                    </button>
-                    <button 
-                      onClick={() => setSelectedOrders([])}
-                      className="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg font-bold transition text-sm"
-                    >
-                      Clear Selection
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Orders Table */}
-            <div className="bg-white rounded-xl shadow-md overflow-x-auto border-2 border-gray-200">
-              {filteredOrders.length === 0 ? (
-                <div className="p-8 text-center">
-                  <p className="text-gray-500 text-lg">📭 No orders found</p>
-                </div>
-              ) : (
-                <table className="w-full text-sm">
-                  <thead className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
-                    <tr>
-                      <th className="px-4 py-3 text-left">
-                        <input 
-                          type="checkbox" 
-                          checked={selectedOrders.length === filteredOrders.length}
-                          onChange={(e) => setSelectedOrders(e.target.checked ? filteredOrders.map(o => o.id) : [])}
-                          className="w-5 h-5 cursor-pointer"
-                        />
-                      </th>
-                      <th className="px-4 py-3 text-left font-bold">Order Info</th>
-                      <th className="px-4 py-3 text-left font-bold">Buyer</th>
-                      <th className="px-4 py-3 text-left font-bold">Items</th>
-                      <th className="px-4 py-3 text-left font-bold">Total</th>
-                      <th className="px-4 py-3 text-left font-bold">Status</th>
-                      <th className="px-4 py-3 text-left font-bold">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredOrders.map((order, idx) => (
-                      <tr key={order.id} className={`border-t border-gray-200 ${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-blue-50 transition`}>
-                        <td className="px-4 py-3">
-                          <input 
-                            type="checkbox" 
-                            checked={selectedOrders.includes(order.id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedOrders([...selectedOrders, order.id])
-                              } else {
-                                setSelectedOrders(selectedOrders.filter(id => id !== order.id))
-                              }
-                            }}
-                            className="w-5 h-5 cursor-pointer"
-                          />
-                        </td>
-                        <td className="px-4 py-3">
-                          <div>
-                            <p className="font-semibold text-gray-900">{order.id.substring(0, 8)}...</p>
-                            <p className="text-xs text-gray-500">{order.region || 'N/A'}</p>
-                            <p className="text-xs text-gray-400">
-                              {(() => {
-                                const now = new Date()
-                                const created = new Date(order.createdAt)
-                                const diffHours = Math.floor((now - created) / (1000 * 60 * 60))
-                                if (diffHours < 1) return 'Just now'
-                                if (diffHours < 24) return `${diffHours}h ago`
-                                const diffDays = Math.floor(diffHours / 24)
-                                return `${diffDays}d ago`
-                              })()}
-                            </p>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div>
-                            <p className="font-semibold text-gray-900">{order.buyer?.name || 'N/A'}</p>
-                            <p className="text-xs text-gray-600">{order.buyer?.phone || 'N/A'}</p>
-                            <p className="text-xs text-gray-500">{order.buyer?.email || 'N/A'}</p>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <p className="font-semibold text-gray-900">{order.items?.length || 0} item(s)</p>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div>
-                            <p className="font-semibold text-gray-900">XAF {(order.totals?.total || 0).toLocaleString()}</p>
-                            <p className="text-xs text-gray-600">Shipping: XAF {(order.totals?.shipping || 0).toLocaleString()}</p>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <select 
-                            value={order.status}
-                            onChange={async (e) => {
-                              const newStatus = e.target.value
-                              try {
-                                await axios.put(`/api/admin/orders/${order.id}`, 
-                                  { status: newStatus }, 
-                                  { headers: { Authorization: `Bearer ${token}` } }
-                                )
-                                setOrders(orders.map(o => o.id === order.id ? {...o, status: newStatus} : o))
-                                setMessage({ type: 'success', text: `✅ Order status updated` })
-                                setTimeout(() => setMessage({ type: '', text: '' }), 2000)
-                              } catch (err) {
-                                setMessage({ type: 'error', text: '❌ Failed to update status' })
-                              }
-                            }}
-                            className="px-3 py-2 rounded-lg text-xs font-bold border-2 cursor-pointer transition
-                              ${order.status === 'pending' ? 'bg-yellow-100 border-yellow-300 text-yellow-800' : ''}
-                              ${order.status === 'processing' ? 'bg-blue-100 border-blue-300 text-blue-800' : ''}
-                              ${order.status === 'shipped' ? 'bg-purple-100 border-purple-300 text-purple-800' : ''}
-                              ${order.status === 'delivered' ? 'bg-green-100 border-green-300 text-green-800' : ''}
-                              ${order.status === 'cancelled' ? 'bg-red-100 border-red-300 text-red-800' : ''}
-                            "
-                          >
-                            <option value="pending">Pending</option>
-                            <option value="processing">Processing</option>
-                            <option value="shipped">Shipped</option>
-                            <option value="delivered">Delivered</option>
-                            <option value="cancelled">Cancelled</option>
-                          </select>
-                        </td>
-                        <td className="px-4 py-3 flex gap-2">
-                          <button 
-                            onClick={() => handleViewReceipt(order)}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded font-semibold text-xs transition"
-                          >
-                            View
-                          </button>
-                          <button 
-                            onClick={async () => {
-                              if (!window.confirm('Delete this order?')) return
-                              try {
-                                await axios.delete(`/api/admin/orders/${order.id}`, 
-                                  { headers: { Authorization: `Bearer ${token}` } }
-                                )
-                                setOrders(orders.filter(o => o.id !== order.id))
-                                setMessage({ type: 'success', text: '✅ Order deleted' })
-                                setTimeout(() => setMessage({ type: '', text: '' }), 2000)
-                              } catch (err) {
-                                setMessage({ type: 'error', text: '❌ Failed to delete order' })
-                              }
-                            }}
-                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded font-semibold text-xs transition"
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-
-            {/* Results Info */}
-            <div className="text-center mt-4 text-sm text-gray-600">
-              Showing {filteredOrders.length} of {orders.length} orders
-            </div>
-          </div>
+          <OrderManagement 
+            orders={orders}
+            token={localStorage.getItem('adminToken')}
+            resetStatus={resetStatus}
+            onOrderUpdate={(orderId, updatedOrder, deleted) => {
+              if (deleted) {
+                setOrders(orders.filter(o => o.id !== orderId))
+              } else {
+                setOrders(orders.map(o => o.id === orderId ? updatedOrder : o))
+              }
+            }}
+            onViewReceipt={(order) => setReceiptOrder(order)}
+          />
         )}
 
         {/* Receipt Modal */}
@@ -1754,6 +1818,18 @@ export default function AdminDashboard() {
             onClose={() => setReceiptOrder(null)}
           />
         )}
+
+        {/* Agency Selection Modal */}
+        <AgencySelectModal
+          isOpen={showAgencyModal}
+          order={agencyModalOrder}
+          onClose={() => {
+            setShowAgencyModal(false)
+            setAgencyModalOrder(null)
+            setPendingStatusChange(null)
+          }}
+          onSelectAgency={handleAgencySelect}
+        />
 
         {/* Order Detail Modal - DEPRECATED - Kept for compatibility */}
         {viewOrder && false && (
@@ -1924,7 +2000,225 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {/* PAYMENTS TAB */}
+        {activeTab === 'payments' && (
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-8">💳 Payment Account Configuration</h2>
+            <p className="text-gray-600 mb-8">Configure your payment receiving accounts for each payment method customers can use</p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* CARD PAYMENT CONFIG */}
+              <div className="bg-white rounded-xl shadow-md overflow-hidden border-2 border-blue-200">
+                <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-white">
+                  <h3 className="text-xl font-bold flex items-center gap-3">💳 Card Payment</h3>
+                  <p className="text-blue-100 text-sm mt-2">Visa & Mastercard</p>
+                </div>
+                <div className="p-6">
+                  {editingPaymentType === 'card' ? (
+                    <form onSubmit={(e) => {
+                      e.preventDefault()
+                      savePaymentAccount('card', null, {
+                        accountName: paymentAccounts.card.accountName,
+                        accountNumber: document.getElementById('cardNumber').value,
+                        bankName: document.getElementById('bankName').value,
+                        accountHolder: document.getElementById('cardHolder').value,
+                        isActive: document.getElementById('cardActive').checked
+                      })
+                    }} className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Account Holder Name</label>
+                        <input type="text" id="cardHolder" placeholder="Business Name" defaultValue={paymentAccounts.card.accountHolder} required className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Bank Account Number</label>
+                        <input type="text" id="cardNumber" placeholder="0123456789" defaultValue={paymentAccounts.card.accountNumber} required className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Bank Name</label>
+                        <input type="text" id="bankName" placeholder="e.g., SGBC, UBA" defaultValue={paymentAccounts.card.bankName} required className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" />
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <input type="checkbox" id="cardActive" defaultChecked={paymentAccounts.card.isActive} className="w-5 h-5 rounded" />
+                        <label htmlFor="cardActive" className="text-sm font-semibold text-gray-700">Active (Customers can pay with card)</label>
+                      </div>
+                      <div className="flex gap-3 pt-2">
+                        <button type="submit" disabled={loading} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition disabled:opacity-50">Save</button>
+                        <button type="button" onClick={() => setEditingPaymentType(null)} className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 py-2 rounded-lg font-semibold">Cancel</button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-xs text-gray-600">Account Holder</p>
+                        <p className="font-bold text-gray-900">{paymentAccounts.card.accountHolder || 'Not configured'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600">Account Number</p>
+                        <p className="font-bold text-gray-900">{paymentAccounts.card.accountNumber ? '••••' + paymentAccounts.card.accountNumber.slice(-4) : 'Not configured'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600">Bank Name</p>
+                        <p className="font-bold text-gray-900">{paymentAccounts.card.bankName || 'Not configured'}</p>
+                      </div>
+                      <div className="pt-2">
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${paymentAccounts.card.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                          {paymentAccounts.card.isActive ? '✓ Active' : '✗ Inactive'}
+                        </span>
+                      </div>
+                      <button onClick={() => setEditingPaymentType('card')} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition">Edit</button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* MTN MOBILE MONEY CONFIG */}
+              <div className="bg-white rounded-xl shadow-md overflow-hidden border-2 border-yellow-300">
+                <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 p-6 text-white">
+                  <h3 className="text-xl font-bold flex items-center gap-3">🟡 MTN Mobile Money</h3>
+                  <p className="text-yellow-100 text-sm mt-2">MTN Payment Account</p>
+                </div>
+                <div className="p-6">
+                  {editingPaymentType === 'mtn' ? (
+                    <form onSubmit={(e) => {
+                      e.preventDefault()
+                      savePaymentAccount('momo', 'mtn', {
+                        accountName: paymentAccounts.momo.mtn.accountName,
+                        phoneNumber: document.getElementById('mtnPhone').value,
+                        accountHolder: document.getElementById('mtnHolder').value,
+                        isActive: document.getElementById('mtnActive').checked
+                      })
+                    }} className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Account Holder Name</label>
+                        <input type="text" id="mtnHolder" placeholder="Business Name" defaultValue={paymentAccounts.momo.mtn.accountHolder} required className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-600" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">MTN Phone Number (Cameroon)</label>
+                        <input type="tel" id="mtnPhone" placeholder="697123456 or 670123456" defaultValue={paymentAccounts.momo.mtn.phoneNumber} required className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-600" />
+                        <p className="text-xs text-gray-500 mt-1">9-digit Cameroon MTN number (670-676, 680, 683-689)</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <input type="checkbox" id="mtnActive" defaultChecked={paymentAccounts.momo.mtn.isActive} className="w-5 h-5 rounded" />
+                        <label htmlFor="mtnActive" className="text-sm font-semibold text-gray-700">Active (Customers can pay with MTN)</label>
+                      </div>
+                      <div className="flex gap-3 pt-2">
+                        <button type="submit" disabled={loading} className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white py-2 rounded-lg font-semibold transition disabled:opacity-50">Save</button>
+                        <button type="button" onClick={() => setEditingPaymentType(null)} className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 py-2 rounded-lg font-semibold">Cancel</button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-xs text-gray-600">Account Holder</p>
+                        <p className="font-bold text-gray-900">{paymentAccounts.momo.mtn.accountHolder || 'Not configured'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600">Phone Number</p>
+                        <p className="font-bold text-gray-900">{paymentAccounts.momo.mtn.phoneNumber || 'Not configured'}</p>
+                      </div>
+                      <div className="pt-2">
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${paymentAccounts.momo.mtn.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                          {paymentAccounts.momo.mtn.isActive ? '✓ Active' : '✗ Inactive'}
+                        </span>
+                      </div>
+                      <button onClick={() => setEditingPaymentType('mtn')} className="w-full bg-yellow-600 hover:bg-yellow-700 text-white py-2 rounded-lg font-semibold transition">Edit</button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* ORANGE MONEY CONFIG */}
+              <div className="bg-white rounded-xl shadow-md overflow-hidden border-2 border-orange-300">
+                <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6 text-white">
+                  <h3 className="text-xl font-bold flex items-center gap-3">🟠 Orange Money</h3>
+                  <p className="text-orange-100 text-sm mt-2">Orange Payment Account</p>
+                </div>
+                <div className="p-6">
+                  {editingPaymentType === 'orange' ? (
+                    <form onSubmit={(e) => {
+                      e.preventDefault()
+                      savePaymentAccount('momo', 'orange', {
+                        accountName: paymentAccounts.momo.orange.accountName,
+                        phoneNumber: document.getElementById('orangePhone').value,
+                        accountHolder: document.getElementById('orangeHolder').value,
+                        isActive: document.getElementById('orangeActive').checked
+                      })
+                    }} className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Account Holder Name</label>
+                        <input type="text" id="orangeHolder" placeholder="Business Name" defaultValue={paymentAccounts.momo.orange.accountHolder} required className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-600" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Orange Phone Number (Cameroon)</label>
+                        <input type="tel" id="orangePhone" placeholder="699123456 or 690123456" defaultValue={paymentAccounts.momo.orange.phoneNumber} required className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-600" />
+                        <p className="text-xs text-gray-500 mt-1">9-digit Cameroon Orange number (690, 691, 696, 699)</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <input type="checkbox" id="orangeActive" defaultChecked={paymentAccounts.momo.orange.isActive} className="w-5 h-5 rounded" />
+                        <label htmlFor="orangeActive" className="text-sm font-semibold text-gray-700">Active (Customers can pay with Orange)</label>
+                      </div>
+                      <div className="flex gap-3 pt-2">
+                        <button type="submit" disabled={loading} className="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-2 rounded-lg font-semibold transition disabled:opacity-50">Save</button>
+                        <button type="button" onClick={() => setEditingPaymentType(null)} className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 py-2 rounded-lg font-semibold">Cancel</button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-xs text-gray-600">Account Holder</p>
+                        <p className="font-bold text-gray-900">{paymentAccounts.momo.orange.accountHolder || 'Not configured'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600">Phone Number</p>
+                        <p className="font-bold text-gray-900">{paymentAccounts.momo.orange.phoneNumber || 'Not configured'}</p>
+                      </div>
+                      <div className="pt-2">
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${paymentAccounts.momo.orange.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                          {paymentAccounts.momo.orange.isActive ? '✓ Active' : '✗ Inactive'}
+                        </span>
+                      </div>
+                      <button onClick={() => setEditingPaymentType('orange')} className="w-full bg-orange-600 hover:bg-orange-700 text-white py-2 rounded-lg font-semibold transition">Edit</button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* CASH PAYMENT CONFIG */}
+              <div className="bg-white rounded-xl shadow-md overflow-hidden border-2 border-green-300">
+                <div className="bg-gradient-to-r from-green-600 to-green-700 p-6 text-white">
+                  <h3 className="text-xl font-bold flex items-center gap-3">💰 Cash at Pickup</h3>
+                  <p className="text-green-100 text-sm mt-2">Collect cash when customer picks up order</p>
+                </div>
+                <div className="p-6">
+                  <div className="space-y-3">
+                    <p className="text-sm text-gray-600">Cash payments are automatically handled during pickup. No additional configuration needed.</p>
+                    <div className="bg-green-50 border-l-4 border-green-600 p-4 rounded">
+                      <p className="text-sm text-green-900">✓ This payment method is always active and ready for use</p>
+                    </div>
+                    <div className="pt-2">
+                      <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800">✓ Always Active</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Account Instructions */}
+            <div className="mt-8 bg-blue-50 border-l-4 border-blue-600 p-6 rounded-lg">
+              <h3 className="font-bold text-blue-900 mb-3">📋 How Payment Accounts Work</h3>
+              <ul className="space-y-2 text-sm text-blue-800">
+                <li>✓ Configure your payment receiving accounts for each payment method</li>
+                <li>✓ Only active payment methods will be available to customers during checkout</li>
+                <li>✓ All customer payments will be directed to these accounts</li>
+                <li>✓ Ensure account details are correct to avoid payment issues</li>
+                <li>✓ Cash payments are handled directly at the pickup location</li>
+              </ul>
+            </div>
+          </div>
+        )}
+
         {/* STATISTICS TAB */}
+
         {activeTab === 'statistics' && (
           <div>
             <h2 className="text-3xl font-bold text-gray-900 mb-8">Real-Time Analytics Dashboard</h2>
@@ -2210,6 +2504,145 @@ export default function AdminDashboard() {
                   <p className="text-sm font-semibold text-blue-900">💡 Need Help?</p>
                   <p className="text-xs text-blue-800 mt-2">For technical support or to report issues, contact the development team. All platform features are designed for optimal performance and security.</p>
                 </div>
+              </div>
+
+              {/* SECTION 5.5: Platform Reset & Recovery */}
+              <div className="bg-gradient-to-r from-red-50 to-rose-50 rounded-xl shadow-md p-6 lg:p-8 border-2 border-red-200">
+                <h3 className="text-xl font-bold text-red-900 mb-6 flex items-center gap-2">🔄 Reset Platform & Data Recovery</h3>
+                
+                {!resetStatus?.isReset ? (
+                  <div>
+                    <p className="text-gray-700 mb-4">Reset your entire platform to start fresh. Perfect when changing business direction or reselling the platform.</p>
+                    <div className="bg-red-100 border-l-4 border-red-600 p-4 rounded mb-4">
+                      <p className="text-sm font-bold text-red-900">⚠️  IMPORTANT NOTICE:</p>
+                      <ul className="text-xs text-red-800 mt-2 space-y-1">
+                        <li>✓ All products, orders, chat messages, and history will be cleared</li>
+                        <li>✓ Data will be recoverable for 48 hours after reset</li>
+                        <li>✓ After 48 hours, data is permanently deleted and cannot be recovered</li>
+                        <li>✓ Your account credentials remain unchanged</li>
+                        <li>✓ All activity is logged for security</li>
+                      </ul>
+                    </div>
+                    
+                    <button
+                      onClick={() => setShowResetConfirm(true)}
+                      disabled={resetLoading}
+                      className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-bold transition disabled:opacity-50"
+                    >
+                      🔄 Reset Platform Now
+                    </button>
+
+                    {showResetConfirm && (
+                      <div className="mt-4 p-4 bg-white border-2 border-red-400 rounded-lg">
+                        <p className="font-bold text-red-900 mb-3">⚠️  Final Confirmation Required</p>
+                        <p className="text-sm text-gray-700 mb-4">This action will delete all platform data. You have 48 hours to restore it using the backup.</p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handlePlatformReset}
+                            disabled={resetLoading}
+                            className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded font-bold transition disabled:opacity-50"
+                          >
+                            {resetLoading ? '⏳ Resetting...' : '✓ Yes, Reset Platform'}
+                          </button>
+                          <button
+                            onClick={() => setShowResetConfirm(false)}
+                            className="flex-1 bg-gray-400 hover:bg-gray-500 text-white py-2 rounded font-bold transition"
+                          >
+                            ✗ Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div>
+                    <div className="bg-orange-100 border-l-4 border-orange-600 p-4 rounded mb-4">
+                      <p className="font-bold text-orange-900">🔄 Platform Reset Active - Recovery Window Open</p>
+                      <p className="text-sm text-orange-800 mt-2">Your data is backed up and can be restored within the recovery window below.</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div className="bg-white p-4 rounded border-2 border-orange-300">
+                        <p className="text-xs text-gray-600 font-bold mb-1">Reset Time</p>
+                        <p className="text-lg font-bold text-gray-900">
+                          {new Date(resetStatus.resetTime).toLocaleString()}
+                        </p>
+                      </div>
+                      <div className={`bg-white p-4 rounded border-2 ${resetStatus.isExpired ? 'border-red-300' : 'border-green-300'}`}>
+                        <p className="text-xs text-gray-600 font-bold mb-1">Recovery Time Remaining</p>
+                        <p className={`text-lg font-bold ${resetStatus.isExpired ? 'text-red-600' : 'text-green-600'}`}>
+                          {resetStatus.isExpired ? '⏰ EXPIRED' : `${resetStatus.hoursRemaining}h remaining`}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="bg-white p-4 rounded border-2 border-orange-300 mb-4">
+                      <p className="text-sm font-bold text-gray-800 mb-3">📦 Data Available in Backup:</p>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+                        <div className="text-center">
+                          <p className="text-lg font-bold text-gray-900">{resetStatus.itemsInBackup.products}</p>
+                          <p className="text-xs text-gray-600">Products</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-lg font-bold text-gray-900">{resetStatus.itemsInBackup.orders}</p>
+                          <p className="text-xs text-gray-600">Orders</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-lg font-bold text-gray-900">{resetStatus.itemsInBackup.users}</p>
+                          <p className="text-xs text-gray-600">Users</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-lg font-bold text-gray-900">{resetStatus.itemsInBackup.receipts}</p>
+                          <p className="text-xs text-gray-600">Receipts</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-lg font-bold text-gray-900">{resetStatus.itemsInBackup.chatMessages}</p>
+                          <p className="text-xs text-gray-600">Messages</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {!resetStatus.isExpired && (
+                      <div className="flex gap-2 mb-2">
+                        <button
+                          onClick={handleRestorePlatform}
+                          className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-bold transition"
+                        >
+                          ✓ Restore All Data Now
+                        </button>
+                        <button
+                          onClick={handleExtendRecoveryWindow}
+                          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold transition"
+                        >
+                          ⏱️ Extend 48 Hours
+                        </button>
+                      </div>
+                    )}
+
+                    {resetStatus.isExpired && (
+                      <div>
+                        <div className="p-4 bg-red-100 border-2 border-red-400 rounded mb-2">
+                          <p className="text-sm font-bold text-red-900">❌ Recovery Window Expired</p>
+                          <p className="text-xs text-red-800 mt-1">Your data backup has expired. However, you can extend the recovery window below to restore your data.</p>
+                        </div>
+                        <button
+                          onClick={handleExtendRecoveryWindow}
+                          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold transition mb-2"
+                        >
+                          ⏱️ Extend Recovery Window (+48 Hours)
+                        </button>
+                      </div>
+                    )}
+
+                    <button
+                      onClick={handlePermanentlyDeleteData}
+                      disabled={!resetStatus.isExpired}
+                      className="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg font-bold transition disabled:opacity-50"
+                    >
+                      🗑️  Permanently Delete Data
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* SECTION 6: Quick Actions */}

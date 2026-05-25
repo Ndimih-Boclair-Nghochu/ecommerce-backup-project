@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'import toast from 'react-hot-toast'
+
 import axios from 'axios'
 
 export default function AdminMessaging({ token }) {
@@ -101,13 +102,13 @@ export default function AdminMessaging({ token }) {
     if (file) {
       // Check file size (10MB limit)
       if (file.size > 10 * 1024 * 1024) {
-        alert('File size should be less than 10MB')
+        toast('File size should be less than 10MB')
         return
       }
       // Check file type
       const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf']
       if (!validTypes.includes(file.type)) {
-        alert('Please upload an image (JPG, PNG, GIF, WebP) or PDF file')
+        toast('Please upload an image (JPG, PNG, GIF, WebP) or PDF file')
         return
       }
       setSelectedImage(file)
@@ -165,10 +166,10 @@ export default function AdminMessaging({ token }) {
         setMessages([])
         fetchConversations()
         setShowActionMenu(false)
-        alert('Chat cleared successfully')
+        toast('Chat cleared successfully')
       } catch (err) {
         console.error('Failed to clear chat:', err)
-        alert('Failed to clear chat')
+        toast('Failed to clear chat')
       }
     }
   }
@@ -183,10 +184,10 @@ export default function AdminMessaging({ token }) {
         setSelectedConversation(null)
         fetchConversations()
         setShowActionMenu(false)
-        alert('Conversation deleted successfully')
+        toast('Conversation deleted successfully')
       } catch (err) {
         console.error('Failed to delete chat:', err)
-        alert('Failed to delete chat')
+        toast('Failed to delete chat')
       }
     }
   }
@@ -196,10 +197,10 @@ export default function AdminMessaging({ token }) {
     const userName = conversations.find(c => c.deviceId === selectedConversation)?.userName
     if (!blockedUsers.includes(selectedConversation)) {
       setBlockedUsers([...blockedUsers, selectedConversation])
-      alert(`User "${userName}" has been blocked. You won't receive messages from them.`)
+      toast(`User "${userName}" has been blocked. You won't receive messages from them.`)
     } else {
       setBlockedUsers(blockedUsers.filter(id => id !== selectedConversation))
-      alert(`User "${userName}" has been unblocked.`)
+      toast(`User "${userName}" has been unblocked.`)
     }
     setShowActionMenu(false)
   }
@@ -208,10 +209,10 @@ export default function AdminMessaging({ token }) {
     if (!selectedConversation) return
     if (!mutedChats.includes(selectedConversation)) {
       setMutedChats([...mutedChats, selectedConversation])
-      alert('Chat notifications muted')
+      toast('Chat notifications muted')
     } else {
       setMutedChats(mutedChats.filter(id => id !== selectedConversation))
-      alert('Chat notifications unmuted')
+      toast('Chat notifications unmuted')
     }
     setShowActionMenu(false)
   }
@@ -243,7 +244,7 @@ export default function AdminMessaging({ token }) {
       setShowActionMenu(false)
     } catch (err) {
       console.error('Failed to export chat:', err)
-      alert('Failed to export chat')
+      toast('Failed to export chat')
     }
   }
 

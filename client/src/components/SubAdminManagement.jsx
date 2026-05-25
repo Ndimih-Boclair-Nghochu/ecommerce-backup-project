@@ -13,6 +13,9 @@ const SubAdminManagement = ({ token }) => {
   const [activeView, setActiveView] = useState('analytics') // 'analytics', 'subadmins' or 'activities'
   const [searchActivity, setSearchActivity] = useState('')
   const [filterSubAdmin, setFilterSubAdmin] = useState('')
+  const [lastUpdate, setLastUpdate] = useState(new Date())
+  const [isRealTimeActive, setIsRealTimeActive] = useState(true)
+  const [enableRealTime, setEnableRealTime] = useState(true)
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -50,6 +53,27 @@ const SubAdminManagement = ({ token }) => {
     loadData()
   }, [])
 
+  // Real-time polling for analytics updates
+  useEffect(() => {
+    if (!enableRealTime) return // Don't poll if real-time is disabled
+
+    const refreshAnalytics = async () => {
+      try {
+        await fetchActivities()
+      } catch (err) {
+        console.error('Error refreshing analytics:', err)
+      }
+    }
+
+    // Faster polling when on analytics view (3 seconds), slower otherwise (10 seconds)
+    const pollInterval = activeView === 'analytics' ? 3000 : 10000
+    
+    const intervalId = setInterval(refreshAnalytics, pollInterval)
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(intervalId)
+  }, [token, activeView, enableRealTime])
+
   const fetchSubAdmins = async () => {
     try {
       const res = await axios.get('/api/admin/subadmins', {
@@ -75,8 +99,11 @@ const SubAdminManagement = ({ token }) => {
         headers: { Authorization: `Bearer ${token}` }
       })
       setActivities(res.data)
+      setLastUpdate(new Date())
+      setIsRealTimeActive(true)
     } catch (err) {
       console.error('Failed to fetch activities:', err)
+      setIsRealTimeActive(false)
     }
   }
 
@@ -376,17 +403,43 @@ const SubAdminManagement = ({ token }) => {
           <div className="flex justify-between items-center">
             <div>
               <h2 className="text-2xl font-bold text-gray-900">📊 Analytics Dashboard</h2>
-              <p className="text-sm text-gray-600 mt-1">Real-time sub-admin performance tracking</p>
+              <div className="flex items-center gap-3 mt-1">
+                <p className="text-sm text-gray-600">Real-time sub-admin performance tracking</p>
+                <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold ${
+                  isRealTimeActive 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-red-100 text-red-800'
+                }`}>
+                  <span className={`w-2 h-2 rounded-full ${isRealTimeActive ? 'bg-green-600' : 'bg-red-600'} ${isRealTimeActive ? 'animate-pulse' : ''}`}></span>
+                  {isRealTimeActive ? 'Live' : 'Offline'}
+                </div>
+                <p className="text-xs text-gray-500">
+                  Last updated: {lastUpdate.toLocaleTimeString()}
+                </p>
+              </div>
             </div>
-            <button
-              onClick={() => {
-                fetchSubAdmins();
-                fetchActivities();
-              }}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition shadow-md"
-            >
-              🔄 Refresh Data
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setEnableRealTime(!enableRealTime)}
+                className={`px-4 py-2 rounded-lg font-semibold transition shadow-md text-white ${
+                  enableRealTime
+                    ? 'bg-green-600 hover:bg-green-700'
+                    : 'bg-gray-600 hover:bg-gray-700'
+                }`}
+                title={enableRealTime ? 'Disable real-time updates' : 'Enable real-time updates'}
+              >
+                {enableRealTime ? '⚡ Live' : '⏸ Paused'}
+              </button>
+              <button
+                onClick={() => {
+                  fetchSubAdmins();
+                  fetchActivities();
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition shadow-md"
+              >
+                🔄 Refresh Data
+              </button>
+            </div>
           </div>
 
           {/* Top Stats */}
@@ -788,7 +841,17 @@ const SubAdminManagement = ({ token }) => {
           <div className="flex justify-between items-center">
             <div>
               <h2 className="text-2xl font-bold text-gray-900">📋 Activity Log</h2>
-              <p className="text-sm text-gray-600 mt-1">Track all sub-admin activities and actions in the system</p>
+              <div className="flex items-center gap-3 mt-1">
+                <p className="text-sm text-gray-600">Track all sub-admin activities and actions in the system</p>
+                <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold ${
+                  isRealTimeActive 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-red-100 text-red-800'
+                }`}>
+                  <span className={`w-2 h-2 rounded-full ${isRealTimeActive ? 'bg-green-600' : 'bg-red-600'} ${isRealTimeActive ? 'animate-pulse' : ''}`}></span>
+                  {isRealTimeActive ? 'Live' : 'Offline'}
+                </div>
+              </div>
             </div>
             <button
               onClick={fetchActivities}
@@ -867,14 +930,15 @@ const SubAdminManagement = ({ token }) => {
                   <tbody>
                     {filteredActivities.map((activity, idx) => {
                       const subAdmin = subAdmins.find(s => s.id === activity.subAdminId)
+                      const isShopOwner = activity.subAdminId === null
                       return (
                         <tr key={idx} className="border-b border-gray-200 hover:bg-gray-50">
                           <td className="px-6 py-4">
                             <div className="font-semibold text-gray-900">
-                              {subAdmin?.name || 'Unknown'}
+                              {isShopOwner ? '🏪 SHOP OWNER' : (subAdmin?.name || 'Unknown')}
                             </div>
                             <div className="text-sm text-gray-600">
-                              {subAdmin?.email || '-'}
+                              {isShopOwner ? 'ndimihboclair4@gmail.com' : (subAdmin?.email || '-')}
                             </div>
                           </td>
                           <td className="px-6 py-4">

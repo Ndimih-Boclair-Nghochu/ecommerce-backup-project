@@ -1,8 +1,37 @@
-import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import React, { useState } from 'react'
+import toast from 'react-hot-toast'
+import axios from '../lib/api'
 import Receipt from '../components/Receipt'
+import { formatXAF, getProductImage } from '../utils/format'
 
-export default function OrderTracking() {
+const steps = ['pending', 'processing', 'shipped', 'delivered']
+
+function StatusStepper({ status }) {
+  const currentIndex = steps.indexOf(status)
+  const cancelled = status === 'cancelled'
+
+  if (cancelled) {
+    return <div className="rounded-md bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">This order was cancelled.</div>
+  }
+
+  return (
+    <div className="grid grid-cols-4 gap-2">
+      {steps.map((step, index) => {
+        const active = index <= currentIndex
+        return (
+          <div key={step} className="text-center">
+            <div className={`mx-auto h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold ${active ? 'bg-blue-700 text-white' : 'bg-slate-200 text-slate-600'}`}>
+              {index + 1}
+            </div>
+            <p className={`mt-2 text-xs font-semibold capitalize ${active ? 'text-blue-800' : 'text-slate-500'}`}>{step}</p>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+export default function OrderTracking({ settings }) {
   const [orders, setOrders] = useState([])
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -10,262 +39,106 @@ export default function OrderTracking() {
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [searched, setSearched] = useState(false)
 
-  const handleSearch = async (e) => {
-    e.preventDefault()
-    if (!email && !phone) {
-      alert('Please enter your email or phone number')
+  const handleSearch = async (event) => {
+    event.preventDefault()
+    if (!email.trim() && !phone.trim()) {
+      toast.error('Enter your email or phone number')
       return
     }
+
     setLoading(true)
     try {
-      const response = await axios.get('/api/orders/search', {
-        params: { email, phone }
-      })
-      setOrders(response.data || [])
+      const response = await axios.get('/api/orders/search', { params: { email, phone } })
+      const sorted = (response.data || []).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      setOrders(sorted)
       setSearched(true)
-    } catch (err) {
-      alert('Failed to fetch orders. Please try again.')
+    } catch {
+      toast.error('Failed to fetch orders')
       setOrders([])
+      setSearched(true)
     } finally {
       setLoading(false)
     }
   }
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-300'
-      case 'processing': return 'bg-blue-100 text-blue-800 border-blue-300'
-      case 'shipped': return 'bg-indigo-100 text-indigo-800 border-indigo-300'
-      case 'delivered': return 'bg-green-100 text-green-800 border-green-300'
-      case 'cancelled': return 'bg-red-100 text-red-800 border-red-300'
-      default: return 'bg-gray-100 text-gray-800 border-gray-300'
-    }
-  }
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-50 to-blue-100 py-8 sm:py-12 md:py-16">
-      {/* Receipt Modal */}
-      {selectedOrder && (
-        <Receipt 
-          order={selectedOrder} 
-          onClose={() => setSelectedOrder(null)}
-        />
-      )}
+    <main className="min-h-screen bg-slate-50">
+      {selectedOrder && <Receipt order={selectedOrder} onClose={() => setSelectedOrder(null)} />}
 
-      <div className="max-w-6xl mx-auto px-4">
-        {/* Header */}
-        <div className="text-center mb-8 sm:mb-10 md:mb-12">
-          <div className="inline-block bg-gradient-to-r from-blue-700 to-blue-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-lg sm:rounded-2xl shadow-lg mb-3 sm:mb-4">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold flex items-center gap-2 sm:gap-3 justify-center">
-              📦 Track Your Orders
-            </h1>
-          </div>
-          <p className="text-gray-600 text-xs sm:text-sm md:text-base px-2">
-            Enter your email or phone number to view your order history and download receipts
-          </p>
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl sm:text-4xl font-bold text-slate-950">Track Your Order</h1>
+          <p className="mt-3 text-slate-600">Search with the email or phone number used at checkout.</p>
         </div>
 
-        {/* Search Form */}
-        <div className="bg-white rounded-lg sm:rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 mb-6 sm:mb-8">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Find Your Orders</h2>
-          <form onSubmit={handleSearch} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
-            <div>
-              <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Email Address</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-700 focus:border-transparent text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Phone Number</label>
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="+237 6XX XXX XXX"
-                className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-700 focus:border-transparent text-sm"
-              />
-            </div>
-            <div className="flex items-end">
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-blue-700 text-white py-2 sm:py-3 px-4 sm:px-6 rounded-lg font-semibold hover:bg-blue-800 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
-              >
-                {loading ? 'Searching...' : '🔍 Search'}
-              </button>
-            </div>
-          </form>
-          <p className="text-xs sm:text-sm text-gray-500 mt-3 sm:mt-4">
-            💡 Tip: You can use either your email or phone number to search
-          </p>
-        </div>
-
-        {/* Orders List */}
-        {searched && (
+        <form onSubmit={handleSearch} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm grid gap-4 md:grid-cols-[1fr_1fr_auto]">
           <div>
+            <label className="block text-sm font-bold text-slate-800 mb-1">Email</label>
+            <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="w-full rounded-md border border-slate-300 px-3 py-2 focus:border-blue-700 focus:outline-none" />
+          </div>
+          <div>
+            <label className="block text-sm font-bold text-slate-800 mb-1">Phone</label>
+            <input type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} className="w-full rounded-md border border-slate-300 px-3 py-2 focus:border-blue-700 focus:outline-none" />
+          </div>
+          <button type="submit" disabled={loading} className="md:self-end rounded-md bg-blue-700 px-5 py-2 font-bold text-white hover:bg-blue-800 disabled:bg-slate-300">
+            {loading ? 'Searching...' : 'Search'}
+          </button>
+        </form>
+
+        {searched && (
+          <div className="mt-8">
             {orders.length === 0 ? (
-              <div className="bg-white rounded-lg sm:rounded-2xl shadow-xl p-8 sm:p-12 text-center">
-                <div className="text-5xl sm:text-6xl mb-3 sm:mb-4">📭</div>
-                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">No Orders Found</h3>
-                <p className="text-gray-600 text-sm sm:text-base">
-                  We couldn't find any orders matching your information. Please check your email or phone number and try again.
+              <div className="rounded-lg border border-slate-200 bg-white p-8 text-center shadow-sm">
+                <h2 className="text-xl font-bold text-slate-950">No orders found</h2>
+                <p className="mt-2 text-slate-600">
+                  Please check your details or contact support at {settings?.shopPhone || '+237 6 52 882 753'}.
                 </p>
               </div>
             ) : (
-              <div>
-                <div className="flex justify-between items-center mb-4 sm:mb-6">
-                  <h2 className="text-lg sm:text-2xl font-bold text-gray-900">
-                    Your Orders ({orders.length})
-                  </h2>
-                </div>
-                <div className="space-y-3 sm:space-y-4 md:space-y-6">
-                  {orders.map((order) => (
-                    <div key={order.id} className="bg-white rounded-lg sm:rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition">
-                      <div className="bg-gradient-to-r from-blue-700 to-blue-600 p-4 sm:p-6 text-white">
-                        <div className="flex justify-between items-start flex-col sm:flex-row gap-3 sm:gap-4">
-                          <div>
-                            <p className="text-xs sm:text-sm text-blue-100 mb-0.5 sm:mb-1">Order ID</p>
-                            <p className="font-mono font-bold text-sm sm:text-lg break-all">{order.id}</p>
-                            <p className="text-xs sm:text-sm text-blue-100 mt-1 sm:mt-2">{formatDate(order.createdAt)}</p>
-                          </div>
-                          <div className="text-left sm:text-right">
-                            <p className="text-xs sm:text-sm text-blue-100 mb-0.5 sm:mb-1">Total Amount</p>
-                            <p className="text-xl sm:text-2xl font-bold">{order.totals?.total?.toLocaleString()} XAF</p>
-                          </div>
-                        </div>
+              <div className="space-y-4">
+                <h2 className="text-xl font-bold text-slate-950">Your Orders ({orders.length})</h2>
+                {orders.map((order) => (
+                  <article key={order.id} className="rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
+                    <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-semibold uppercase text-slate-500">Order ID</p>
+                        <p className="font-mono font-bold text-slate-950">{order.id}</p>
+                        <p className="mt-1 text-sm text-slate-500">{new Date(order.createdAt).toLocaleString()}</p>
                       </div>
-                      
-                      <div className="p-4 sm:p-6">
-                        {/* Cancellation Warning */}
-                        {order.status === 'cancelled' && (
-                          <div className="mb-4 sm:mb-6 bg-red-50 border-2 border-red-300 rounded-lg p-3 sm:p-4">
-                            <h3 className="text-sm sm:text-lg font-bold text-red-900 mb-1 sm:mb-2 flex items-center gap-2">
-                              <span>⚠️</span> Order Cancelled
-                            </h3>
-                            <p className="text-red-800 text-xs sm:text-sm mb-2">
-                              Your order has been cancelled. Contact customer service with your receipt to process your refund.
-                            </p>
-                            <p className="text-red-900 font-semibold text-xs sm:text-sm">
-                              📞 Customer Service: support@myshop.com
-                            </p>
-                          </div>
-                        )}
-
-                        {/* Delivery Agency Info */}
-                        {order.deliveryAgency && (order.status === 'delivered' || order.status === 'cancelled') && (
-                          <div className="mb-4 sm:mb-6 bg-blue-50 border-2 border-blue-300 rounded-lg p-3 sm:p-4">
-                            <p className="text-xs sm:text-sm font-semibold text-blue-900 mb-1">
-                              {order.status === 'delivered' ? '📍 Delivered to:' : '📍 Available at:'}
-                            </p>
-                            <p className="text-sm sm:text-lg font-bold text-blue-700">{order.deliveryAgency}</p>
-                          </div>
-                        )}
-
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 mb-4 sm:mb-6">
-                          <div>
-                            <p className="text-xs sm:text-sm text-gray-600 mb-0.5 sm:mb-1">Delivery Region</p>
-                            <p className="font-semibold text-gray-900 text-sm sm:text-base">{order.region}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs sm:text-sm text-gray-600 mb-0.5 sm:mb-1">Items</p>
-                            <p className="font-semibold text-gray-900 text-sm sm:text-base">{order.items?.length} item(s)</p>
-                          </div>
-                          <div>
-                            <p className="text-xs sm:text-sm text-gray-600 mb-0.5 sm:mb-1">Status</p>
-                            <span className={`inline-block px-2 sm:px-4 py-1 sm:py-2 rounded-full text-xs sm:text-sm font-bold border-2 ${getStatusColor(order.status)}`}>
-                              {order.status?.toUpperCase()}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Order Items Preview */}
-                        <div className="mb-4 sm:mb-6">
-                          <p className="text-xs sm:text-sm font-semibold text-gray-700 mb-2 sm:mb-3">Order Items:</p>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
-                            {order.items?.slice(0, 4).map((item, idx) => (
-                              <div key={idx} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
-                                <img
-                                  src={item.selectedImageUrl || item.image || '/placeholder.png'}
-                                  alt={item.name}
-                                  className="w-12 h-12 object-cover rounded"
-                                />
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs font-semibold text-gray-900 truncate">{item.name}</p>
-                                  <p className="text-xs text-gray-600">Qty: {item.quantity}</p>
-                                </div>
-                              </div>
-                            ))}
-                            {order.items?.length > 4 && (
-                              <div className="flex items-center justify-center p-2 bg-gray-100 rounded-lg">
-                                <p className="text-sm font-semibold text-gray-600">+{order.items.length - 4} more</p>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div className="flex gap-3">
-                          <button
-                            onClick={() => setSelectedOrder(order)}
-                            className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 transition flex items-center justify-center gap-2"
-                          >
-                            <span>🧾</span> View Receipt
-                          </button>
-                          {order.status === 'pending' && (
-                            <button
-                              className="bg-gray-200 text-gray-700 py-3 px-6 rounded-lg font-semibold hover:bg-gray-300 transition"
-                              title="Contact support to cancel"
-                            >
-                              Need Help?
-                            </button>
-                          )}
-                        </div>
+                      <div className="sm:text-right">
+                        <p className="text-xs font-semibold uppercase text-slate-500">Total</p>
+                        <p className="text-2xl font-bold text-blue-800">{formatXAF(order.totals?.total || order.total)}</p>
                       </div>
                     </div>
-                  ))}
-                </div>
+                    <div className="p-5 space-y-5">
+                      <StatusStepper status={order.status} />
+                      <div className="grid gap-3 sm:grid-cols-3 text-sm">
+                        <div><span className="text-slate-500">Region:</span> <span className="font-semibold">{order.region}</span></div>
+                        <div><span className="text-slate-500">Status:</span> <span className="font-semibold capitalize">{order.status}</span></div>
+                        <div><span className="text-slate-500">Items:</span> <span className="font-semibold">{order.items?.length || 0}</span></div>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        {(order.items || []).slice(0, 4).map((item) => (
+                          <div key={`${order.id}-${item.id}`} className="rounded-md bg-slate-50 p-2 flex gap-2 items-center">
+                            <img src={item.selectedImageUrl || item.image || getProductImage(item)} alt={item.name} className="h-12 w-12 rounded object-cover bg-slate-100" />
+                            <div className="min-w-0">
+                              <p className="text-xs font-bold truncate">{item.name}</p>
+                              <p className="text-xs text-slate-600">Qty: {item.quantity}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <button type="button" onClick={() => setSelectedOrder(order)} className="rounded-md bg-blue-700 px-5 py-3 font-bold text-white hover:bg-blue-800">
+                        View Receipt
+                      </button>
+                    </div>
+                  </article>
+                ))}
               </div>
             )}
           </div>
         )}
-
-        {/* Help Section */}
-        {!searched && (
-          <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-8 mt-8">
-            <h3 className="text-xl font-bold text-blue-900 mb-4 flex items-center gap-2">
-              <span>💡</span> How to Track Your Order
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm text-blue-800">
-              <div>
-                <p className="font-bold mb-2">1. Enter Your Info</p>
-                <p>Provide the email or phone number you used when placing your order.</p>
-              </div>
-              <div>
-                <p className="font-bold mb-2">2. View Your Orders</p>
-                <p>See all your orders with current status and delivery information.</p>
-              </div>
-              <div>
-                <p className="font-bold mb-2">3. Download Receipt</p>
-                <p>Access and download your order receipt anytime you need it.</p>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+      </section>
+    </main>
   )
 }
