@@ -51,8 +51,9 @@ export default function Locations() {
     <section className="py-12 sm:py-16 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-8 sm:mb-12">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-3 sm:mb-4">Visit Our Store</h2>
-          <p className="text-gray-600 text-sm sm:text-lg">Find us at convenient locations near you</p>
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-blue-700">Store locations</p>
+          <h2 className="mt-2 text-3xl font-black text-gray-950 sm:text-4xl">Visit Our Store</h2>
+          <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-gray-600 sm:text-base">Find us at convenient locations near you.</p>
         </div>
 
         {/* Live Status Bar */}
@@ -79,7 +80,7 @@ export default function Locations() {
         {/* Main Store */}
         {mainStore && (
           <div className="mb-8 sm:mb-12">
-            <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 flex items-center gap-2">
+            <h3 className="text-xl sm:text-2xl font-black mb-4 sm:mb-6 flex items-center gap-2 text-gray-950">
               🏢 <span>Main Store</span>
             </h3>
             <div className="bg-white rounded-lg sm:rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow">
@@ -147,7 +148,7 @@ export default function Locations() {
         {/* Branches */}
         {branches.length > 0 && (
           <div>
-            <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 flex items-center gap-2">
+            <h3 className="text-xl sm:text-2xl font-black mb-4 sm:mb-6 flex items-center gap-2 text-gray-950">
               🌿 <span>Branch Locations ({branches.length})</span>
             </h3>
             <div className="space-y-6 sm:space-y-8">

@@ -15,12 +15,19 @@ export default function ProductDetail({ addToCart, toggleWishlist, isInWishlist,
   const [selectedVariant, setSelectedVariant] = useState(null)
   const [quantity, setQuantity] = useState(1)
   const [loading, setLoading] = useState(true)
+  const [reviewSummary, setReviewSummary] = useState({ reviews: [], averageRating: 0, reviewCount: 0 })
+  const [reviewForm, setReviewForm] = useState({ customerName: '', rating: 5, comment: '' })
+  const [submittingReview, setSubmittingReview] = useState(false)
 
   useEffect(() => {
     let active = true
     setLoading(true)
-    Promise.all([axios.get(`/api/products/${id}`), axios.get('/api/products')])
-      .then(([productRes, productsRes]) => {
+    Promise.all([
+      axios.get(`/api/products/${id}`),
+      axios.get('/api/products'),
+      axios.get(`/api/products/${id}/reviews`)
+    ])
+      .then(([productRes, productsRes, reviewsRes]) => {
         if (!active) return
         const item = productRes.data
         setProduct(item)
@@ -28,6 +35,7 @@ export default function ProductDetail({ addToCart, toggleWishlist, isInWishlist,
         setSelectedVariant(firstVariant)
         setSelectedImage(firstVariant?.url || getProductImage(item))
         setRelated((productsRes.data || []).filter((entry) => entry.category === item.category && entry.id !== item.id).slice(0, 4))
+        setReviewSummary(reviewsRes.data || { reviews: [], averageRating: 0, reviewCount: 0 })
       })
       .catch(() => toast.error('Product could not be loaded'))
       .finally(() => active && setLoading(false))
@@ -40,6 +48,7 @@ export default function ProductDetail({ addToCart, toggleWishlist, isInWishlist,
   const variants = useMemo(() => product?.images?.filter((image) => image?.url) || [], [product])
   const availableRegions = product?.availableRegions || ['ALL']
   const regionLimited = availableRegions.length > 0 && !availableRegions.includes('ALL')
+  const reviews = reviewSummary.reviews || []
 
   useEffect(() => {
     if (displayProduct) document.title = `${displayProduct.displayName} - ${settings?.shopName || 'MyShop'}`
@@ -73,6 +82,32 @@ export default function ProductDetail({ addToCart, toggleWishlist, isInWishlist,
 
   const outOfStock = product.stock <= 0
 
+  const handleReviewSubmit = async (event) => {
+    event.preventDefault()
+    const comment = reviewForm.comment.trim()
+    if (!comment) {
+      toast.error('Please write a short comment')
+      return
+    }
+
+    setSubmittingReview(true)
+    try {
+      await axios.post(`/api/products/${product.id}/reviews`, {
+        customerName: reviewForm.customerName.trim(),
+        rating: Number(reviewForm.rating),
+        comment
+      })
+      const response = await axios.get(`/api/products/${product.id}/reviews`)
+      setReviewSummary(response.data || { reviews: [], averageRating: 0, reviewCount: 0 })
+      setReviewForm({ customerName: '', rating: 5, comment: '' })
+      toast.success('Thanks for reviewing this product')
+    } catch (err) {
+      toast.error(err.response?.data?.errors?.[0]?.message || err.response?.data?.error || 'Review could not be saved')
+    } finally {
+      setSubmittingReview(false)
+    }
+  }
+
   return (
     <main className="bg-gray-50 min-h-screen">
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
@@ -103,6 +138,14 @@ export default function ProductDetail({ addToCart, toggleWishlist, isInWishlist,
             </div>
 
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-950">{displayProduct.displayName}</h1>
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+              <span className="rounded-full bg-amber-50 px-3 py-1 font-black text-amber-700">
+                {reviewSummary.averageRating ? `${reviewSummary.averageRating}/5` : 'No ratings yet'}
+              </span>
+              <span className="font-semibold text-gray-500">
+                {reviewSummary.reviewCount} customer review{reviewSummary.reviewCount === 1 ? '' : 's'}
+              </span>
+            </div>
             <p className="mt-4 text-3xl font-bold text-blue-800">{formatXAF(product.price)}</p>
 
             <div className={`mt-4 rounded-md px-4 py-3 text-sm font-semibold ${outOfStock ? 'bg-red-50 text-red-800' : 'bg-green-50 text-green-800'}`}>
@@ -147,6 +190,94 @@ export default function ProductDetail({ addToCart, toggleWishlist, isInWishlist,
                 &hearts;
               </button>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-12">
+        <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
+          <form onSubmit={handleReviewSubmit} className="h-fit rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-blue-700">Customer feedback</p>
+            <h2 className="mt-2 text-2xl font-black text-gray-950">Rate this product</h2>
+            <p className="mt-2 text-sm leading-relaxed text-gray-600">Share your experience so other customers can choose with confidence.</p>
+
+            <div className="mt-5">
+              <label className="block text-sm font-bold text-gray-800 mb-1">Your name</label>
+              <input
+                value={reviewForm.customerName}
+                onChange={(event) => setReviewForm((current) => ({ ...current, customerName: event.target.value }))}
+                placeholder="Customer"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-blue-700 focus:ring-4 focus:ring-blue-100"
+              />
+            </div>
+
+            <div className="mt-4">
+              <label className="block text-sm font-bold text-gray-800 mb-2">Rating</label>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map((rating) => (
+                  <button
+                    key={rating}
+                    type="button"
+                    onClick={() => setReviewForm((current) => ({ ...current, rating }))}
+                    className={`h-10 w-10 rounded-full border text-lg font-black transition ${
+                      reviewForm.rating >= rating ? 'border-amber-400 bg-amber-100 text-amber-700' : 'border-gray-300 text-gray-400 hover:bg-gray-50'
+                    }`}
+                    aria-label={`${rating} star rating`}
+                  >
+                    &#9733;
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <label className="block text-sm font-bold text-gray-800 mb-1">Comment</label>
+              <textarea
+                value={reviewForm.comment}
+                onChange={(event) => setReviewForm((current) => ({ ...current, comment: event.target.value }))}
+                rows="4"
+                placeholder="Tell us what you liked, how it arrived, or who it is best for."
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-blue-700 focus:ring-4 focus:ring-blue-100"
+              />
+            </div>
+
+            <button type="submit" disabled={submittingReview} className="mt-5 w-full rounded-md bg-blue-700 px-5 py-3 font-black text-white transition hover:bg-blue-800 disabled:bg-gray-300">
+              {submittingReview ? 'Saving...' : 'Submit review'}
+            </button>
+          </form>
+
+          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+            <div className="flex flex-col gap-2 border-b border-gray-100 pb-4 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.22em] text-blue-700">Reviews</p>
+                <h2 className="mt-2 text-2xl font-black text-gray-950">What customers are saying</h2>
+              </div>
+              <div className="text-sm font-bold text-gray-600">
+                Average: <span className="text-amber-700">{reviewSummary.averageRating || 0}/5</span>
+              </div>
+            </div>
+
+            {reviews.length ? (
+              <div className="divide-y divide-gray-100">
+                {reviews.map((review) => (
+                  <article key={review.id} className="py-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <h3 className="font-black text-gray-950">{review.customerName}</h3>
+                        <p className="text-xs font-semibold text-gray-500">{new Date(review.createdAt).toLocaleDateString()}</p>
+                      </div>
+                      <span className="rounded-full bg-amber-50 px-3 py-1 text-sm font-black text-amber-700">{review.rating}/5</span>
+                    </div>
+                    <p className="mt-2 text-sm leading-relaxed text-gray-700">{review.comment}</p>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="py-10 text-center">
+                <h3 className="text-lg font-black text-gray-950">No reviews yet</h3>
+                <p className="mt-2 text-sm text-gray-600">Be the first customer to rate this product.</p>
+              </div>
+            )}
           </div>
         </div>
       </section>

@@ -33,6 +33,7 @@ function StatusStepper({ status }) {
 
 export default function OrderTracking({ settings }) {
   const [orders, setOrders] = useState([])
+  const [orderId, setOrderId] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [loading, setLoading] = useState(false)
@@ -41,14 +42,14 @@ export default function OrderTracking({ settings }) {
 
   const handleSearch = async (event) => {
     event.preventDefault()
-    if (!email.trim() && !phone.trim()) {
-      toast.error('Enter your email or phone number')
+    if (!orderId.trim() && !email.trim() && !phone.trim()) {
+      toast.error('Enter your order ID, email, or phone number')
       return
     }
 
     setLoading(true)
     try {
-      const response = await axios.get('/api/orders/search', { params: { email, phone } })
+      const response = await axios.get('/api/orders/search', { params: { orderId, email, phone } })
       const sorted = (response.data || []).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
       setOrders(sorted)
       setSearched(true)
@@ -67,18 +68,25 @@ export default function OrderTracking({ settings }) {
 
       <section className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-950">Track Your Order</h1>
-          <p className="mt-3 text-gray-600">Search with the email or phone number used at checkout.</p>
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-blue-700">Order tracking</p>
+          <h1 className="mt-2 text-3xl font-black text-gray-950 sm:text-4xl">Track Your Order</h1>
+          <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-gray-600">
+            Use your order ID for the fastest result, or search with the email or phone number used at checkout.
+          </p>
         </div>
 
-        <form onSubmit={handleSearch} className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm grid gap-4 md:grid-cols-[1fr_1fr_auto]">
+        <form onSubmit={handleSearch} className="grid gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm md:grid-cols-[1fr_1fr_1fr_auto]">
+          <div>
+            <label className="block text-sm font-bold text-gray-800 mb-1">Order ID</label>
+            <input value={orderId} onChange={(event) => setOrderId(event.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100" placeholder="Paste your order ID" />
+          </div>
           <div>
             <label className="block text-sm font-bold text-gray-800 mb-1">Email</label>
-            <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none" />
+            <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100" />
           </div>
           <div>
             <label className="block text-sm font-bold text-gray-800 mb-1">Phone</label>
-            <input type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none" />
+            <input type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100" />
           </div>
           <button type="submit" disabled={loading} className="md:self-end rounded-md bg-blue-700 px-5 py-2 font-bold text-white hover:bg-blue-800 disabled:bg-gray-300">
             {loading ? 'Searching...' : 'Search'}

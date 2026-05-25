@@ -80,7 +80,6 @@ const orderLimiter = rateLimit({ windowMs: 60 * 1000, max: 5 });
 app.use('/api/', generalLimiter);
 app.use('/api/admin/login', authLimiter);
 app.use('/api/sub-admin/login', authLimiter);
-app.use('/api/orders', orderLimiter);
 
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
@@ -200,9 +199,22 @@ function productFromRow(row) {
   };
 }
 
+function productReviewFromRow(row) {
+  return {
+    id: row.id,
+    productId: row.product_id,
+    customerName: row.customer_name || 'Customer',
+    rating: Number(row.rating || 0),
+    comment: row.comment || '',
+    createdAt: row.created_at
+  };
+}
+
 function orderFromRow(row) {
   if (!row) return null;
   const items = Array.isArray(row.items) ? row.items : [];
+  const paidAmount = Number(row.paid_amount || 0);
+  const total = Number(row.total || 0);
   return {
     id: row.id,
     orderNumber: row.id,
@@ -219,21 +231,22 @@ function orderFromRow(row) {
     region: row.region,
     shippingFee: Number(row.shipping_fee || 0),
     subtotal: Number(row.subtotal || 0),
-    total: Number(row.total || 0),
+    total,
     totals: {
       subtotal: Number(row.subtotal || 0),
       shipping: Number(row.shipping_fee || 0),
       shippingFee: Number(row.shipping_fee || 0),
-      total: Number(row.total || 0)
+      total
     },
     items,
     status: row.status,
     deliveryAgency: row.delivery_agency || '',
     notes: row.notes || '',
     paymentMethod: row.payment_method || '',
+    isPaid: paidAmount >= total && total > 0,
     isInStoreSale: Boolean(row.is_in_store_sale),
     discountPercent: Number(row.discount_percent || 0),
-    paidAmount: Number(row.paid_amount || 0),
+    paidAmount,
     changeAmount: Number(row.change_amount || 0),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -498,6 +511,12 @@ const chatValidation = validate([
   body('message').trim().notEmpty().withMessage('Message is required')
 ]);
 
+const productReviewValidation = validate([
+  body('customerName').optional().trim().isLength({ max: 120 }).withMessage('Name is too long'),
+  body('rating').isInt({ min: 1, max: 5 }).withMessage('Rating must be between 1 and 5'),
+  body('comment').trim().isLength({ min: 3, max: 1000 }).withMessage('Comment must be between 3 and 1000 characters')
+]);
+
 app.get('/api/health', (req, res) => res.json({ ok: true, database: 'postgresql' }));
 
 app.get('/api/settings', asyncHandler(async (req, res) => {
@@ -565,13 +584,50 @@ app.get('/api/categories', asyncHandler(async (req, res) => {
   res.json(result.rows.map((row) => row.name));
 }));
 
+app.get('/api/products/:id/reviews', asyncHandler(async (req, res) => {
+  const result = await pool.query(
+    `SELECT * FROM product_reviews
+     WHERE product_id = $1
+     ORDER BY created_at DESC
+     LIMIT 50`,
+    [req.params.id]
+  );
+  const reviews = result.rows.map(productReviewFromRow);
+  const averageRating = reviews.length
+    ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+    : 0;
+  res.json({
+    reviews,
+    reviewCount: reviews.length,
+    averageRating: Number(averageRating.toFixed(1))
+  });
+}));
+
+app.post('/api/products/:id/reviews', productReviewValidation, asyncHandler(async (req, res) => {
+  const product = await pool.query('SELECT id FROM products WHERE id = $1', [req.params.id]);
+  if (product.rowCount === 0) return res.status(404).json({ error: 'Product not found' });
+
+  const result = await pool.query(
+    `INSERT INTO product_reviews (product_id, customer_name, rating, comment)
+     VALUES ($1, $2, $3, $4)
+     RETURNING *`,
+    [
+      req.params.id,
+      String(req.body.customerName || '').trim() || 'Customer',
+      Number(req.body.rating),
+      String(req.body.comment || '').trim()
+    ]
+  );
+  res.status(201).json(productReviewFromRow(result.rows[0]));
+}));
+
 app.get('/api/products/:id', asyncHandler(async (req, res) => {
   const result = await pool.query('SELECT * FROM products WHERE id = $1', [req.params.id]);
   if (result.rowCount === 0) return res.status(404).json({ error: 'Product not found' });
   res.json(productFromRow(result.rows[0]));
 }));
 
-app.post('/api/orders', orderValidation, asyncHandler(async (req, res) => {
+app.post('/api/orders', orderLimiter, orderValidation, asyncHandler(async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -669,16 +725,20 @@ app.post('/api/orders', orderValidation, asyncHandler(async (req, res) => {
 }));
 
 app.get('/api/orders/search', asyncHandler(async (req, res) => {
+  const orderId = (req.query.orderId || req.query.id || '').trim();
   const email = (req.query.email || '').trim();
   const phone = (req.query.phone || '').trim();
-  if (!email && !phone) return res.status(400).json({ error: 'Email or phone is required' });
+  const normalizedPhone = phone.replace(/\D/g, '');
+  if (!orderId && !email && !normalizedPhone) return res.status(400).json({ error: 'Order ID, email, or phone is required' });
 
   const result = await pool.query(
     `SELECT * FROM orders
-     WHERE ($1::text <> '' AND LOWER(buyer_email) = LOWER($1))
-        OR ($2::text <> '' AND buyer_phone = $2)
-     ORDER BY created_at DESC`,
-    [email, phone]
+     WHERE ($1::text <> '' AND id::text ILIKE $1 || '%')
+        OR ($2::text <> '' AND LOWER(buyer_email) = LOWER($2))
+        OR ($3::text <> '' AND regexp_replace(buyer_phone, '\\D', '', 'g') = $3)
+     ORDER BY created_at DESC
+     LIMIT 20`,
+    [orderId, email, normalizedPhone]
   );
   res.json(result.rows.map(orderFromRow));
 }));
@@ -918,7 +978,8 @@ app.get('/api/admin/orders', checkPermission('manageOrders'), asyncHandler(async
 app.put('/api/admin/orders/:id', checkPermission('manageOrders'), validate([
   body('status').optional().isIn(['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'completed']).withMessage('Invalid order status'),
   body('deliveryAgency').optional().isString(),
-  body('paidAmount').optional().isInt({ min: 0 })
+  body('paidAmount').optional().isInt({ min: 0 }),
+  body('isPaid').optional().isBoolean().withMessage('Payment status must be true or false')
 ]), asyncHandler(async (req, res) => {
   const current = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
   if (current.rowCount === 0) return res.status(404).json({ error: 'Order not found' });
@@ -926,7 +987,11 @@ app.put('/api/admin/orders/:id', checkPermission('manageOrders'), validate([
   const existing = current.rows[0];
   const status = req.body.status || existing.status;
   const deliveryAgency = req.body.deliveryAgency ?? req.body.delivery_agency ?? existing.delivery_agency;
-  const paidAmount = req.body.paidAmount ?? req.body.paid_amount ?? existing.paid_amount;
+  const paidAmount = req.body.isPaid === true
+    ? existing.total
+    : req.body.isPaid === false
+      ? 0
+      : req.body.paidAmount ?? req.body.paid_amount ?? existing.paid_amount;
   const changeAmount = req.body.changeAmount ?? req.body.change_amount ?? existing.change_amount;
   const paymentMethod = req.body.paymentMethod ?? req.body.payment_method ?? existing.payment_method;
 

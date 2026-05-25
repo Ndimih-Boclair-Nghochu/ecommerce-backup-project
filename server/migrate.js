@@ -130,6 +130,99 @@ const starterProducts = [
   }
 ];
 
+const additionalProducts = [
+  {
+    name: 'Tecno Spark 20 Pro 256GB',
+    description: 'Large-screen Android phone with generous storage, smooth everyday performance, dual SIM support, and a dependable battery for work, school, and entertainment.',
+    price: 168000,
+    stock: 20,
+    category: 'Phones',
+    isNew: true,
+    mostOrdered: true,
+    availableRegions: ['ALL'],
+    imageUrl: 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=1200',
+    images: [
+      { color: 'Midnight Black', url: 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=1200' },
+      { color: 'Display View', url: 'https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=1200' }
+    ]
+  },
+  {
+    name: 'Canon PIXMA Wireless Printer',
+    description: 'Compact color printer for home offices, school projects, invoices, and small business documents with wireless printing support.',
+    price: 89000,
+    stock: 11,
+    category: 'Computer Accessories',
+    isNew: true,
+    mostOrdered: false,
+    availableRegions: ['ALL'],
+    imageUrl: 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=1200',
+    images: [
+      { color: 'White', url: 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=1200' },
+      { color: 'Office Setup', url: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1200' }
+    ]
+  },
+  {
+    name: 'JBL Portable Bluetooth Speaker',
+    description: 'Durable portable speaker with rich sound, wireless Bluetooth connection, rechargeable battery, and compact design for indoor and outdoor use.',
+    price: 42000,
+    stock: 26,
+    category: 'Audio',
+    isNew: false,
+    mostOrdered: true,
+    availableRegions: ['ALL'],
+    imageUrl: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=1200',
+    images: [
+      { color: 'Black', url: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=1200' },
+      { color: 'Portable View', url: 'https://images.unsplash.com/photo-1545454675-3531b543be5d?w=1200' }
+    ]
+  },
+  {
+    name: 'iPhone 13 128GB',
+    description: 'Premium smartphone with sharp OLED display, excellent cameras, fast performance, and reliable battery life for calls, photos, apps, and business.',
+    price: 415000,
+    stock: 8,
+    category: 'Phones',
+    isNew: false,
+    mostOrdered: true,
+    availableRegions: ['ALL'],
+    imageUrl: 'https://images.unsplash.com/photo-1632661674596-df8be070a5c5?w=1200',
+    images: [
+      { color: 'Blue', url: 'https://images.unsplash.com/photo-1632661674596-df8be070a5c5?w=1200' },
+      { color: 'Camera Detail', url: 'https://images.unsplash.com/photo-1603891128711-11b4b03bb138?w=1200' }
+    ]
+  },
+  {
+    name: 'Dell 24 Inch Full HD Monitor',
+    description: 'Clear Full HD monitor for office desks, POS counters, online classes, design work, and comfortable multitasking with laptops or desktops.',
+    price: 118000,
+    stock: 13,
+    category: 'Computers',
+    isNew: true,
+    mostOrdered: false,
+    availableRegions: ['ALL'],
+    imageUrl: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=1200',
+    images: [
+      { color: 'Black', url: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=1200' },
+      { color: 'Desk Setup', url: 'https://images.unsplash.com/photo-1547082299-de196ea013d6?w=1200' }
+    ]
+  },
+  {
+    name: 'Solar Rechargeable LED Lamp',
+    description: 'Bright rechargeable LED lamp with solar charging support for homes, shops, study desks, travel, and backup lighting during power cuts.',
+    price: 15500,
+    stock: 40,
+    category: 'Accessories',
+    isNew: true,
+    mostOrdered: true,
+    availableRegions: ['ALL'],
+    imageUrl: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=1200',
+    images: [
+      { color: 'Warm White', url: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=1200' },
+      { color: 'Night Light', url: 'https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?w=1200' }
+    ]
+  }
+];
+
 const starterTranslations = {
   'Samsung Galaxy A15 128GB': {
     fr: {
@@ -165,6 +258,42 @@ const starterTranslations = {
     fr: {
       name: 'Clavier et souris sans fil Logitech',
       description: 'Ensemble clavier et souris sans fil confortable pour ordinateurs, bureaux POS et travail quotidien.'
+    }
+  },
+  'Tecno Spark 20 Pro 256GB': {
+    fr: {
+      name: 'Tecno Spark 20 Pro 256 Go',
+      description: 'Telephone Android grand ecran avec stockage genereux, bonnes performances quotidiennes, double SIM et batterie fiable.'
+    }
+  },
+  'Canon PIXMA Wireless Printer': {
+    fr: {
+      name: 'Imprimante sans fil Canon PIXMA',
+      description: 'Imprimante couleur compacte pour bureaux, devoirs scolaires, factures et documents de petite entreprise.'
+    }
+  },
+  'JBL Portable Bluetooth Speaker': {
+    fr: {
+      name: 'Haut-parleur Bluetooth portable JBL',
+      description: 'Haut-parleur portable durable avec son riche, connexion Bluetooth, batterie rechargeable et format compact.'
+    }
+  },
+  'iPhone 13 128GB': {
+    fr: {
+      name: 'iPhone 13 128 Go',
+      description: 'Smartphone premium avec ecran OLED, excellents appareils photo, performances rapides et autonomie fiable.'
+    }
+  },
+  'Dell 24 Inch Full HD Monitor': {
+    fr: {
+      name: 'Ecran Dell Full HD 24 pouces',
+      description: 'Ecran Full HD clair pour bureaux, comptoirs POS, cours en ligne et multitache confortable.'
+    }
+  },
+  'Solar Rechargeable LED Lamp': {
+    fr: {
+      name: 'Lampe LED solaire rechargeable',
+      description: 'Lampe LED lumineuse avec recharge solaire pour maisons, boutiques, bureaux et eclairage de secours.'
     }
   }
 };
@@ -223,6 +352,50 @@ async function seedStarterProducts(client) {
   );
 }
 
+async function seedAdditionalProducts(client) {
+  const marker = await client.query("SELECT 1 FROM settings WHERE key = 'starter_products_seeded_v2'");
+  if (marker.rowCount > 0) {
+    await syncStarterProductTranslations(client);
+    return;
+  }
+
+  for (const product of additionalProducts) {
+    await client.query(
+      `INSERT INTO categories (name) VALUES ($1) ON CONFLICT (name) DO NOTHING`,
+      [product.category]
+    );
+
+    await client.query(
+      `INSERT INTO products (
+        name, description, price, stock, category, is_new, most_ordered,
+        available_regions, image_url, images, translations
+      )
+      SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb
+      WHERE NOT EXISTS (SELECT 1 FROM products WHERE name = $1)`,
+      [
+        product.name,
+        product.description,
+        product.price,
+        product.stock,
+        product.category,
+        product.isNew,
+        product.mostOrdered,
+        product.availableRegions,
+        product.imageUrl,
+        JSON.stringify(product.images),
+        JSON.stringify(starterTranslations[product.name] || {})
+      ]
+    );
+  }
+
+  await syncStarterProductTranslations(client);
+
+  await client.query(
+    `INSERT INTO settings (key, value) VALUES ('starter_products_seeded_v2', 'true')
+     ON CONFLICT (key) DO NOTHING`
+  );
+}
+
 async function migrate(options = {}) {
   const close = options.close !== false;
   const client = await pool.connect();
@@ -270,6 +443,17 @@ async function migrate(options = {}) {
       CREATE TABLE IF NOT EXISTS categories (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         name VARCHAR(100) UNIQUE NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS product_reviews (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        product_id UUID REFERENCES products(id) ON DELETE CASCADE,
+        customer_name VARCHAR(120),
+        rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+        comment TEXT NOT NULL,
         created_at TIMESTAMPTZ DEFAULT NOW()
       )
     `);
@@ -388,9 +572,12 @@ async function migrate(options = {}) {
     `);
 
     await client.query('CREATE INDEX IF NOT EXISTS idx_orders_buyer_email ON orders (buyer_email)');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_orders_buyer_email_lower ON orders (LOWER(buyer_email))');
     await client.query('CREATE INDEX IF NOT EXISTS idx_orders_buyer_phone ON orders (buyer_phone)');
+    await client.query("CREATE INDEX IF NOT EXISTS idx_orders_buyer_phone_digits ON orders ((regexp_replace(buyer_phone, '\\D', '', 'g')))");
     await client.query('CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders (created_at DESC)');
     await client.query('CREATE INDEX IF NOT EXISTS idx_products_created_at ON products (created_at DESC)');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_product_reviews_product_created ON product_reviews (product_id, created_at DESC)');
     await client.query('CREATE INDEX IF NOT EXISTS idx_chat_device_created ON chat_messages (device_id, created_at)');
 
     for (const [key, value] of requiredSettings) {
@@ -424,6 +611,7 @@ async function migrate(options = {}) {
     `);
 
     await seedStarterProducts(client);
+    await seedAdditionalProducts(client);
 
     const adminPasswordHash = await resolveAdminPasswordHash();
     if (process.env.ADMIN_EMAIL && adminPasswordHash) {

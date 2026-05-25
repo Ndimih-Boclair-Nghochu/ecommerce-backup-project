@@ -8,11 +8,25 @@ import { formatXAF } from '../utils/format'
 import { useLanguage } from '../i18n/LanguageContext'
 
 const INITIAL_HERO_IMAGE = 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1920'
+const PRODUCTS_PER_ROW_BY_WIDTH = [
+  { min: 1280, columns: 4 },
+  { min: 768, columns: 3 },
+  { min: 0, columns: 2 }
+]
+
+function getHomeProductColumns() {
+  if (typeof window === 'undefined') return 4
+  return PRODUCTS_PER_ROW_BY_WIDTH.find((entry) => window.innerWidth >= entry.min)?.columns || 2
+}
 
 export default function Home({ products, settings, addToCart, toggleWishlist, isInWishlist, loading }) {
   const { t } = useLanguage()
   const [hero, setHero] = useState(null)
   const [stats, setStats] = useState(null)
+  const [productSearch, setProductSearch] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('All')
+  const [productPage, setProductPage] = useState(0)
+  const [productColumns, setProductColumns] = useState(getHomeProductColumns)
 
   useEffect(() => {
     let active = true
@@ -28,10 +42,44 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
     }
   }, [])
 
-  const featuredProducts = useMemo(() => {
-    const marked = products.filter((product) => product.mostOrdered || product.isNew)
-    return (marked.length ? marked : products).slice(0, 8)
+  useEffect(() => {
+    const onResize = () => setProductColumns(getHomeProductColumns())
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
+  const orderedProducts = useMemo(() => {
+    return [...products].sort((a, b) => {
+      const aScore = Number(Boolean(a.mostOrdered)) * 2 + Number(Boolean(a.isNew))
+      const bScore = Number(Boolean(b.mostOrdered)) * 2 + Number(Boolean(b.isNew))
+      if (bScore !== aScore) return bScore - aScore
+      return new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+    })
   }, [products])
+
+  const categories = useMemo(() => ['All', ...Array.from(new Set(products.map((product) => product.category).filter(Boolean)))], [products])
+
+  const filteredProducts = useMemo(() => {
+    const query = productSearch.trim().toLowerCase()
+    return orderedProducts
+      .filter((product) => (selectedCategory === 'All' ? true : product.category === selectedCategory))
+      .filter((product) => {
+        if (!query) return true
+        return `${product.name || ''} ${product.description || ''} ${product.category || ''}`.toLowerCase().includes(query)
+      })
+  }, [orderedProducts, productSearch, selectedCategory])
+
+  const productsPerPage = productColumns * 3
+  const pageCount = Math.max(1, Math.ceil(filteredProducts.length / productsPerPage))
+  const visibleProducts = filteredProducts.slice(productPage * productsPerPage, (productPage + 1) * productsPerPage)
+
+  useEffect(() => {
+    setProductPage(0)
+  }, [productSearch, selectedCategory, productsPerPage])
+
+  useEffect(() => {
+    if (productPage >= pageCount) setProductPage(pageCount - 1)
+  }, [pageCount, productPage])
 
   const heroData = {
     badge: hero?.badge || 'Special Offers This Season',
@@ -91,16 +139,26 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
         </div>
       </section>
 
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+        <div className="mb-5 text-center sm:mb-7">
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-blue-700">Why shop with us</p>
+          <h2 className="mt-2 text-2xl font-black text-gray-950 sm:text-3xl">A smoother way to buy essentials</h2>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {[
             { title: t('fastDeliveryTitle'), desc: t('fastDeliveryDesc') },
             { title: t('paymentTitle'), desc: t('paymentDesc') },
             { title: t('supportTitle'), desc: t('supportDesc', { phone: settings.shopPhone }) }
-          ].map((feature) => (
-            <div key={feature.title} className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-              <h2 className="font-bold text-gray-950">{feature.title}</h2>
-              <p className="mt-2 text-sm text-gray-600">{feature.desc}</p>
+          ].map((feature, index) => (
+            <div key={feature.title} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-blue-50 text-xs font-black text-blue-800">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                <span className="h-px flex-1 bg-gray-100" />
+              </div>
+              <h3 className="text-base font-black leading-tight text-gray-950">{feature.title}</h3>
+              <p className="mt-1.5 text-sm leading-relaxed text-gray-600">{feature.desc}</p>
             </div>
           ))}
         </div>
@@ -108,32 +166,86 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
 
       <section className="bg-gray-50 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex items-end justify-between gap-4 mb-6">
+          <div className="mb-6 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="text-sm font-semibold uppercase text-blue-700">{t('featured')}</p>
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-950">{t('featuredTitle')}</h2>
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-blue-700">{t('featured')}</p>
+              <h2 className="mt-2 text-2xl font-black text-gray-950 sm:text-4xl">{t('featuredTitle')}</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-gray-600">
+                Search the catalog, filter by category, and browse three rows at a time.
+              </p>
             </div>
-            <Link to="/products" className="hidden sm:inline-flex rounded-md border border-gray-300 px-4 py-2 font-semibold hover:bg-white">
-              {t('viewAll')}
-            </Link>
+            <div className="grid gap-3 rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:grid-cols-[minmax(240px,1fr)_220px_auto] lg:min-w-[680px]">
+              <label className="block">
+                <span className="sr-only">{t('searchProducts')}</span>
+                <input
+                  type="search"
+                  value={productSearch}
+                  onChange={(event) => setProductSearch(event.target.value)}
+                  placeholder={t('searchProducts')}
+                  className="h-11 w-full rounded-md border border-gray-300 px-4 text-sm font-semibold text-gray-800 outline-none transition focus:border-blue-700 focus:ring-4 focus:ring-blue-100"
+                />
+              </label>
+              <label className="block">
+                <span className="sr-only">{t('category')}</span>
+                <select
+                  value={selectedCategory}
+                  onChange={(event) => setSelectedCategory(event.target.value)}
+                  className="h-11 w-full rounded-md border border-gray-300 px-3 text-sm font-bold text-gray-800 outline-none transition focus:border-blue-700 focus:ring-4 focus:ring-blue-100"
+                >
+                  {categories.map((category) => (
+                    <option key={category} value={category}>{category === 'All' ? 'All categories' : category}</option>
+                  ))}
+                </select>
+              </label>
+              <Link to="/products" className="inline-flex h-11 items-center justify-center rounded-md border border-gray-300 px-4 text-sm font-black text-gray-800 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-800">
+                {t('viewAll')}
+              </Link>
+            </div>
           </div>
 
           {loading ? (
             <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 xl:grid-cols-4">
-              {Array.from({ length: 8 }).map((_, index) => (
+              {Array.from({ length: productsPerPage }).map((_, index) => (
                 <div key={index} className="h-72 rounded-2xl bg-white border border-gray-200 animate-pulse" />
               ))}
             </div>
-          ) : featuredProducts.length ? (
-            <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 xl:grid-cols-4">
-              {featuredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} addToCart={addToCart} toggleWishlist={toggleWishlist} isInWishlist={isInWishlist} />
-              ))}
-            </div>
+          ) : filteredProducts.length ? (
+            <>
+              <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 xl:grid-cols-4">
+                {visibleProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} addToCart={addToCart} toggleWishlist={toggleWishlist} isInWishlist={isInWishlist} />
+                ))}
+              </div>
+              <div className="mt-7 flex flex-col items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm sm:flex-row">
+                <p className="text-sm font-bold text-gray-600">
+                  Showing {visibleProducts.length} of {filteredProducts.length} products, page {productPage + 1} of {pageCount}
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setProductPage((page) => Math.max(0, page - 1))}
+                    disabled={productPage === 0}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-300 text-lg font-black text-gray-800 transition hover:border-blue-200 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40"
+                    aria-label="Previous products"
+                  >
+                    &larr;
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setProductPage((page) => Math.min(pageCount - 1, page + 1))}
+                    disabled={productPage >= pageCount - 1}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-blue-700 text-lg font-black text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-gray-300"
+                    aria-label="Next products"
+                  >
+                    &rarr;
+                  </button>
+                </div>
+              </div>
+            </>
           ) : (
             <div className="rounded-lg border border-dashed border-gray-300 bg-white p-8 text-center">
-              <h3 className="text-lg font-bold text-gray-950">{t('noProductsYet')}</h3>
-              <p className="mt-2 text-gray-600">{t('ownerCanAdd')}</p>
+              <h3 className="text-lg font-bold text-gray-950">{products.length ? t('noProductsFound') : t('noProductsYet')}</h3>
+              <p className="mt-2 text-gray-600">{products.length ? t('changeFilters') : t('ownerCanAdd')}</p>
             </div>
           )}
         </div>

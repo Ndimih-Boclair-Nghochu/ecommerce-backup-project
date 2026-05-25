@@ -17,7 +17,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
   const [lastUpdate, setLastUpdate] = useState(new Date())
   const [isRealTimeActive, setIsRealTimeActive] = useState(true)
 
-  // Real-time polling for orders - 1 second
+  // Real-time polling for orders
   useEffect(() => {
     if (!isRealTimeActive) return
 
@@ -33,8 +33,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
       }
     }
 
-    // Poll every 1 second for real-time updates
-    const intervalId = setInterval(refreshOrders, 1000)
+    const intervalId = setInterval(refreshOrders, 10000)
     return () => clearInterval(intervalId)
   }, [isRealTimeActive, onOrderUpdate])
 

@@ -1813,10 +1813,14 @@ export default function AdminDashboard() {
             token={localStorage.getItem('adminToken')}
             resetStatus={resetStatus}
             onOrderUpdate={(orderId, updatedOrder, deleted) => {
+              if (!orderId) {
+                fetchOrders()
+                return
+              }
               if (deleted) {
-                setOrders(orders.filter(o => o.id !== orderId))
+                setOrders(current => current.filter(o => o.id !== orderId))
               } else {
-                setOrders(orders.map(o => o.id === orderId ? updatedOrder : o))
+                setOrders(current => current.map(o => o.id === orderId ? updatedOrder : o))
               }
             }}
             onViewReceipt={(order) => setReceiptOrder(order)}
