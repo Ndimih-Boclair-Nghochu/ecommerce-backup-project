@@ -18,6 +18,8 @@ export default function ProductDetail({ addToCart, toggleWishlist, isInWishlist,
   const [reviewSummary, setReviewSummary] = useState({ reviews: [], averageRating: 0, reviewCount: 0 })
   const [reviewForm, setReviewForm] = useState({ customerName: '', rating: 5, comment: '' })
   const [submittingReview, setSubmittingReview] = useState(false)
+  const [installmentDuration, setInstallmentDuration] = useState(3)
+  const [requestingInstallment, setRequestingInstallment] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -34,6 +36,7 @@ export default function ProductDetail({ addToCart, toggleWishlist, isInWishlist,
         const firstVariant = item.images?.[0] || null
         setSelectedVariant(firstVariant)
         setSelectedImage(firstVariant?.url || getProductImage(item))
+        setInstallmentDuration(Number(item.installmentDurationMonths || 3))
         setRelated((productsRes.data || []).filter((entry) => entry.category === item.category && entry.id !== item.id).slice(0, 4))
         setReviewSummary(reviewsRes.data || { reviews: [], averageRating: 0, reviewCount: 0 })
       })
@@ -81,6 +84,7 @@ export default function ProductDetail({ addToCart, toggleWishlist, isInWishlist,
   }
 
   const outOfStock = product.stock <= 0
+  const installmentDeposit = Math.ceil(Number(product.price || 0) * (Number(product.installmentDepositPercent || 30) / 100))
 
   const handleReviewSubmit = async (event) => {
     event.preventDefault()
@@ -105,6 +109,27 @@ export default function ProductDetail({ addToCart, toggleWishlist, isInWishlist,
       toast.error(err.response?.data?.errors?.[0]?.message || err.response?.data?.error || 'Review could not be saved')
     } finally {
       setSubmittingReview(false)
+    }
+  }
+
+  const handleInstallmentRequest = async () => {
+    const token = localStorage.getItem('customerToken')
+    if (!token) {
+      toast.error('Create or login to your customer account first')
+      return
+    }
+    setRequestingInstallment(true)
+    try {
+      await axios.post(
+        '/api/customer/create-installment',
+        { productId: product.id, durationMonths: installmentDuration },
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      toast.success('Installment request sent to the shop for approval')
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Installment request could not be sent')
+    } finally {
+      setRequestingInstallment(false)
     }
   }
 
@@ -155,6 +180,37 @@ export default function ProductDetail({ addToCart, toggleWishlist, isInWishlist,
             {regionLimited && (
               <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
                 {t('availableOnly', { regions: availableRegions.join(', ') })}
+              </div>
+            )}
+
+            {product.installmentAvailable && (
+              <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <h2 className="font-black text-emerald-950">Installment buying available</h2>
+                    <p className="mt-1 text-sm text-emerald-900">
+                      Deposit from {formatXAF(installmentDeposit)}. Non-completion charge: {product.installmentChargePercent || 10}% of deposited amount.
+                    </p>
+                  </div>
+                  <select
+                    value={installmentDuration}
+                    onChange={(event) => setInstallmentDuration(Number(event.target.value))}
+                    className="rounded-md border border-emerald-300 bg-white px-3 py-2 text-sm font-bold text-emerald-950"
+                  >
+                    {[1, 2, 3, 6, 9, 12].map((months) => (
+                      <option key={months} value={months}>{months} month{months === 1 ? '' : 's'}</option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleInstallmentRequest}
+                  disabled={requestingInstallment || outOfStock}
+                  className="mt-4 w-full rounded-md bg-emerald-700 px-5 py-3 font-black text-white transition hover:bg-emerald-800 disabled:bg-gray-300"
+                >
+                  {requestingInstallment ? 'Sending request...' : 'Request installment plan'}
+                </button>
+                <p className="mt-2 text-xs font-semibold text-emerald-900">The shop must approve your request before deposits can start.</p>
               </div>
             )}
 

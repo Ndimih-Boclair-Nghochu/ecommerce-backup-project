@@ -31,6 +31,7 @@ export default function AdminDashboard() {
   const [loadingShipping, setLoadingShipping] = useState(false)
   const [orders, setOrders] = useState([])
   const [customers, setCustomers] = useState([])
+  const [adminInstallments, setAdminInstallments] = useState([])
   const [installmentStats, setInstallmentStats] = useState({})
   const [orderSearch, setOrderSearch] = useState('')
   const [orderSortBy, setOrderSortBy] = useState('newest')
@@ -118,7 +119,11 @@ export default function AdminDashboard() {
     images: [{ color: 'default', url: '' }], sku: '', weight: '', dimensions: '',
     storeAvailability: {}, // { storeId: quantity }
     specifications: [], // [{ key: 'Color', value: 'Black' }, ...]
-    warranty: '', barcode: '', tax: 0
+    warranty: '', barcode: '', tax: 0,
+    installmentAvailable: false,
+    installmentDepositPercent: 30,
+    installmentDurationMonths: 3,
+    installmentChargePercent: 10
   })
 
   const [productSearch, setProductSearch] = useState('')
@@ -188,6 +193,7 @@ export default function AdminDashboard() {
     fetchHeroSection()
     fetchPaymentAccounts()
     fetchCustomersWithInstallments()
+    fetchInstallments()
     fetchInstallmentStats()
   }, [token, navigate])
 
@@ -325,6 +331,17 @@ export default function AdminDashboard() {
     }
   }
 
+  const fetchInstallments = async () => {
+    try {
+      const response = await axios.get('/api/admin/installments', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      setAdminInstallments(response.data || [])
+    } catch (err) {
+      console.error('Failed to fetch installment plans:', err)
+    }
+  }
+
   const fetchInstallmentStats = async () => {
     try {
       const response = await axios.get('/api/admin/installment-stats', {
@@ -333,6 +350,42 @@ export default function AdminDashboard() {
       setInstallmentStats(response.data.stats || {})
     } catch (err) {
       console.error('Failed to fetch installment stats:', err)
+    }
+  }
+
+  const refreshInstallmentData = () => {
+    fetchInstallments()
+    fetchCustomersWithInstallments()
+    fetchInstallmentStats()
+  }
+
+  const handleInstallmentStatus = async (planId, status) => {
+    try {
+      await axios.put(`/api/admin/installments/${planId}/status`, { status }, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      setMessage({ type: 'success', text: `Installment ${status}` })
+      refreshInstallmentData()
+    } catch (err) {
+      setMessage({ type: 'error', text: err.response?.data?.error || 'Failed to update installment' })
+    } finally {
+      setTimeout(() => setMessage({ type: '', text: '' }), 3000)
+    }
+  }
+
+  const handleInstallmentPayment = async (plan) => {
+    const amount = Number(window.prompt('Enter payment amount received', plan.depositRequired || plan.remainingAmount || ''))
+    if (!amount || amount <= 0) return
+    try {
+      await axios.post(`/api/admin/installments/${plan.id}/payments`, { amount, paymentMethod: 'manual', note: 'Recorded by admin' }, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      setMessage({ type: 'success', text: 'Installment payment recorded' })
+      refreshInstallmentData()
+    } catch (err) {
+      setMessage({ type: 'error', text: err.response?.data?.error || 'Failed to record payment' })
+    } finally {
+      setTimeout(() => setMessage({ type: '', text: '' }), 3000)
     }
   }
 
@@ -490,7 +543,7 @@ export default function AdminDashboard() {
         })
         setMessage({ type: 'success', text: 'Product created successfully' })
       }
-      setProductForm({ name: '', price: '', description: '', stock: '', category: 'Electronics', image: '', mostOrdered: false, isNew: false, availableRegions: ['ALL'], images: [{ color: 'default', url: '' }], sku: '', weight: '', dimensions: '', storeAvailability: {}, specifications: [], warranty: '', barcode: '', tax: 0 })
+      setProductForm({ name: '', price: '', description: '', stock: '', category: 'Electronics', image: '', mostOrdered: false, isNew: false, availableRegions: ['ALL'], images: [{ color: 'default', url: '' }], sku: '', weight: '', dimensions: '', storeAvailability: {}, specifications: [], warranty: '', barcode: '', tax: 0, installmentAvailable: false, installmentDepositPercent: 30, installmentDurationMonths: 3, installmentChargePercent: 10 })
       setEditingProductId(null)
       setShowProductForm(false)
       fetchProducts()
@@ -577,7 +630,11 @@ export default function AdminDashboard() {
       specifications: product.specifications || [],
       warranty: product.warranty || '',
       barcode: product.barcode || '',
-      tax: product.tax || 0
+      tax: product.tax || 0,
+      installmentAvailable: !!product.installmentAvailable,
+      installmentDepositPercent: product.installmentDepositPercent || 30,
+      installmentDurationMonths: product.installmentDurationMonths || 3,
+      installmentChargePercent: product.installmentChargePercent || 10
     })
     setEditingProductId(product.id)
     setShowProductForm(true)
@@ -826,6 +883,7 @@ export default function AdminDashboard() {
     { key: 'chat', label: 'Chat', icon: '💬' },
     { key: 'settings', label: 'Settings', icon: '⚙' }
   ]
+  adminTabs.splice(5, 0, { key: 'installments', label: 'Installments', icon: '$' })
   const mobilePrimaryTabs = adminTabs.slice(0, 4)
   const mobileMoreTabs = adminTabs.slice(4)
 
@@ -989,7 +1047,7 @@ export default function AdminDashboard() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-6 mb-4 sm:mb-6">
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Product Management</h2>
               {!showProductForm && (
-                <button onClick={() => { setShowProductForm(true); setEditingProductId(null); setProductForm({ name: '', price: '', description: '', stock: '', category: 'Electronics', image: '', mostOrdered: false, isNew: false, availableRegions: ['ALL'], images: [{ color: 'default', url: '' }], sku: '', weight: '', dimensions: '', storeAvailability: {}, specifications: [], warranty: '', barcode: '', tax: 0 }); }} 
+                <button onClick={() => { setShowProductForm(true); setEditingProductId(null); setProductForm({ name: '', price: '', description: '', stock: '', category: 'Electronics', image: '', mostOrdered: false, isNew: false, availableRegions: ['ALL'], images: [{ color: 'default', url: '' }], sku: '', weight: '', dimensions: '', storeAvailability: {}, specifications: [], warranty: '', barcode: '', tax: 0, installmentAvailable: false, installmentDepositPercent: 30, installmentDurationMonths: 3, installmentChargePercent: 10 }); }}
                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold text-sm sm:text-base transition shadow-md">
                   ➕ Add Product
                 </button>
@@ -1282,6 +1340,41 @@ export default function AdminDashboard() {
                         <p className="text-xs text-gray-500 mt-1">VAT/Tax percentage</p>
                       </div>
                     </div>
+                  </div>
+
+                  {/* SECTION 7: Installment Settings */}
+                  <div className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg p-4 sm:p-6 border border-emerald-200">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <h4 className="text-base font-bold text-emerald-900 flex items-center gap-2">Installment Buying</h4>
+                        <p className="text-xs text-gray-600 mt-1">Allow customers to request a payment plan for this product.</p>
+                      </div>
+                      <label className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 border border-emerald-200 font-bold text-emerald-900">
+                        <input
+                          type="checkbox"
+                          checked={productForm.installmentAvailable}
+                          onChange={(e) => setProductForm({ ...productForm, installmentAvailable: e.target.checked })}
+                          className="h-5 w-5"
+                        />
+                        Available
+                      </label>
+                    </div>
+                    {productForm.installmentAvailable && (
+                      <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-700 mb-1">Minimum Deposit (%)</label>
+                          <input type="number" min="0" max="100" value={productForm.installmentDepositPercent} onChange={(e) => setProductForm({ ...productForm, installmentDepositPercent: e.target.value })} className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-600 text-sm" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-700 mb-1">Default Duration (months)</label>
+                          <input type="number" min="1" max="24" value={productForm.installmentDurationMonths} onChange={(e) => setProductForm({ ...productForm, installmentDurationMonths: e.target.value })} className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-600 text-sm" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-700 mb-1">Non-completion Charge (%)</label>
+                          <input type="number" min="0" max="100" value={productForm.installmentChargePercent} onChange={(e) => setProductForm({ ...productForm, installmentChargePercent: e.target.value })} className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-600 text-sm" />
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* SECTION 7: Product Specifications */}
@@ -1816,6 +1909,98 @@ export default function AdminDashboard() {
             }}
             onViewReceipt={(order) => setReceiptOrder(order)}
           />
+        )}
+
+        {/* INSTALLMENTS TAB */}
+        {activeTab === 'installments' && (
+          <div className="space-y-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Installment Requests</h2>
+                <p className="text-sm text-gray-600 mt-1">Approve plans, record deposits, and track refunds from one place.</p>
+              </div>
+              <button onClick={refreshInstallmentData} className="rounded-lg bg-blue-600 px-4 py-2 font-bold text-white hover:bg-blue-700">
+                Refresh
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="rounded-xl border border-blue-200 bg-white p-4 shadow-sm">
+                <p className="text-sm font-bold text-gray-500">Active Plans</p>
+                <p className="mt-2 text-3xl font-black text-blue-700">{installmentStats.activeInstallments || 0}</p>
+              </div>
+              <div className="rounded-xl border border-emerald-200 bg-white p-4 shadow-sm">
+                <p className="text-sm font-bold text-gray-500">Plan Value</p>
+                <p className="mt-2 text-3xl font-black text-emerald-700">XAF {(installmentStats.totalInstallmentAmount || 0).toLocaleString()}</p>
+              </div>
+              <div className="rounded-xl border border-amber-200 bg-white p-4 shadow-sm">
+                <p className="text-sm font-bold text-gray-500">Collected</p>
+                <p className="mt-2 text-3xl font-black text-amber-700">XAF {(installmentStats.totalPaid || 0).toLocaleString()}</p>
+              </div>
+            </div>
+
+            {adminInstallments.length === 0 ? (
+              <div className="rounded-xl border border-gray-200 bg-white p-10 text-center shadow-sm">
+                <h3 className="text-xl font-bold text-gray-900">No installment requests yet</h3>
+                <p className="mt-2 text-gray-600">Requests will appear here when customers apply from eligible product pages.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4">
+                {adminInstallments.map((plan) => (
+                  <article key={plan.id} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                    <div className="grid gap-4 lg:grid-cols-[96px_1fr_auto]">
+                      <img src={getProductImage({ image: plan.productImage })} alt={plan.productName} className="h-24 w-24 rounded-lg object-cover bg-gray-100" />
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-lg font-black text-gray-950">{plan.productName}</h3>
+                          <span className={`rounded-full px-3 py-1 text-xs font-black ${
+                            plan.status === 'completed' ? 'bg-green-100 text-green-800' :
+                            plan.status === 'refunded' || plan.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                            plan.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-blue-100 text-blue-800'
+                          }`}>
+                            {plan.status}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-sm text-gray-600">{plan.customer?.name} - {plan.customer?.email} - {plan.customer?.phone || 'No phone'}</p>
+                        <div className="mt-3 grid gap-2 text-sm text-gray-700 sm:grid-cols-4">
+                          <div><span className="font-bold">Total:</span> XAF {(plan.totalAmount || 0).toLocaleString()}</div>
+                          <div><span className="font-bold">Deposit:</span> XAF {(plan.depositRequired || 0).toLocaleString()}</div>
+                          <div><span className="font-bold">Paid:</span> XAF {(plan.paidAmount || 0).toLocaleString()}</div>
+                          <div><span className="font-bold">Due:</span> {plan.dueDate ? new Date(plan.dueDate).toLocaleDateString() : 'After approval'}</div>
+                        </div>
+                        {plan.payments?.length > 0 && (
+                          <div className="mt-3 rounded-lg bg-gray-50 p-3 text-xs text-gray-700">
+                            <p className="font-bold text-gray-900">Payment history</p>
+                            {plan.payments.slice(0, 3).map((payment) => (
+                              <p key={payment.id} className="mt-1">XAF {(payment.amount || 0).toLocaleString()} - {new Date(payment.createdAt).toLocaleString()} - {payment.note || payment.paymentMethod}</p>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-col gap-2 lg:w-44">
+                        {plan.status === 'pending' && (
+                          <>
+                            <button onClick={() => handleInstallmentStatus(plan.id, 'approved')} className="rounded-lg bg-green-600 px-3 py-2 text-sm font-bold text-white hover:bg-green-700">Approve</button>
+                            <button onClick={() => handleInstallmentStatus(plan.id, 'rejected')} className="rounded-lg bg-red-600 px-3 py-2 text-sm font-bold text-white hover:bg-red-700">Reject</button>
+                          </>
+                        )}
+                        {['approved', 'active'].includes(plan.status) && (
+                          <>
+                            <button onClick={() => handleInstallmentPayment(plan)} className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-bold text-white hover:bg-blue-700">Record Payment</button>
+                            <button onClick={() => handleInstallmentStatus(plan.id, 'refunded')} className="rounded-lg bg-amber-600 px-3 py-2 text-sm font-bold text-white hover:bg-amber-700">Refund</button>
+                          </>
+                        )}
+                        {plan.status !== 'completed' && plan.paidAmount >= plan.totalAmount && (
+                          <button onClick={() => handleInstallmentStatus(plan.id, 'completed')} className="rounded-lg bg-gray-900 px-3 py-2 text-sm font-bold text-white hover:bg-black">Complete</button>
+                        )}
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
         )}
 
         {/* Receipt Modal */}

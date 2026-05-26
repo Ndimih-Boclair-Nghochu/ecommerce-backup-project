@@ -34,6 +34,7 @@ export default function ProductCard({ product, addToCart, toggleWishlist, isInWi
           <div className="absolute left-2 top-2 flex flex-wrap gap-1.5">
             {product.isNew && <span className="rounded-full bg-amber-400 px-2 py-1 text-[11px] font-bold text-gray-950">{t('new')}</span>}
             {product.mostOrdered && <span className="rounded-full bg-blue-700 px-2 py-1 text-[11px] font-bold text-white">{t('popular')}</span>}
+            {product.installmentAvailable && <span className="rounded-full bg-emerald-600 px-2 py-1 text-[11px] font-bold text-white">Installments</span>}
           </div>
         </div>
 

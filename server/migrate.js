@@ -436,12 +436,20 @@ async function migrate(options = {}) {
         images JSONB DEFAULT '[]',
         translations JSONB DEFAULT '{}',
         store_availability JSONB DEFAULT '{}',
+        installment_available BOOLEAN DEFAULT false,
+        installment_deposit_percent INTEGER DEFAULT 30,
+        installment_duration_months INTEGER DEFAULT 3,
+        installment_charge_percent INTEGER DEFAULT 10,
         created_at TIMESTAMPTZ DEFAULT NOW(),
         updated_at TIMESTAMPTZ DEFAULT NOW()
       )
     `);
     await client.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS translations JSONB DEFAULT '{}'`);
     await client.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS store_availability JSONB DEFAULT '{}'`);
+    await client.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS installment_available BOOLEAN DEFAULT false`);
+    await client.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS installment_deposit_percent INTEGER DEFAULT 30`);
+    await client.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS installment_duration_months INTEGER DEFAULT 3`);
+    await client.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS installment_charge_percent INTEGER DEFAULT 10`);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS categories (
@@ -581,6 +589,44 @@ async function migrate(options = {}) {
       )
     `);
 
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS installment_plans (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        customer_id UUID REFERENCES customers(id) ON DELETE SET NULL,
+        product_id UUID REFERENCES products(id) ON DELETE SET NULL,
+        product_name VARCHAR(255) NOT NULL,
+        product_image TEXT,
+        customer_name VARCHAR(255) NOT NULL,
+        customer_email VARCHAR(255) NOT NULL,
+        customer_phone VARCHAR(50),
+        total_amount INTEGER NOT NULL DEFAULT 0,
+        deposit_required INTEGER NOT NULL DEFAULT 0,
+        charge_percent INTEGER NOT NULL DEFAULT 10,
+        duration_months INTEGER NOT NULL DEFAULT 3,
+        due_date TIMESTAMPTZ,
+        status VARCHAR(50) NOT NULL DEFAULT 'pending',
+        admin_note TEXT,
+        paid_amount INTEGER NOT NULL DEFAULT 0,
+        refunded_amount INTEGER NOT NULL DEFAULT 0,
+        approved_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS installment_payments (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        plan_id UUID REFERENCES installment_plans(id) ON DELETE CASCADE,
+        customer_id UUID REFERENCES customers(id) ON DELETE SET NULL,
+        amount INTEGER NOT NULL,
+        payment_method VARCHAR(80),
+        reference VARCHAR(255),
+        note TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
     await client.query('CREATE INDEX IF NOT EXISTS idx_orders_buyer_email ON orders (buyer_email)');
     await client.query('CREATE INDEX IF NOT EXISTS idx_orders_buyer_email_lower ON orders (LOWER(buyer_email))');
     await client.query('CREATE INDEX IF NOT EXISTS idx_orders_buyer_phone ON orders (buyer_phone)');
@@ -588,6 +634,9 @@ async function migrate(options = {}) {
     await client.query('CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders (created_at DESC)');
     await client.query('CREATE INDEX IF NOT EXISTS idx_products_created_at ON products (created_at DESC)');
     await client.query('CREATE INDEX IF NOT EXISTS idx_product_reviews_product_created ON product_reviews (product_id, created_at DESC)');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_installment_plans_customer ON installment_plans (customer_id, created_at DESC)');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_installment_plans_status ON installment_plans (status, due_date)');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_installment_payments_plan ON installment_payments (plan_id, created_at DESC)');
     await client.query('CREATE INDEX IF NOT EXISTS idx_chat_device_created ON chat_messages (device_id, created_at)');
 
     for (const [key, value] of requiredSettings) {
