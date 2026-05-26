@@ -123,8 +123,14 @@ export default function OrderTracking({ settings }) {
                       <div className="grid gap-3 sm:grid-cols-3 text-sm">
                         <div><span className="text-gray-500">Region:</span> <span className="font-semibold">{order.region}</span></div>
                         <div><span className="text-gray-500">Status:</span> <span className="font-semibold capitalize">{order.status}</span></div>
-                        <div><span className="text-gray-500">Items:</span> <span className="font-semibold">{order.items?.length || 0}</span></div>
+                        <div><span className="text-gray-500">Fulfillment:</span> <span className="font-semibold">{order.deliveryOption === 'pickup' ? 'Pickup' : 'Delivery'}</span></div>
                       </div>
+                      {order.deliveryOption === 'pickup' && (
+                        <div className="rounded-md bg-blue-50 px-4 py-3 text-sm text-blue-950">
+                          <p><span className="font-semibold">Pickup store:</span> {order.pickupLocation || order.buyer?.pickupLocation || 'To be confirmed'}</p>
+                          <p><span className="font-semibold">Pickup time:</span> {order.pickupTime || order.buyer?.pickupTime || 'To be confirmed'}</p>
+                        </div>
+                      )}
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         {(order.items || []).slice(0, 4).map((item) => (
                           <div key={`${order.id}-${item.id}`} className="rounded-md bg-gray-50 p-2 flex gap-2 items-center">

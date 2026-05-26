@@ -365,24 +365,15 @@ async function seedAdditionalProducts(client) {
       [product.category]
     );
 
+    const existing = await client.query('SELECT 1 FROM products WHERE name = $1 LIMIT 1', [product.name]);
+    if (existing.rowCount > 0) continue;
+
     await client.query(
       `INSERT INTO products (
         name, description, price, stock, category, is_new, most_ordered,
         available_regions, image_url, images, translations
       )
-      SELECT
-        $1::varchar(255),
-        $2::text,
-        $3::integer,
-        $4::integer,
-        $5::varchar(100),
-        $6::boolean,
-        $7::boolean,
-        $8::text[],
-        $9::text,
-        $10::jsonb,
-        $11::jsonb
-      WHERE NOT EXISTS (SELECT 1 FROM products WHERE name = $1::varchar(255))`,
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb)`,
       [
         product.name,
         product.description,
@@ -444,11 +435,13 @@ async function migrate(options = {}) {
         image_url TEXT,
         images JSONB DEFAULT '[]',
         translations JSONB DEFAULT '{}',
+        store_availability JSONB DEFAULT '{}',
         created_at TIMESTAMPTZ DEFAULT NOW(),
         updated_at TIMESTAMPTZ DEFAULT NOW()
       )
     `);
     await client.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS translations JSONB DEFAULT '{}'`);
+    await client.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS store_availability JSONB DEFAULT '{}'`);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS categories (
@@ -486,6 +479,9 @@ async function migrate(options = {}) {
         delivery_agency VARCHAR(255),
         notes TEXT,
         payment_method VARCHAR(50),
+        delivery_option VARCHAR(30) DEFAULT 'delivery',
+        pickup_location TEXT,
+        pickup_time TEXT,
         is_in_store_sale BOOLEAN DEFAULT false,
         discount_percent INTEGER DEFAULT 0,
         paid_amount INTEGER DEFAULT 0,
@@ -494,6 +490,9 @@ async function migrate(options = {}) {
         updated_at TIMESTAMPTZ DEFAULT NOW()
       )
     `);
+    await client.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_option VARCHAR(30) DEFAULT 'delivery'`);
+    await client.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS pickup_location TEXT`);
+    await client.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS pickup_time TEXT`);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS pos_receipts (

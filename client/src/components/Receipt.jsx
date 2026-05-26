@@ -97,8 +97,15 @@ export default function Receipt({ order, onClose }) {
               <div className="rounded-lg border border-gray-200 p-4">
                 <h2 className="font-bold mb-2">Order</h2>
                 <p className="capitalize">Status: {order.status || 'completed'}</p>
+                <p>Fulfillment: {order.deliveryOption === 'pickup' ? 'Pickup in store' : 'Delivery'}</p>
                 <p>Region: {order.region || 'In store'}</p>
                 {order.deliveryAgency && <p>Agency: {order.deliveryAgency}</p>}
+                {order.deliveryOption === 'pickup' && (order.pickupLocation || buyer.pickupLocation) && (
+                  <p>Pickup store: {order.pickupLocation || buyer.pickupLocation}</p>
+                )}
+                {order.deliveryOption === 'pickup' && (order.pickupTime || buyer.pickupTime) && (
+                  <p>Pickup time: {order.pickupTime || buyer.pickupTime}</p>
+                )}
               </div>
             </div>
 

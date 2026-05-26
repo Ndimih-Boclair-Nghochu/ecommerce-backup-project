@@ -178,7 +178,6 @@ export default function App() {
 
   const isInWishlist = (productId) => wishlist.some((item) => item.id === productId)
   const closeMobileMenu = () => setMobileMenuOpen(false)
-  const hasAdminSession = Boolean(localStorage.getItem('adminToken'))
   const isAdminRoute = location.pathname.startsWith('/admin')
 
   const navLinks = [
@@ -340,7 +339,7 @@ export default function App() {
           </div>
         </footer>
 
-        {!hasAdminSession && !isAdminRoute && <ChatWidget />}
+        {!isAdminRoute && <ChatWidget />}
       </div>
     </ErrorBoundary>
   )

@@ -133,17 +133,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
       agencies: order.buyer?.agencies
     })
     
-    // If changing FROM pending TO another status, show agency selection modal
-    if (order.status === 'pending' && newStatus !== 'pending') {
-      console.debug('✅ Showing agency modal for pending order')
-      setOrderForAgency(order)
-      setPendingStatusChange({ orderId, newStatus })
-      setAgencyModalOpen(true)
-      return
-    }
-
     console.debug('⏭️ Proceeding with direct status change')
-    // Otherwise, proceed with the status change directly
     await completeStatusChange(orderId, newStatus, order)
   }
 
@@ -549,11 +539,11 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
                       </td>
                       <td className="px-4 py-4">
                         <span className={`inline-block px-2 py-1 rounded-lg text-xs font-bold ${
-                          order.deliveryOption === 'ship' 
+                          order.deliveryOption !== 'pickup'
                             ? 'bg-purple-100 text-purple-800' 
                             : 'bg-orange-100 text-orange-800'
                         }`}>
-                          {order.deliveryOption === 'ship' ? '🚚 Shipping' : '🏪 Pickup'}
+                          {order.deliveryOption === 'pickup' ? '🏪 Pickup' : '🚚 Delivery'}
                         </span>
                         {order.region && <div className="text-xs text-gray-600 mt-1">{order.region}</div>}
                       </td>
@@ -641,11 +631,11 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
                                   <div className="flex items-center gap-2">
                                     <span className="font-semibold">Delivery Method:</span>
                                     <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
-                                      order.deliveryOption === 'ship' 
+                                      order.deliveryOption !== 'pickup'
                                         ? 'bg-purple-100 text-purple-800' 
                                         : 'bg-orange-100 text-orange-800'
                                     }`}>
-                                      {order.deliveryOption === 'ship' ? '🚚 Shipping' : '🏪 Pickup in Store'}
+                                      {order.deliveryOption === 'pickup' ? '🏪 Pickup in Store' : '🚚 Delivery'}
                                     </span>
                                   </div>
                                   <div><span className="font-semibold">Region:</span> {order.region}</div>
@@ -656,6 +646,9 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
                                     <div className="pt-2 border-t border-green-200">
                                       <span className="font-semibold">Pickup Location:</span> {order.buyer.pickupLocation}
                                     </div>
+                                  )}
+                                  {order.deliveryOption === 'pickup' && order.buyer?.pickupTime && (
+                                    <div><span className="font-semibold">Pickup Time:</span> {order.buyer.pickupTime}</div>
                                   )}
                                 </div>
                               </div>

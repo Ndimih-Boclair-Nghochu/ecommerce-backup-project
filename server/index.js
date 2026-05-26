@@ -193,6 +193,8 @@ function productFromRow(row) {
     imageUrl: image,
     image_url: image,
     images,
+    storeAvailability: row.store_availability && typeof row.store_availability === 'object' ? row.store_availability : {},
+    store_availability: row.store_availability && typeof row.store_availability === 'object' ? row.store_availability : {},
     translations: row.translations && typeof row.translations === 'object' ? row.translations : {},
     createdAt: row.created_at,
     updatedAt: row.updated_at
@@ -223,7 +225,9 @@ function orderFromRow(row) {
       email: row.buyer_email,
       phone: row.buyer_phone,
       address: row.buyer_address,
-      agencies: row.buyer_agencies || []
+      agencies: row.buyer_agencies || [],
+      pickupLocation: row.pickup_location || '',
+      pickupTime: row.pickup_time || ''
     },
     buyerName: row.buyer_name,
     buyerEmail: row.buyer_email,
@@ -243,6 +247,9 @@ function orderFromRow(row) {
     deliveryAgency: row.delivery_agency || '',
     notes: row.notes || '',
     paymentMethod: row.payment_method || '',
+    deliveryOption: row.delivery_option || 'delivery',
+    pickupLocation: row.pickup_location || '',
+    pickupTime: row.pickup_time || '',
     isPaid: paidAmount >= total && total > 0,
     isInStoreSale: Boolean(row.is_in_store_sale),
     discountPercent: Number(row.discount_percent || 0),
@@ -495,7 +502,7 @@ const orderValidation = validate([
     return true;
   }),
   body('buyer.address').custom((value, { req }) => {
-    if (req.body.isInStoreSale || req.body.deliveryOption === 'pickup') return true;
+    if (req.body.isInStoreSale || req.body.deliveryOption === 'pickup' || req.body.delivery_option === 'pickup') return true;
     if (!value || !String(value).trim()) throw new Error('Buyer address is required');
     return true;
   }),
@@ -635,6 +642,10 @@ app.post('/api/orders', orderLimiter, orderValidation, asyncHandler(async (req, 
     const shippingFees = await getShippingFees();
     const buyer = req.body.buyer || {};
     const isInStoreSale = Boolean(req.body.isInStoreSale || req.body.is_in_store_sale);
+    const deliveryOption = req.body.deliveryOption || req.body.delivery_option || 'delivery';
+    const isPickup = deliveryOption === 'pickup';
+    const pickupLocation = buyer.pickupLocation || req.body.pickupLocation || req.body.pickup_location || '';
+    const pickupTime = buyer.pickupTime || req.body.pickupTime || req.body.pickup_time || '';
     const region = req.body.region || settings.main_shop_town || 'Bamenda';
     const items = req.body.items || [];
     const orderItems = [];
@@ -670,22 +681,29 @@ app.post('/api/orders', orderLimiter, orderValidation, asyncHandler(async (req, 
     }
 
     const threshold = Number(settings.free_shipping_threshold || 100000);
-    const baseShipping = isInStoreSale ? 0 : Number(shippingFees[region] ?? 0);
-    const shippingFee = !isInStoreSale && subtotal >= threshold ? 0 : baseShipping;
+    const baseShipping = isInStoreSale || isPickup ? 0 : Number(shippingFees[region] ?? 0);
+    const shippingFee = !isInStoreSale && !isPickup && subtotal >= threshold ? 0 : baseShipping;
     const discountPercent = Math.max(0, Number(req.body.discountPercent || req.body.discount_percent || 0));
     const discountAmount = Math.round(subtotal * (discountPercent / 100));
     const total = Math.max(0, subtotal - discountAmount + shippingFee);
     const status = isInStoreSale ? (req.body.status || 'completed') : 'pending';
     const email = buyer.email || (isInStoreSale ? 'pos-sale@local.invalid' : '');
-    const address = buyer.address || buyer.pickupLocation || (isInStoreSale ? 'In-store sale' : '');
+    const address = isPickup
+      ? (buyer.address || pickupLocation || 'Customer pickup')
+      : (buyer.address || (isInStoreSale ? 'In-store sale' : ''));
+    const notes = [
+      buyer.specialInstructions || req.body.notes || '',
+      isPickup && pickupTime ? `Pickup time: ${pickupTime}` : ''
+    ].filter(Boolean).join('\n');
 
     const inserted = await client.query(
       `INSERT INTO orders (
         buyer_name, buyer_email, buyer_phone, buyer_address, buyer_agencies,
         region, shipping_fee, subtotal, total, items, status, delivery_agency,
-        notes, payment_method, is_in_store_sale, discount_percent, paid_amount, change_amount
+        notes, payment_method, delivery_option, pickup_location, pickup_time,
+        is_in_store_sale, discount_percent, paid_amount, change_amount
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11, $12, $13, $14, $15, $16, $17, $18)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
       RETURNING *`,
       [
         buyer.name,
@@ -700,8 +718,11 @@ app.post('/api/orders', orderLimiter, orderValidation, asyncHandler(async (req, 
         JSON.stringify(orderItems),
         status,
         req.body.deliveryAgency || req.body.delivery_agency || '',
-        buyer.specialInstructions || req.body.notes || '',
+        notes,
         req.body.paymentMethod || req.body.payment_method || '',
+        deliveryOption,
+        pickupLocation,
+        pickupTime,
         isInStoreSale,
         discountPercent,
         normalizeNumber(req.body.paidAmount || req.body.paid_amount, 0),
@@ -909,39 +930,10 @@ app.post('/api/admin/products', checkPermission('manageProducts'), productValida
   const imageUrl = req.body.image_url || req.body.image || images[0]?.url || '';
   const regions = normalizeArray(req.body.availableRegions || req.body.available_regions, ['ALL']);
   const translations = req.body.translations && typeof req.body.translations === 'object' ? req.body.translations : {};
+  const storeAvailability = req.body.storeAvailability || req.body.store_availability || {};
   const result = await pool.query(
-    `INSERT INTO products (name, description, price, stock, category, is_new, most_ordered, available_regions, image_url, images, translations)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb)
-     RETURNING *`,
-    [
-      req.body.name,
-      req.body.description || '',
-      Number(req.body.price),
-      Number(req.body.stock),
-      req.body.category || '',
-      Boolean(req.body.isNew || req.body.is_new),
-      Boolean(req.body.mostOrdered || req.body.most_ordered),
-      regions.length ? regions : ['ALL'],
-      imageUrl,
-      JSON.stringify(images),
-      JSON.stringify(translations)
-    ]
-  );
-  await logActivity(req, 'create_product', { productId: result.rows[0].id, name: result.rows[0].name });
-  res.status(201).json(productFromRow(result.rows[0]));
-}));
-
-app.put('/api/admin/products/:id', checkPermission('manageProducts'), productValidation, asyncHandler(async (req, res) => {
-  const images = normalizeArray(req.body.images).filter((image) => image && image.url);
-  const imageUrl = req.body.image_url || req.body.image || images[0]?.url || '';
-  const regions = normalizeArray(req.body.availableRegions || req.body.available_regions, ['ALL']);
-  const translations = req.body.translations && typeof req.body.translations === 'object' ? req.body.translations : {};
-  const result = await pool.query(
-    `UPDATE products
-     SET name = $1, description = $2, price = $3, stock = $4, category = $5,
-         is_new = $6, most_ordered = $7, available_regions = $8, image_url = $9,
-         images = $10::jsonb, translations = $11::jsonb, updated_at = NOW()
-     WHERE id = $12
+    `INSERT INTO products (name, description, price, stock, category, is_new, most_ordered, available_regions, image_url, images, translations, store_availability)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb, $12::jsonb)
      RETURNING *`,
     [
       req.body.name,
@@ -955,6 +947,39 @@ app.put('/api/admin/products/:id', checkPermission('manageProducts'), productVal
       imageUrl,
       JSON.stringify(images),
       JSON.stringify(translations),
+      JSON.stringify(storeAvailability)
+    ]
+  );
+  await logActivity(req, 'create_product', { productId: result.rows[0].id, name: result.rows[0].name });
+  res.status(201).json(productFromRow(result.rows[0]));
+}));
+
+app.put('/api/admin/products/:id', checkPermission('manageProducts'), productValidation, asyncHandler(async (req, res) => {
+  const images = normalizeArray(req.body.images).filter((image) => image && image.url);
+  const imageUrl = req.body.image_url || req.body.image || images[0]?.url || '';
+  const regions = normalizeArray(req.body.availableRegions || req.body.available_regions, ['ALL']);
+  const translations = req.body.translations && typeof req.body.translations === 'object' ? req.body.translations : {};
+  const storeAvailability = req.body.storeAvailability || req.body.store_availability || {};
+  const result = await pool.query(
+    `UPDATE products
+     SET name = $1, description = $2, price = $3, stock = $4, category = $5,
+         is_new = $6, most_ordered = $7, available_regions = $8, image_url = $9,
+         images = $10::jsonb, translations = $11::jsonb, store_availability = $12::jsonb, updated_at = NOW()
+     WHERE id = $13
+     RETURNING *`,
+    [
+      req.body.name,
+      req.body.description || '',
+      Number(req.body.price),
+      Number(req.body.stock),
+      req.body.category || '',
+      Boolean(req.body.isNew || req.body.is_new),
+      Boolean(req.body.mostOrdered || req.body.most_ordered),
+      regions.length ? regions : ['ALL'],
+      imageUrl,
+      JSON.stringify(images),
+      JSON.stringify(translations),
+      JSON.stringify(storeAvailability),
       req.params.id
     ]
   );
@@ -986,7 +1011,10 @@ app.put('/api/admin/orders/:id', checkPermission('manageOrders'), validate([
 
   const existing = current.rows[0];
   const status = req.body.status || existing.status;
-  const deliveryAgency = req.body.deliveryAgency ?? req.body.delivery_agency ?? existing.delivery_agency;
+  const requestedAgency = req.body.deliveryAgency ?? req.body.delivery_agency ?? req.body.selectedDeliveryAgency;
+  const deliveryAgency = requestedAgency && typeof requestedAgency === 'object'
+    ? requestedAgency.name || ''
+    : requestedAgency ?? existing.delivery_agency;
   const paidAmount = req.body.isPaid === true
     ? existing.total
     : req.body.isPaid === false

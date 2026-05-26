@@ -360,15 +360,6 @@ export default function AdminDashboard() {
   }
 
   const handleStatusChange = async (order, newStatus) => {
-    // If changing to delivered, show agency selection modal
-    if (newStatus === 'delivered' && order.buyer?.agencies && order.buyer.agencies.length > 0) {
-      setAgencyModalOrder(order)
-      setPendingStatusChange(newStatus)
-      setShowAgencyModal(true)
-      return
-    }
-    
-    // Otherwise, update status directly
     try {
       await axios.put(`/api/admin/orders/${order.id}`, 
         { status: newStatus }, 

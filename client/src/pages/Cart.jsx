@@ -9,8 +9,24 @@ const emptyBuyer = {
   email: '',
   phone: '',
   address: '',
-  agencies: ['', '', ''],
+  agencies: [''],
   notes: ''
+}
+
+const normalizeTown = (value = '') => String(value || '').trim().toLowerCase()
+
+const getAvailability = (item) => item.storeAvailability || item.store_availability || {}
+
+const isProductAvailableAtLocation = (item, location) => {
+  const availability = getAvailability(item)
+  const locationIds = Object.keys(availability)
+  if (!locationIds.length) return true
+  return Number(availability[location.id] || 0) > 0
+}
+
+const formatPickupLocation = (location) => {
+  if (!location) return ''
+  return [location.name, location.city].filter(Boolean).join(' - ')
 }
 
 function RequiredLabel({ children }) {
@@ -23,7 +39,11 @@ function RequiredLabel({ children }) {
 
 export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, subtotal, settings }) {
   const [shippingFees, setShippingFees] = useState({})
+  const [pickupLocations, setPickupLocations] = useState([])
   const [region, setRegion] = useState(settings?.mainShopTown || 'Bamenda')
+  const [deliveryOption, setDeliveryOption] = useState('delivery')
+  const [pickupLocationId, setPickupLocationId] = useState('')
+  const [pickupTime, setPickupTime] = useState('')
   const [buyer, setBuyer] = useState(emptyBuyer)
   const [errors, setErrors] = useState({})
   const [placingOrder, setPlacingOrder] = useState(false)
@@ -34,24 +54,67 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
     axios.get('/api/shipping-fees')
       .then((res) => {
         if (!active) return
-        setShippingFees(res.data || {})
-        if (!region && res.data?.[settings?.mainShopTown]) setRegion(settings.mainShopTown)
+        const fees = res.data || {}
+        setShippingFees(fees)
+        setRegion((current) => current || settings?.mainShopTown || Object.keys(fees)[0] || 'Bamenda')
       })
       .catch(() => toast.error('Shipping fees could not be loaded'))
     return () => {
       active = false
     }
-  }, [region, settings?.mainShopTown])
+  }, [settings?.mainShopTown])
+
+  useEffect(() => {
+    let active = true
+    axios.get('/api/pickup-locations')
+      .then((res) => {
+        if (!active) return
+        setPickupLocations(Array.isArray(res.data) ? res.data : [])
+      })
+      .catch(() => toast.error('Pickup locations could not be loaded'))
+    return () => {
+      active = false
+    }
+  }, [])
 
   const mainTown = settings?.mainShopTown || 'Bamenda'
-  const showAgencies = region !== mainTown
+  const regions = useMemo(() => Object.keys(shippingFees).sort((a, b) => a.localeCompare(b)), [shippingFees])
+  const availablePickupLocations = useMemo(
+    () => pickupLocations.filter((location) => cart.every((item) => isProductAvailableAtLocation(item, location))),
+    [pickupLocations, cart]
+  )
+  const selectedPickupLocation = useMemo(
+    () => availablePickupLocations.find((location) => location.id === pickupLocationId) || availablePickupLocations[0] || null,
+    [availablePickupLocations, pickupLocationId]
+  )
+  const selectedPickupCity = selectedPickupLocation?.city || ''
+  const cartAvailableInRegion = useMemo(
+    () => pickupLocations.some((location) => (
+      normalizeTown(location.city) === normalizeTown(region)
+      && cart.every((item) => isProductAvailableAtLocation(item, location))
+    )),
+    [pickupLocations, cart, region]
+  )
+  const showAgencies = deliveryOption === 'delivery'
+    && !(cartAvailableInRegion || normalizeTown(region) === normalizeTown(mainTown))
   const freeShippingThreshold = Number(settings?.freeShippingThreshold || 100000)
   const baseShipping = Number(shippingFees[region] ?? 0)
-  const freeShipping = subtotal >= freeShippingThreshold
-  const shipping = freeShipping ? 0 : baseShipping
+  const freeShipping = deliveryOption === 'delivery' && subtotal >= freeShippingThreshold
+  const shipping = deliveryOption === 'pickup' ? 0 : (freeShipping ? 0 : baseShipping)
   const total = subtotal + shipping
 
-  const regions = useMemo(() => Object.keys(shippingFees).sort((a, b) => a.localeCompare(b)), [shippingFees])
+  useEffect(() => {
+    if (!availablePickupLocations.length) return
+    if (!pickupLocationId || !availablePickupLocations.some((location) => location.id === pickupLocationId)) {
+      setPickupLocationId(availablePickupLocations[0].id)
+    }
+  }, [availablePickupLocations, pickupLocationId])
+
+  useEffect(() => {
+    if (deliveryOption === 'pickup' && selectedPickupCity) {
+      setRegion(selectedPickupCity)
+    }
+  }, [deliveryOption, selectedPickupCity])
 
   const validateForm = () => {
     const nextErrors = {}
@@ -59,7 +122,9 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
     if (!buyer.email.trim()) nextErrors.email = 'Email is required'
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyer.email)) nextErrors.email = 'Enter a valid email address'
     if (!buyer.phone.trim()) nextErrors.phone = 'Phone number is required'
-    if (!buyer.address.trim()) nextErrors.address = 'Delivery address is required'
+    if (deliveryOption === 'delivery' && !buyer.address.trim()) nextErrors.address = 'Delivery address is required'
+    if (deliveryOption === 'pickup' && !selectedPickupLocation) nextErrors.pickupLocation = 'Select a pickup store'
+    if (deliveryOption === 'pickup' && !pickupTime) nextErrors.pickupTime = 'Select your pickup time'
     if (!cart.length) nextErrors.cart = 'Your cart is empty'
     setErrors(nextErrors)
     return Object.keys(nextErrors).length === 0
@@ -78,6 +143,22 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
     })
   }
 
+  const addAgencyField = () => {
+    setBuyer((current) => ({ ...current, agencies: [...current.agencies, ''] }))
+  }
+
+  const removeAgencyField = (index) => {
+    setBuyer((current) => ({
+      ...current,
+      agencies: current.agencies.length > 1 ? current.agencies.filter((_, itemIndex) => itemIndex !== index) : ['']
+    }))
+  }
+
+  const chooseDeliveryOption = (option) => {
+    setDeliveryOption(option)
+    setErrors((current) => ({ ...current, address: undefined, pickupLocation: undefined, pickupTime: undefined }))
+  }
+
   const placeOrder = async (event) => {
     event.preventDefault()
     if (!validateForm()) {
@@ -88,16 +169,25 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
     const loadingToast = toast.loading('Placing order...')
     setPlacingOrder(true)
     try {
+      const pickupLabel = formatPickupLocation(selectedPickupLocation)
+      const normalizedAgencies = buyer.agencies.map((agency) => agency.trim()).filter(Boolean)
       const payload = {
         buyer: {
           name: buyer.name.trim(),
           email: buyer.email.trim(),
           phone: buyer.phone.trim(),
-          address: buyer.address.trim(),
-          agencies: showAgencies ? buyer.agencies.filter((agency) => agency.trim()) : [],
+          address: deliveryOption === 'pickup'
+            ? (selectedPickupLocation?.address || pickupLabel)
+            : buyer.address.trim(),
+          agencies: showAgencies ? normalizedAgencies : [],
+          pickupLocation: deliveryOption === 'pickup' ? pickupLabel : '',
+          pickupTime: deliveryOption === 'pickup' ? pickupTime : '',
           specialInstructions: buyer.notes.trim()
         },
-        region,
+        region: deliveryOption === 'pickup' && selectedPickupCity ? selectedPickupCity : region,
+        deliveryOption,
+        pickupLocation: deliveryOption === 'pickup' ? pickupLabel : '',
+        pickupTime: deliveryOption === 'pickup' ? pickupTime : '',
         paymentMethod: 'manual_confirmation',
         items: cart.map((item) => ({
           id: item.id,
@@ -113,6 +203,9 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
       setSuccessOrder(response.data)
       clearCart()
       setBuyer(emptyBuyer)
+      setDeliveryOption('delivery')
+      setPickupTime('')
+      setPickupLocationId('')
       toast.success('Order received')
     } catch (err) {
       const responseErrors = err.response?.data?.errors || []
@@ -148,7 +241,7 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
     <main className="min-h-screen bg-gray-50">
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         <div className="mb-6">
-          <Link to="/products" className="text-sm font-semibold text-blue-700 hover:text-blue-900">← Continue Shopping</Link>
+          <Link to="/products" className="text-sm font-semibold text-blue-700 hover:text-blue-900">Back to products</Link>
           <h1 className="mt-3 text-3xl sm:text-4xl font-bold text-gray-950">Shopping Cart</h1>
         </div>
 
@@ -159,7 +252,7 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
               Order ID: <span className="font-mono font-bold">{successOrder.id}</span>
             </p>
             <p className="mt-2 text-green-800">
-              Your order has been received. We will contact you shortly to confirm payment and delivery.
+              Your order has been received. We will contact you shortly to confirm payment and fulfillment.
             </p>
             <Link to="/track-order" className="mt-4 inline-flex rounded-md bg-green-700 px-4 py-2 font-bold text-white hover:bg-green-800">
               Track Order
@@ -185,7 +278,7 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
                     </div>
                     <div className="mt-4 flex items-center justify-between gap-4">
                       <div className="flex items-center gap-2">
-                        <button type="button" onClick={() => updateQuantity(item.id, item.quantity - 1)} className="h-9 w-9 rounded-md border border-gray-300 font-bold">−</button>
+                        <button type="button" onClick={() => updateQuantity(item.id, item.quantity - 1)} className="h-9 w-9 rounded-md border border-gray-300 font-bold">-</button>
                         <input
                           type="number"
                           min="1"
@@ -229,35 +322,114 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
               </div>
 
               <div>
-                <RequiredLabel>Delivery Region</RequiredLabel>
-                <select value={region} onChange={(event) => setRegion(event.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none">
-                  {(regions.length ? regions : [mainTown]).map((city) => (
-                    <option key={city} value={city}>{city}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <RequiredLabel>Delivery Address</RequiredLabel>
-                <textarea value={buyer.address} onChange={(event) => handleBuyerChange('address', event.target.value)} rows="3" className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none" />
-                {errors.address && <p className="mt-1 text-sm text-red-600">{errors.address}</p>}
-              </div>
-
-              {showAgencies && (
-                <div>
-                  <label className="block text-sm font-bold text-gray-800 mb-2">Nearby collection agencies</label>
-                  <div className="space-y-2">
-                    {buyer.agencies.map((agency, index) => (
-                      <input
-                        key={index}
-                        value={agency}
-                        onChange={(event) => handleAgencyChange(index, event.target.value)}
-                        placeholder={`Agency ${index + 1}`}
-                        className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none"
-                      />
-                    ))}
-                  </div>
+                <RequiredLabel>Fulfillment</RequiredLabel>
+                <div className="grid grid-cols-2 gap-2 rounded-lg bg-gray-100 p-1">
+                  <button
+                    type="button"
+                    onClick={() => chooseDeliveryOption('delivery')}
+                    className={`rounded-md px-3 py-2 text-sm font-bold transition ${deliveryOption === 'delivery' ? 'bg-white text-blue-800 shadow-sm' : 'text-gray-700 hover:text-gray-950'}`}
+                  >
+                    Delivery
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => chooseDeliveryOption('pickup')}
+                    className={`rounded-md px-3 py-2 text-sm font-bold transition ${deliveryOption === 'pickup' ? 'bg-white text-blue-800 shadow-sm' : 'text-gray-700 hover:text-gray-950'}`}
+                  >
+                    Pickup
+                  </button>
                 </div>
+              </div>
+
+              {deliveryOption === 'delivery' ? (
+                <>
+                  <div>
+                    <RequiredLabel>Delivery Region</RequiredLabel>
+                    <select value={region} onChange={(event) => setRegion(event.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none">
+                      {(regions.length ? regions : [mainTown]).map((city) => (
+                        <option key={city} value={city}>{city}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <RequiredLabel>Delivery Address</RequiredLabel>
+                    <textarea value={buyer.address} onChange={(event) => handleBuyerChange('address', event.target.value)} rows="3" className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none" />
+                    {errors.address && <p className="mt-1 text-sm text-red-600">{errors.address}</p>}
+                  </div>
+
+                  {showAgencies && (
+                    <div>
+                      <label className="block text-sm font-bold text-gray-800 mb-2">Nearby collection agencies</label>
+                      <p className="mb-2 text-xs text-gray-500">Add one or more agencies if you want delivery through a local pickup point.</p>
+                      <div className="space-y-2">
+                        {buyer.agencies.map((agency, index) => (
+                          <div key={index} className="flex gap-2">
+                            <input
+                              value={agency}
+                              onChange={(event) => handleAgencyChange(index, event.target.value)}
+                              placeholder={`Agency ${index + 1}`}
+                              className="min-w-0 flex-1 rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none"
+                            />
+                            {buyer.agencies.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeAgencyField(index)}
+                                className="rounded-md border border-gray-300 px-3 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50"
+                              >
+                                Remove
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      <button type="button" onClick={addAgencyField} className="mt-2 text-sm font-bold text-blue-700 hover:text-blue-900">
+                        Add another agency
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div>
+                    <RequiredLabel>Pickup Store</RequiredLabel>
+                    <select
+                      value={selectedPickupLocation?.id || ''}
+                      onChange={(event) => setPickupLocationId(event.target.value)}
+                      className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none"
+                    >
+                      {availablePickupLocations.length ? (
+                        availablePickupLocations.map((location) => (
+                          <option key={location.id} value={location.id}>
+                            {formatPickupLocation(location)}
+                          </option>
+                        ))
+                      ) : (
+                        <option value="">No pickup store available for these items</option>
+                      )}
+                    </select>
+                    {selectedPickupLocation?.address && (
+                      <p className="mt-2 rounded-md bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-900">
+                        {selectedPickupLocation.address}
+                      </p>
+                    )}
+                    {errors.pickupLocation && <p className="mt-1 text-sm text-red-600">{errors.pickupLocation}</p>}
+                  </div>
+
+                  <div>
+                    <RequiredLabel>Pickup Time</RequiredLabel>
+                    <input
+                      type="datetime-local"
+                      value={pickupTime}
+                      onChange={(event) => {
+                        setPickupTime(event.target.value)
+                        setErrors((current) => ({ ...current, pickupTime: undefined }))
+                      }}
+                      className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none"
+                    />
+                    {errors.pickupTime && <p className="mt-1 text-sm text-red-600">{errors.pickupTime}</p>}
+                  </div>
+                </>
               )}
 
               <div>
@@ -268,8 +440,10 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
               <div className="rounded-lg bg-gray-50 p-4 space-y-2">
                 <div className="flex justify-between text-sm"><span>Subtotal</span><span className="font-semibold">{formatXAF(subtotal)}</span></div>
                 <div className="flex justify-between text-sm">
-                  <span>Shipping</span>
-                  <span className="font-semibold">{freeShipping ? 'Free' : formatXAF(shipping)}</span>
+                  <span>{deliveryOption === 'pickup' ? 'Pickup' : 'Shipping'}</span>
+                  <span className="font-semibold">
+                    {deliveryOption === 'pickup' ? 'Free' : (freeShipping ? 'Free' : formatXAF(shipping))}
+                  </span>
                 </div>
                 {freeShipping && <p className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-800 inline-flex">Free shipping</p>}
                 <div className="border-t border-gray-200 pt-2 flex justify-between text-lg font-bold">
