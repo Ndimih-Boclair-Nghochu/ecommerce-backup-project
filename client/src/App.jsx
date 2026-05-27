@@ -1,23 +1,34 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { Routes, Route, Link, useLocation } from 'react-router-dom'
 import toast, { Toaster } from 'react-hot-toast'
 import axios from './lib/api'
+// Eagerly load the most common pages for instant first-paint
 import Home from './pages/Home'
 import AllProducts from './pages/AllProducts'
 import ProductDetail from './pages/ProductDetail'
-import Wishlist from './pages/Wishlist'
-import Cart from './pages/Cart'
-import OrderTracking from './pages/OrderTracking'
-import AdminLogin from './pages/AdminLogin'
-import AdminDashboard from './pages/AdminDashboard'
-import CustomerSignup from './pages/CustomerSignup'
-import CustomerLogin from './pages/CustomerLogin'
-import CustomerDashboard from './pages/CustomerDashboard'
-import NotFound from './pages/NotFound'
+// Lazy-load heavier or less-visited pages to reduce initial bundle
+const Wishlist = lazy(() => import('./pages/Wishlist'))
+const Cart = lazy(() => import('./pages/Cart'))
+const OrderTracking = lazy(() => import('./pages/OrderTracking'))
+const AdminLogin = lazy(() => import('./pages/AdminLogin'))
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'))
+const CustomerSignup = lazy(() => import('./pages/CustomerSignup'))
+const CustomerLogin = lazy(() => import('./pages/CustomerLogin'))
+const CustomerDashboard = lazy(() => import('./pages/CustomerDashboard'))
+const NotFound = lazy(() => import('./pages/NotFound'))
 import ChatWidget from './components/ChatWidget'
 import ErrorBoundary from './components/ErrorBoundary'
 import { formatXAF } from './utils/format'
 import { useLanguage } from './i18n/LanguageContext'
+
+// Minimal spinner shown while lazy chunks load over slow networks
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
+}
 
 function useLocalStorageState(key, initialValue) {
   const [value, setValue] = useState(() => {
@@ -301,6 +312,7 @@ export default function App() {
           </div>
         )}
 
+        <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/" element={<Home products={products} settings={settings} addToCart={addToCart} toggleWishlist={toggleWishlist} isInWishlist={isInWishlist} loading={loading} />} />
           <Route path="/products" element={<AllProducts addToCart={addToCart} toggleWishlist={toggleWishlist} isInWishlist={isInWishlist} />} />
@@ -315,6 +327,7 @@ export default function App() {
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </Suspense>
 
         <footer className="bg-white border-t">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 grid gap-6 md:grid-cols-3">

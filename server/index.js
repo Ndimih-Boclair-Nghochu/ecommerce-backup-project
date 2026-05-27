@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const compression = require('compression');
 const { body, validationResult } = require('express-validator');
 const path = require('path');
 const fs = require('fs');
@@ -70,6 +71,9 @@ app.use(helmet({
     }
   }
 }));
+// Gzip compression for all responses (huge win on slow networks)
+app.use(compression({ level: 6, threshold: 1024 }));
+
 app.use(cors({ origin: CLIENT_ORIGIN }));
 app.use(express.json({ limit: '2mb' }));
 
@@ -116,7 +120,11 @@ function sendUploadResponse(req, res) {
   return res.json({ imageUrl, url: imageUrl });
 }
 
-app.use('/uploads', express.static(uploadDir));
+app.use('/uploads', express.static(uploadDir, {
+  maxAge: '7d',
+  etag: true,
+  lastModified: true
+}));
 
 function requireJwtSecret() {
   if (!JWT_SECRET || JWT_SECRET.length < 32) {
@@ -645,6 +653,7 @@ app.get('/api/health', (req, res) => res.json({ ok: true, database: 'postgresql'
 
 app.get('/api/settings', asyncHandler(async (req, res) => {
   const settings = await getSettings();
+  res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
   res.json({
     shopName: settings.shop_name,
     mainShopTown: settings.main_shop_town,
@@ -656,6 +665,7 @@ app.get('/api/settings', asyncHandler(async (req, res) => {
 
 app.get('/api/platform-name', asyncHandler(async (req, res) => {
   const settings = await getSettings();
+  res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
   res.json({ platformName: settings.shop_name || 'MyShop' });
 }));
 
@@ -664,6 +674,7 @@ app.get('/api/hero-section', asyncHandler(async (req, res) => {
   const result = await pool.query("SELECT value FROM settings WHERE key = 'hero_section'");
   const hero = { ...DEFAULT_HERO_SECTION, ...(result.rowCount ? JSON.parse(result.rows[0].value) : {}) };
   if (!hero.backgroundImage) hero.backgroundImage = INITIAL_HERO_IMAGE;
+  res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
   res.json({ ...hero, title: hero.title === 'MyShop' ? settings.shop_name : hero.title });
 }));
 
@@ -695,6 +706,7 @@ app.get('/api/stats', asyncHandler(async (req, res) => {
 
 app.get('/api/products', asyncHandler(async (req, res) => {
   const result = await pool.query('SELECT * FROM products ORDER BY created_at DESC');
+  res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=120');
   res.json(result.rows.map(productFromRow));
 }));
 
@@ -705,6 +717,7 @@ app.get('/api/categories', asyncHandler(async (req, res) => {
     WHERE category IS NOT NULL AND BTRIM(category) <> ''
     ORDER BY category ASC
   `);
+  res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
   res.json(result.rows.map((row) => row.name));
 }));
 
@@ -1875,8 +1888,18 @@ app.use((err, req, res, next) => {
 });
 
 const clientBuildPath = path.join(__dirname, '../client/dist');
-app.use(express.static(clientBuildPath));
+// Cache hashed assets (JS/CSS bundles) for 1 year; HTML not cached (always fresh)
+app.use(express.static(clientBuildPath, {
+  maxAge: '1y',
+  etag: true,
+  setHeaders(res, filePath) {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    }
+  }
+}));
 app.get('*', (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.sendFile(path.join(clientBuildPath, 'index.html'));
 });
 
