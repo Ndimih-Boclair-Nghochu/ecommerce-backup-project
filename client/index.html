@@ -80,18 +80,29 @@
     </div>
     <div id="root"></div>
     <script>
-      // Hide skeleton once React mounts
-      document.addEventListener('DOMContentLoaded', function() {
-        var observer = new MutationObserver(function() {
-          var root = document.getElementById('root');
-          if (root && root.children.length > 0) {
-            var shell = document.getElementById('app-shell');
-            if (shell) shell.style.display = 'none';
-            observer.disconnect();
+      (function() {
+        var shell = document.getElementById('app-shell');
+        var root = document.getElementById('root');
+
+        function hideAppShell() {
+          if (shell && shell.parentNode) {
+            shell.parentNode.removeChild(shell);
+            shell = null;
           }
-        });
-        observer.observe(document.getElementById('root'), { childList: true, subtree: false });
-      });
+        }
+
+        window.__hideAppShell = hideAppShell;
+
+        if (root) {
+          var observer = new MutationObserver(function() {
+            if (root.children.length > 0) {
+              hideAppShell();
+              observer.disconnect();
+            }
+          });
+          observer.observe(root, { childList: true });
+        }
+      })();
     </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
