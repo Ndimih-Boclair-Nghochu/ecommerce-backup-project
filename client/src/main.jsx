@@ -17,5 +17,3 @@ createRoot(rootElement).render(
   </LanguageProvider>
 )
 
-requestAnimationFrame(() => window.__hideAppShell?.())
-

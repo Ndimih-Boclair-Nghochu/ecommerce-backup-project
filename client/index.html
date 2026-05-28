@@ -13,96 +13,40 @@
     <!-- Preconnect for faster image loading -->
     <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
     <style>
-      /* Instant loading skeleton so the page never looks blank on slow networks */
       body { margin: 0; font-family: system-ui, sans-serif; background: #f9fafb; }
-      #app-shell {
-        display: flex;
-        flex-direction: column;
-        min-height: 100vh;
-      }
-      .shell-nav {
-        height: 64px;
-        background: #1e40af;
-        display: flex;
-        align-items: center;
-        padding: 0 24px;
-      }
-      .shell-nav-logo {
-        width: 120px;
-        height: 28px;
-        background: rgba(255,255,255,0.25);
-        border-radius: 6px;
-        animation: pulse 1.5s ease-in-out infinite;
-      }
-      .shell-body { padding: 24px; max-width: 1280px; margin: 0 auto; width: 100%; box-sizing: border-box; }
-      .shell-hero {
-        height: 260px;
-        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-        border-radius: 12px;
-        margin-bottom: 32px;
-        animation: pulse 1.5s ease-in-out infinite;
-      }
-      .shell-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
-      .shell-card {
-        height: 260px;
-        background: #e5e7eb;
-        border-radius: 10px;
-        animation: pulse 1.5s ease-in-out infinite;
-      }
-      .shell-card:nth-child(2) { animation-delay: 0.1s; }
-      .shell-card:nth-child(3) { animation-delay: 0.2s; }
-      .shell-card:nth-child(4) { animation-delay: 0.3s; }
-      .shell-card:nth-child(5) { animation-delay: 0.4s; }
-      .shell-card:nth-child(6) { animation-delay: 0.5s; }
-      @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
-      }
     </style>
   </head>
   <body>
-    <!-- App shell skeleton visible instantly while JS loads -->
-    <div id="app-shell">
-      <div class="shell-nav">
-        <div class="shell-nav-logo"></div>
-      </div>
-      <div class="shell-body">
-        <div class="shell-hero"></div>
-        <div class="shell-grid">
-          <div class="shell-card"></div>
-          <div class="shell-card"></div>
-          <div class="shell-card"></div>
-          <div class="shell-card"></div>
-          <div class="shell-card"></div>
-          <div class="shell-card"></div>
-        </div>
-      </div>
-    </div>
     <div id="root"></div>
     <script>
       (function() {
-        var shell = document.getElementById('app-shell');
-        var root = document.getElementById('root');
-
-        function hideAppShell() {
-          if (shell && shell.parentNode) {
-            shell.parentNode.removeChild(shell);
-            shell = null;
-          }
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            registrations.forEach(function(registration) {
+              registration.unregister();
+            });
+          }).catch(function() {});
         }
 
-        window.__hideAppShell = hideAppShell;
-
-        if (root) {
-          var observer = new MutationObserver(function() {
-            if (root.children.length > 0) {
-              hideAppShell();
-              observer.disconnect();
-            }
-          });
-          observer.observe(root, { childList: true });
+        if ('caches' in window) {
+          window.caches.keys().then(function(keys) {
+            keys.forEach(function(key) {
+              window.caches.delete(key);
+            });
+          }).catch(function() {});
         }
       })();
+    </script>
+    <script>
+      window.addEventListener('load', function() {
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            registrations.forEach(function(registration) {
+              registration.unregister();
+            });
+          });
+        }
+      });
     </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>

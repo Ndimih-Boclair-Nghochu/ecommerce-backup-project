@@ -13,7 +13,8 @@ export function resolveAssetUrl(value) {
   const normalizedUrl = url.startsWith('uploads/') ? `/${url}` : url
   if (!normalizedUrl.startsWith('/')) return normalizedUrl
 
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, '')
+  const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim().replace(/\/+$/, '') || ''
+  const apiBaseUrl = rawApiBaseUrl.endsWith('/api') ? rawApiBaseUrl.slice(0, -4) : rawApiBaseUrl
   return apiBaseUrl ? `${apiBaseUrl}${normalizedUrl}` : normalizedUrl
 }
 
