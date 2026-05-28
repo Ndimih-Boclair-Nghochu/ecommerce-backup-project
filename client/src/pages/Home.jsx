@@ -1,11 +1,12 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import axios from '../lib/api'
-import Locations from '../components/Locations'
 import ProductCard from '../components/ProductCard'
 import { formatXAF } from '../utils/format'
 import { useLanguage } from '../i18n/LanguageContext'
+
+const Locations = lazy(() => import('../components/Locations'))
 
 const INITIAL_HERO_IMAGE = 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1920'
 const PRODUCTS_PER_ROW_BY_WIDTH = [
@@ -27,6 +28,7 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [productPage, setProductPage] = useState(0)
   const [productColumns, setProductColumns] = useState(getHomeProductColumns)
+  const [locationsReady, setLocationsReady] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -46,6 +48,16 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
     const onResize = () => setProductColumns(getHomeProductColumns())
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
+  }, [])
+
+  useEffect(() => {
+    const showLocations = () => setLocationsReady(true)
+    if ('requestIdleCallback' in window) {
+      const id = window.requestIdleCallback(showLocations, { timeout: 5000 })
+      return () => window.cancelIdleCallback?.(id)
+    }
+    const timer = window.setTimeout(showLocations, 3500)
+    return () => window.clearTimeout(timer)
   }, [])
 
   const orderedProducts = useMemo(() => {
@@ -103,6 +115,9 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
           <img
             src={heroData.backgroundImage}
             alt=""
+            decoding="async"
+            fetchPriority="low"
+            loading="lazy"
             className="h-full w-full object-cover"
             onError={(event) => {
               if (event.currentTarget.src !== INITIAL_HERO_IMAGE) event.currentTarget.src = INITIAL_HERO_IMAGE
@@ -251,7 +266,11 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
         </div>
       </section>
 
-      <Locations />
+      {locationsReady && (
+        <Suspense fallback={null}>
+          <Locations />
+        </Suspense>
+      )}
     </main>
   )
 }

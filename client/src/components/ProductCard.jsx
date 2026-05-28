@@ -19,6 +19,7 @@ export default function ProductCard({ product, addToCart, toggleWishlist, isInWi
             src={image}
             alt={displayProduct.displayName}
             className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+            decoding="async"
             loading="lazy"
             onError={(event) => {
               const fallback = getProductImage({})

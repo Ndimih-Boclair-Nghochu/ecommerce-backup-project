@@ -183,6 +183,10 @@ function normalizeArray(value, fallback = []) {
   return fallback;
 }
 
+function setPublicCache(res, seconds = 60) {
+  res.set('Cache-Control', `public, max-age=${seconds}, stale-while-revalidate=${seconds * 5}`);
+}
+
 function productFromRow(row) {
   if (!row) return null;
   const images = Array.isArray(row.images) ? row.images : [];
@@ -535,6 +539,7 @@ const productReviewValidation = validate([
 app.get('/api/health', (req, res) => res.json({ ok: true, database: 'postgresql' }));
 
 app.get('/api/settings', asyncHandler(async (req, res) => {
+  setPublicCache(res, 120);
   const settings = await getSettings();
   res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
   res.json({
@@ -553,6 +558,7 @@ app.get('/api/platform-name', asyncHandler(async (req, res) => {
 }));
 
 app.get('/api/hero-section', asyncHandler(async (req, res) => {
+  setPublicCache(res, 120);
   const settings = await getSettings();
   const result = await pool.query("SELECT value FROM settings WHERE key = 'hero_section'");
   const hero = { ...DEFAULT_HERO_SECTION, ...(result.rowCount ? JSON.parse(result.rows[0].value) : {}) };
@@ -562,6 +568,7 @@ app.get('/api/hero-section', asyncHandler(async (req, res) => {
 }));
 
 app.get('/api/stats', asyncHandler(async (req, res) => {
+  setPublicCache(res, 60);
   const productStats = await pool.query(`
     SELECT COUNT(*)::int AS total_products, COALESCE(SUM(stock), 0)::int AS total_in_stock
     FROM products
@@ -588,12 +595,14 @@ app.get('/api/stats', asyncHandler(async (req, res) => {
 }));
 
 app.get('/api/products', asyncHandler(async (req, res) => {
+  setPublicCache(res, 60);
   const result = await pool.query('SELECT * FROM products ORDER BY created_at DESC');
   res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=120');
   res.json(result.rows.map(productFromRow));
 }));
 
 app.get('/api/categories', asyncHandler(async (req, res) => {
+  setPublicCache(res, 300);
   const result = await pool.query(`
     SELECT DISTINCT category AS name
     FROM products
@@ -784,15 +793,18 @@ app.get('/api/orders/:id', asyncHandler(async (req, res) => {
 }));
 
 app.get('/api/shipping-fees', asyncHandler(async (req, res) => {
+  setPublicCache(res, 300);
   res.json(await getShippingFees());
 }));
 
 app.get('/api/pickup-locations', asyncHandler(async (req, res) => {
+  setPublicCache(res, 120);
   const result = await pool.query('SELECT * FROM locations ORDER BY is_main_store DESC, city ASC, name ASC');
   res.json(result.rows.map(locationFromRow));
 }));
 
 app.get('/api/locations', asyncHandler(async (req, res) => {
+  setPublicCache(res, 120);
   const result = await pool.query('SELECT * FROM locations ORDER BY is_main_store DESC, city ASC, name ASC');
   res.json(result.rows.map(locationFromRow));
 }));
@@ -1553,13 +1565,16 @@ app.use((err, req, res, next) => {
 });
 
 const clientBuildPath = path.join(__dirname, '../client/dist');
-// Cache hashed assets (JS/CSS bundles) for 1 year; HTML not cached (always fresh)
+// Cache hashed assets for one year; keep HTML fresh so deployments update immediately.
 app.use(express.static(clientBuildPath, {
   maxAge: '1y',
+  immutable: true,
   etag: true,
   setHeaders(res, filePath) {
     if (filePath.endsWith('.html')) {
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    } else if (filePath.includes(`${path.sep}assets${path.sep}`)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     }
   }
 }));

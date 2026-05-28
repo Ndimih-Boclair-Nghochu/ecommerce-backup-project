@@ -1,29 +1,13 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import axios from '../lib/api'
 
 export default function Locations() {
   const [locations, setLocations] = useState([])
   const [loading, setLoading] = useState(true)
-  const [lastUpdate, setLastUpdate] = useState(new Date())
-  const [isRealTimeActive, setIsRealTimeActive] = useState(true)
 
   useEffect(() => {
     fetchLocations()
   }, [])
-
-  // Real-time polling for locations
-  useEffect(() => {
-    if (!isRealTimeActive) return
-
-    const refreshLocations = async () => {
-      await fetchLocations()
-      setLastUpdate(new Date())
-    }
-
-    // Poll every 5 seconds
-    const intervalId = setInterval(refreshLocations, 5000)
-    return () => clearInterval(intervalId)
-  }, [isRealTimeActive])
 
   const fetchLocations = async () => {
     try {
@@ -56,24 +40,16 @@ export default function Locations() {
           <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-gray-600 sm:text-base">Find us at convenient locations near you.</p>
         </div>
 
-        {/* Live Status Bar */}
-        <div className="bg-white rounded-lg shadow-md p-4 flex items-center justify-between flex-wrap gap-4 mb-8">
+        <div className="bg-white rounded-lg shadow-sm p-4 flex items-center justify-between flex-wrap gap-4 mb-8">
           <div className="flex items-center gap-3">
-            <div className={`w-3 h-3 rounded-full ${isRealTimeActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
-            <span className="text-sm font-semibold text-gray-700">
-              {isRealTimeActive ? '🟢 Live Locations' : '⊙ Paused'}
-            </span>
-            <span className="text-xs text-gray-500">Updated: {lastUpdate.toLocaleTimeString()}</span>
+            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+            <span className="text-sm font-semibold text-gray-700">Store details loaded</span>
           </div>
           <button
-            onClick={() => setIsRealTimeActive(!isRealTimeActive)}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
-              isRealTimeActive
-                ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
+            onClick={fetchLocations}
+            className="px-4 py-2 rounded-lg text-sm font-semibold transition bg-blue-100 text-blue-700 hover:bg-blue-200"
           >
-            {isRealTimeActive ? '⏸ Pause' : '▶ Live'}
+            Refresh
           </button>
         </div>
 

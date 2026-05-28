@@ -1,12 +1,14 @@
-import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import { Routes, Route, Link, useLocation } from 'react-router-dom'
 import toast, { Toaster } from 'react-hot-toast'
 import axios from './lib/api'
-// Eagerly load the most common pages for instant first-paint
-import Home from './pages/Home'
-import AllProducts from './pages/AllProducts'
-import ProductDetail from './pages/ProductDetail'
-// Lazy-load heavier or less-visited pages to reduce initial bundle
+import ErrorBoundary from './components/ErrorBoundary'
+import { formatXAF } from './utils/format'
+import { useLanguage } from './i18n/LanguageContext'
+
+const Home = lazy(() => import('./pages/Home'))
+const AllProducts = lazy(() => import('./pages/AllProducts'))
+const ProductDetail = lazy(() => import('./pages/ProductDetail'))
 const Wishlist = lazy(() => import('./pages/Wishlist'))
 const Cart = lazy(() => import('./pages/Cart'))
 const OrderTracking = lazy(() => import('./pages/OrderTracking'))
@@ -16,18 +18,33 @@ const CustomerSignup = lazy(() => import('./pages/CustomerSignup'))
 const CustomerLogin = lazy(() => import('./pages/CustomerLogin'))
 const CustomerDashboard = lazy(() => import('./pages/CustomerDashboard'))
 const NotFound = lazy(() => import('./pages/NotFound'))
-import ChatWidget from './components/ChatWidget'
-import ErrorBoundary from './components/ErrorBoundary'
-import { formatXAF } from './utils/format'
-import { useLanguage } from './i18n/LanguageContext'
+const ChatWidget = lazy(() => import('./components/ChatWidget'))
 
-// Minimal spinner shown while lazy chunks load over slow networks
-function PageLoader() {
-  return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-    </div>
-  )
+const DEFAULT_SETTINGS = {
+  shopName: 'MyShop',
+  mainShopTown: 'Bamenda',
+  freeShippingThreshold: 100000,
+  shopPhone: '+237 6 52 882 753',
+  shopEmail: 'ndimihboclair4@gmail.com'
+}
+
+function readCachedSettings() {
+  try {
+    const stored = localStorage.getItem('shopSettingsCache')
+    return stored ? { ...DEFAULT_SETTINGS, ...JSON.parse(stored) } : DEFAULT_SETTINGS
+  } catch {
+    return DEFAULT_SETTINGS
+  }
+}
+
+function readCachedProducts() {
+  try {
+    const stored = localStorage.getItem('shopProductsCache')
+    const parsed = stored ? JSON.parse(stored) : []
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
 }
 
 function useLocalStorageState(key, initialValue) {
@@ -47,46 +64,70 @@ function useLocalStorageState(key, initialValue) {
   return [value, setValue]
 }
 
+function PageFallback() {
+  return (
+    <main className="min-h-[55vh] bg-gray-50 px-4 py-12">
+      <div className="mx-auto max-w-7xl space-y-4">
+        <div className="h-8 w-56 animate-pulse rounded border border-gray-200 bg-white" />
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, index) => (
+            <div key={index} className="h-52 animate-pulse rounded-2xl border border-gray-200 bg-white" />
+          ))}
+        </div>
+      </div>
+    </main>
+  )
+}
+
 export default function App() {
   const location = useLocation()
   const { language, setLanguage, languages, t } = useLanguage()
-  const [products, setProducts] = useState([])
-  const [settings, setSettings] = useState({
-    shopName: 'MyShop',
-    mainShopTown: 'Bamenda',
-    freeShippingThreshold: 100000,
-    shopPhone: '+237 6 52 882 753',
-    shopEmail: 'ndimihboclair4@gmail.com'
-  })
+  const [products, setProducts] = useState(readCachedProducts)
+  const [settings, setSettings] = useState(readCachedSettings)
   const [cart, setCart] = useLocalStorageState('cart', [])
   const [wishlist, setWishlist] = useLocalStorageState('wishlist', [])
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(products.length === 0)
+  const [chatReady, setChatReady] = useState(false)
   const drawerRef = useRef(null)
 
   useEffect(() => {
     let active = true
-    async function loadInitialData() {
-      setLoading(true)
-      try {
-        const [settingsRes, productsRes] = await Promise.all([
-          axios.get('/api/settings'),
-          axios.get('/api/products')
-        ])
+    axios.get('/api/settings')
+      .then((settingsRes) => {
         if (!active) return
-        setSettings((prev) => ({ ...prev, ...settingsRes.data }))
-        setProducts(productsRes.data || [])
-      } catch {
-        if (active) toast.error('Unable to connect to the shop server')
-      } finally {
-        if (active) setLoading(false)
-      }
-    }
-    loadInitialData()
+        const nextSettings = { ...DEFAULT_SETTINGS, ...settingsRes.data }
+        setSettings(nextSettings)
+        localStorage.setItem('shopSettingsCache', JSON.stringify(nextSettings))
+      })
+      .catch(() => {})
     return () => {
       active = false
     }
   }, [])
+
+  useEffect(() => {
+    if (location.pathname !== '/') return
+
+    let active = true
+    setLoading(products.length === 0)
+    axios.get('/api/products')
+      .then((productsRes) => {
+        if (!active) return
+        const nextProducts = productsRes.data || []
+        setProducts(nextProducts)
+        localStorage.setItem('shopProductsCache', JSON.stringify(nextProducts.slice(0, 80)))
+      })
+      .catch(() => {
+        if (active && products.length === 0) toast.error('Unable to connect to the shop server')
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [location.pathname])
 
   useEffect(() => {
     const shopName = settings.shopName || 'MyShop'
@@ -95,12 +136,9 @@ export default function App() {
     else if (path === '/products') document.title = `All Products - ${shopName}`
     else if (path === '/cart') document.title = `Shopping Cart - ${shopName}`
     else if (path === '/track-order') document.title = `Track Your Order - ${shopName}`
-    else if (path.startsWith('/products/')) {
-      const id = path.split('/').pop()
-      const product = products.find((item) => item.id === id)
-      document.title = product ? `${product.name} - ${shopName}` : `Product - ${shopName}`
-    } else document.title = shopName
-  }, [location.pathname, products, settings.shopName])
+    else if (path.startsWith('/products/')) document.title = `Product - ${shopName}`
+    else document.title = shopName
+  }, [location.pathname, settings.shopName])
 
   useEffect(() => {
     if (!mobileMenuOpen) return
@@ -190,6 +228,18 @@ export default function App() {
   const isInWishlist = (productId) => wishlist.some((item) => item.id === productId)
   const closeMobileMenu = () => setMobileMenuOpen(false)
   const isAdminRoute = location.pathname.startsWith('/admin')
+
+  useEffect(() => {
+    if (isAdminRoute) return
+
+    const markReady = () => setChatReady(true)
+    if ('requestIdleCallback' in window) {
+      const id = window.requestIdleCallback(markReady, { timeout: 3500 })
+      return () => window.cancelIdleCallback?.(id)
+    }
+    const timer = window.setTimeout(markReady, 2500)
+    return () => window.clearTimeout(timer)
+  }, [isAdminRoute])
 
   const navLinks = [
     { to: '/', label: t('home') },
@@ -312,21 +362,21 @@ export default function App() {
           </div>
         )}
 
-        <Suspense fallback={<PageLoader />}>
-        <Routes>
-          <Route path="/" element={<Home products={products} settings={settings} addToCart={addToCart} toggleWishlist={toggleWishlist} isInWishlist={isInWishlist} loading={loading} />} />
-          <Route path="/products" element={<AllProducts addToCart={addToCart} toggleWishlist={toggleWishlist} isInWishlist={isInWishlist} />} />
-          <Route path="/products/:id" element={<ProductDetail addToCart={addToCart} toggleWishlist={toggleWishlist} isInWishlist={isInWishlist} settings={settings} />} />
-          <Route path="/wishlist" element={<Wishlist wishlist={wishlist} addToCart={addToCart} toggleWishlist={toggleWishlist} />} />
-          <Route path="/cart" element={<Cart cart={cart} removeFromCart={removeFromCart} updateQuantity={updateQuantity} clearCart={clearCart} subtotal={subtotal} settings={settings} />} />
-          <Route path="/track-order" element={<OrderTracking settings={settings} />} />
-          <Route path="/customer-signup" element={<CustomerSignup />} />
-          <Route path="/customer-login" element={<CustomerLogin />} />
-          <Route path="/customer-dashboard" element={<CustomerDashboard />} />
-          <Route path="/admin" element={<AdminLogin />} />
-          <Route path="/admin-dashboard" element={<AdminDashboard />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <Suspense fallback={<PageFallback />}>
+          <Routes>
+            <Route path="/" element={<Home products={products} settings={settings} addToCart={addToCart} toggleWishlist={toggleWishlist} isInWishlist={isInWishlist} loading={loading} />} />
+            <Route path="/products" element={<AllProducts addToCart={addToCart} toggleWishlist={toggleWishlist} isInWishlist={isInWishlist} />} />
+            <Route path="/products/:id" element={<ProductDetail addToCart={addToCart} toggleWishlist={toggleWishlist} isInWishlist={isInWishlist} settings={settings} />} />
+            <Route path="/wishlist" element={<Wishlist wishlist={wishlist} addToCart={addToCart} toggleWishlist={toggleWishlist} />} />
+            <Route path="/cart" element={<Cart cart={cart} removeFromCart={removeFromCart} updateQuantity={updateQuantity} clearCart={clearCart} subtotal={subtotal} settings={settings} />} />
+            <Route path="/track-order" element={<OrderTracking settings={settings} />} />
+            <Route path="/customer-signup" element={<CustomerSignup />} />
+            <Route path="/customer-login" element={<CustomerLogin />} />
+            <Route path="/customer-dashboard" element={<CustomerDashboard />} />
+            <Route path="/admin" element={<AdminLogin />} />
+            <Route path="/admin-dashboard" element={<AdminDashboard />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </Suspense>
 
         <footer className="bg-white border-t">
@@ -352,7 +402,11 @@ export default function App() {
           </div>
         </footer>
 
-        {!isAdminRoute && <ChatWidget />}
+        {!isAdminRoute && chatReady && (
+          <Suspense fallback={null}>
+            <ChatWidget />
+          </Suspense>
+        )}
       </div>
     </ErrorBoundary>
   )
