@@ -3,8 +3,8 @@ import { useNavigate, Link } from 'react-router-dom'
 import axios from 'axios'
 
 export default function CustomerLogin() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [email, setEmail] = useState('test@example.com')
+  const [password, setPassword] = useState('password')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
@@ -16,16 +16,15 @@ export default function CustomerLogin() {
 
     try {
       const response = await axios.post('/api/customer/login', { email, password })
-      const customer = response.data.customer || {}
       localStorage.setItem('customerToken', response.data.token)
-      localStorage.setItem('customerEmail', customer.email || email)
-      localStorage.setItem('customerName', customer.name || 'Customer')
+      localStorage.setItem('customerEmail', response.data.email)
+      localStorage.setItem('customerName', response.data.name)
       
       // Check if user is a sub-admin
       if (response.data.isSubAdmin) {
         localStorage.setItem('isSubAdmin', 'true')
         localStorage.setItem('adminToken', response.data.token)
-        localStorage.setItem('adminEmail', customer.email || email)
+        localStorage.setItem('adminEmail', response.data.email)
         navigate('/admin-dashboard')
       } else {
         localStorage.setItem('isSubAdmin', 'false')

@@ -250,11 +250,11 @@ export default function AdminMessaging({ token }) {
   }
 
   return (
-    <div className="grid min-h-[70dvh] grid-cols-1 gap-4 bg-gradient-to-br from-gray-50 via-white to-blue-50 lg:h-[calc(100dvh-190px)] lg:grid-cols-3 lg:gap-6 lg:overflow-hidden">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-screen max-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
       {/* Conversations List - Enhanced Design */}
-      <div className="max-h-80 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-lg flex flex-col lg:col-span-1 lg:max-h-none">
+      <div className="lg:col-span-1 bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col border border-gray-200">
         {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 text-white p-4 shadow-md sm:p-6">
+        <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 text-white p-6 shadow-md">
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <span>💬</span> Conversations
           </h2>
@@ -315,11 +315,11 @@ export default function AdminMessaging({ token }) {
       </div>
 
       {/* Chat Area - Enhanced Design */}
-      <div className="min-h-[70dvh] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-lg flex flex-col lg:col-span-2 lg:min-h-0">
+      <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col border border-gray-200">
         {selectedConversation ? (
           <>
             {/* Chat Header */}
-            <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 text-white p-4 shadow-md sm:p-6">
+            <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 text-white p-6 shadow-md">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <h3 className="text-xl font-bold flex items-center gap-2">
@@ -389,7 +389,7 @@ export default function AdminMessaging({ token }) {
             </div>
 
             {/* Filter and Sort Controls */}
-            <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-b-2 border-purple-200 p-3 flex gap-2 items-center flex-wrap sm:p-4 sm:gap-3">
+            <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-b-2 border-purple-200 p-4 flex gap-3 items-center flex-wrap">
               <div className="flex gap-2 items-center">
                 <span className="text-sm font-semibold text-gray-700">📊 Filter:</span>
                 {['all', 'admin', 'customer'].map(opt => (
@@ -425,7 +425,7 @@ export default function AdminMessaging({ token }) {
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-3 bg-gradient-to-b from-white via-gray-50 to-blue-50 space-y-4 scrollbar-thin scrollbar-thumb-purple-400 scrollbar-track-gray-100 sm:p-6">
+            <div className="flex-1 overflow-y-auto p-6 bg-gradient-to-b from-white via-gray-50 to-blue-50 space-y-4 scrollbar-thin scrollbar-thumb-purple-400 scrollbar-track-gray-100">
               {filteredMessages.length === 0 ? (
                 <div className="text-center text-gray-500 py-12">
                   <p className="text-5xl mb-3 animate-bounce">👋</p>
@@ -439,7 +439,7 @@ export default function AdminMessaging({ token }) {
                     className={`flex ${msg.sender === 'admin' ? 'justify-end' : 'justify-start'} ${animationsEnabled ? 'animate-in fade-in slide-in-from-bottom-2' : ''} cursor-pointer transition-all`}
                   >
                     <div
-                      className={`max-w-[85vw] px-4 py-3 rounded-2xl transition-all duration-200 sm:max-w-sm sm:px-5 ${
+                      className={`max-w-sm px-5 py-3 rounded-2xl transition-all duration-200 ${
                         msg.sender === 'admin'
                           ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-br-none shadow-md hover:shadow-lg hover:from-purple-700 hover:to-blue-700'
                           : 'bg-white border-2 border-gray-300 text-gray-900 rounded-bl-none shadow-sm hover:shadow-md hover:border-purple-300'
@@ -487,7 +487,7 @@ export default function AdminMessaging({ token }) {
             </div>
 
             {/* Input Area - Enhanced */}
-            <div className="border-t-2 border-gray-200 p-3 bg-white shadow-lg sm:p-6">
+            <div className="border-t-2 border-gray-200 p-6 bg-white shadow-lg">
               {imagePreview && (
                 <div className="mb-3 relative inline-block">
                   {imagePreview === 'pdf' ? (
@@ -509,14 +509,14 @@ export default function AdminMessaging({ token }) {
                   </button>
                 </div>
               )}
-              <div className="flex flex-col gap-3 sm:flex-row">
+              <div className="flex gap-3">
                 <input
                   type="text"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                   placeholder="Type your response... (Shift+Enter for new line)"
-                  className="min-w-0 flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent transition shadow-sm"
+                  className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent transition shadow-sm"
                   disabled={loading || uploading}
                 />
                 <input

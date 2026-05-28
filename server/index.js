@@ -203,11 +203,6 @@ function productFromRow(row) {
     images,
     storeAvailability: row.store_availability && typeof row.store_availability === 'object' ? row.store_availability : {},
     store_availability: row.store_availability && typeof row.store_availability === 'object' ? row.store_availability : {},
-    installmentAvailable: Boolean(row.installment_available),
-    installment_available: Boolean(row.installment_available),
-    installmentDepositPercent: Number(row.installment_deposit_percent || 30),
-    installmentDurationMonths: Number(row.installment_duration_months || 3),
-    installmentChargePercent: Number(row.installment_charge_percent || 10),
     translations: row.translations && typeof row.translations === 'object' ? row.translations : {},
     createdAt: row.created_at,
     updatedAt: row.updated_at
@@ -222,68 +217,6 @@ function productReviewFromRow(row) {
     rating: Number(row.rating || 0),
     comment: row.comment || '',
     createdAt: row.created_at
-  };
-}
-
-function installmentPaymentFromRow(row) {
-  return {
-    id: row.id,
-    planId: row.plan_id,
-    customerId: row.customer_id,
-    amount: Number(row.amount || 0),
-    paymentMethod: row.payment_method || '',
-    reference: row.reference || '',
-    note: row.note || '',
-    createdAt: row.created_at
-  };
-}
-
-function installmentPaymentFromJson(payment) {
-  return {
-    id: payment.id,
-    amount: Number(payment.amount || 0),
-    paymentMethod: payment.paymentMethod || payment.payment_method || '',
-    reference: payment.reference || '',
-    note: payment.note || '',
-    createdAt: payment.createdAt || payment.created_at
-  };
-}
-
-function installmentPlanFromRow(row) {
-  const payments = Array.isArray(row.payments) ? row.payments.map(installmentPaymentFromJson) : [];
-  const totalAmount = Number(row.total_amount || 0);
-  const paidAmount = Number(row.paid_amount || 0);
-  return {
-    id: row.id,
-    customerId: row.customer_id,
-    productId: row.product_id,
-    productName: row.product_name,
-    productImage: row.product_image || '',
-    product: {
-      id: row.product_id,
-      name: row.product_name,
-      image: row.product_image || ''
-    },
-    customer: {
-      id: row.customer_id,
-      name: row.customer_name,
-      email: row.customer_email,
-      phone: row.customer_phone || ''
-    },
-    totalAmount,
-    depositRequired: Number(row.deposit_required || 0),
-    chargePercent: Number(row.charge_percent || 0),
-    durationMonths: Number(row.duration_months || 0),
-    dueDate: row.due_date,
-    status: row.status,
-    adminNote: row.admin_note || '',
-    paidAmount,
-    remainingAmount: Math.max(0, totalAmount - paidAmount),
-    refundedAmount: Number(row.refunded_amount || 0),
-    approvedAt: row.approved_at,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-    payments
   };
 }
 
@@ -598,56 +531,6 @@ const productReviewValidation = validate([
   body('rating').isInt({ min: 1, max: 5 }).withMessage('Rating must be between 1 and 5'),
   body('comment').trim().isLength({ min: 3, max: 1000 }).withMessage('Comment must be between 3 and 1000 characters')
 ]);
-
-async function expireOverdueInstallments() {
-  await pool.query(`
-    UPDATE installment_plans
-    SET status = 'refunded',
-        refunded_amount = GREATEST(paid_amount - ROUND(paid_amount * (charge_percent::numeric / 100))::int, 0),
-        admin_note = CONCAT_WS(E'\n', NULLIF(admin_note, ''), 'Auto-refunded after the due date. Non-completion charge deducted.'),
-        updated_at = NOW()
-    WHERE status IN ('approved', 'active')
-      AND due_date IS NOT NULL
-      AND due_date < NOW()
-      AND paid_amount < total_amount
-  `);
-}
-
-function installmentPlanQuery(whereClause = '', orderClause = 'ORDER BY ip.created_at DESC') {
-  return `
-    SELECT ip.*,
-           COALESCE(
-             jsonb_agg(
-               jsonb_build_object(
-                 'id', pay.id,
-                 'amount', pay.amount,
-                 'paymentMethod', pay.payment_method,
-                 'reference', pay.reference,
-                 'note', pay.note,
-                 'createdAt', pay.created_at
-               )
-               ORDER BY pay.created_at DESC
-             ) FILTER (WHERE pay.id IS NOT NULL),
-             '[]'::jsonb
-           ) AS payments
-    FROM installment_plans ip
-    LEFT JOIN installment_payments pay ON pay.plan_id = ip.id
-    ${whereClause}
-    GROUP BY ip.id
-    ${orderClause}
-  `;
-}
-
-async function fetchInstallmentPlan(id, customerId = null) {
-  const params = [id];
-  let where = 'WHERE ip.id = $1';
-  if (customerId) {
-    params.push(customerId);
-    where += ' AND ip.customer_id = $2';
-  }
-  const result = await pool.query(installmentPlanQuery(where, ''), params);
-  return result.rowCount ? installmentPlanFromRow(result.rows[0]) : null;
-}
 
 app.get('/api/health', (req, res) => res.json({ ok: true, database: 'postgresql' }));
 
@@ -1061,17 +944,9 @@ app.post('/api/admin/products', checkPermission('manageProducts'), productValida
   const regions = normalizeArray(req.body.availableRegions || req.body.available_regions, ['ALL']);
   const translations = req.body.translations && typeof req.body.translations === 'object' ? req.body.translations : {};
   const storeAvailability = req.body.storeAvailability || req.body.store_availability || {};
-  const installmentAvailable = Boolean(req.body.installmentAvailable ?? req.body.installment_available);
-  const installmentDepositPercent = Math.max(0, Math.min(100, normalizeNumber(req.body.installmentDepositPercent ?? req.body.installment_deposit_percent, 30)));
-  const installmentDurationMonths = Math.max(1, normalizeNumber(req.body.installmentDurationMonths ?? req.body.installment_duration_months, 3));
-  const installmentChargePercent = Math.max(0, Math.min(100, normalizeNumber(req.body.installmentChargePercent ?? req.body.installment_charge_percent, 10)));
   const result = await pool.query(
-    `INSERT INTO products (
-       name, description, price, stock, category, is_new, most_ordered, available_regions,
-       image_url, images, translations, store_availability, installment_available,
-       installment_deposit_percent, installment_duration_months, installment_charge_percent
-     )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb, $12::jsonb, $13, $14, $15, $16)
+    `INSERT INTO products (name, description, price, stock, category, is_new, most_ordered, available_regions, image_url, images, translations, store_availability)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb, $12::jsonb)
      RETURNING *`,
     [
       req.body.name,
@@ -1085,11 +960,7 @@ app.post('/api/admin/products', checkPermission('manageProducts'), productValida
       imageUrl,
       JSON.stringify(images),
       JSON.stringify(translations),
-      JSON.stringify(storeAvailability),
-      installmentAvailable,
-      installmentDepositPercent,
-      installmentDurationMonths,
-      installmentChargePercent
+      JSON.stringify(storeAvailability)
     ]
   );
   await logActivity(req, 'create_product', { productId: result.rows[0].id, name: result.rows[0].name });
@@ -1102,19 +973,12 @@ app.put('/api/admin/products/:id', checkPermission('manageProducts'), productVal
   const regions = normalizeArray(req.body.availableRegions || req.body.available_regions, ['ALL']);
   const translations = req.body.translations && typeof req.body.translations === 'object' ? req.body.translations : {};
   const storeAvailability = req.body.storeAvailability || req.body.store_availability || {};
-  const installmentAvailable = Boolean(req.body.installmentAvailable ?? req.body.installment_available);
-  const installmentDepositPercent = Math.max(0, Math.min(100, normalizeNumber(req.body.installmentDepositPercent ?? req.body.installment_deposit_percent, 30)));
-  const installmentDurationMonths = Math.max(1, normalizeNumber(req.body.installmentDurationMonths ?? req.body.installment_duration_months, 3));
-  const installmentChargePercent = Math.max(0, Math.min(100, normalizeNumber(req.body.installmentChargePercent ?? req.body.installment_charge_percent, 10)));
   const result = await pool.query(
     `UPDATE products
      SET name = $1, description = $2, price = $3, stock = $4, category = $5,
          is_new = $6, most_ordered = $7, available_regions = $8, image_url = $9,
-         images = $10::jsonb, translations = $11::jsonb, store_availability = $12::jsonb,
-         installment_available = $13, installment_deposit_percent = $14,
-         installment_duration_months = $15, installment_charge_percent = $16,
-         updated_at = NOW()
-     WHERE id = $17
+         images = $10::jsonb, translations = $11::jsonb, store_availability = $12::jsonb, updated_at = NOW()
+     WHERE id = $13
      RETURNING *`,
     [
       req.body.name,
@@ -1129,10 +993,6 @@ app.put('/api/admin/products/:id', checkPermission('manageProducts'), productVal
       JSON.stringify(images),
       JSON.stringify(translations),
       JSON.stringify(storeAvailability),
-      installmentAvailable,
-      installmentDepositPercent,
-      installmentDurationMonths,
-      installmentChargePercent,
       req.params.id
     ]
   );
@@ -1622,112 +1482,10 @@ app.post('/api/admin/payment-accounts', requireSuperAdmin, (req, res) => {
   });
 });
 
-app.get('/api/admin/installments', checkPermission('viewAnalytics'), asyncHandler(async (req, res) => {
-  await expireOverdueInstallments();
-  const result = await pool.query(installmentPlanQuery('', 'ORDER BY ip.created_at DESC'));
-  res.json(result.rows.map(installmentPlanFromRow));
-}));
-
-app.get('/api/admin/customers-with-installments', checkPermission('viewAnalytics'), asyncHandler(async (req, res) => {
-  await expireOverdueInstallments();
-  const result = await pool.query(installmentPlanQuery('', 'ORDER BY ip.created_at DESC'));
-  const customers = new Map();
-  for (const plan of result.rows.map(installmentPlanFromRow)) {
-    const key = plan.customer.email || plan.customerId || plan.id;
-    const current = customers.get(key) || {
-      id: plan.customerId,
-      name: plan.customer.name,
-      email: plan.customer.email,
-      phone: plan.customer.phone,
-      activeInstallments: 0,
-      installmentPlans: []
-    };
-    if (['approved', 'active'].includes(plan.status)) current.activeInstallments += 1;
-    current.installmentPlans.push(plan);
-    customers.set(key, current);
-  }
-  res.json({ customers: Array.from(customers.values()) });
-}));
-
-app.get('/api/admin/installment-stats', checkPermission('viewAnalytics'), asyncHandler(async (req, res) => {
-  await expireOverdueInstallments();
-  const result = await pool.query(`
-    SELECT
-      COUNT(*) FILTER (WHERE status IN ('approved', 'active'))::int AS active_installments,
-      COUNT(*)::int AS total_plans,
-      COALESCE(SUM(total_amount) FILTER (WHERE status IN ('approved', 'active')), 0)::int AS total_installment_amount,
-      COALESCE(SUM(paid_amount), 0)::int AS total_paid,
-      COALESCE(ROUND((COUNT(*) FILTER (WHERE status = 'completed')::numeric / NULLIF(COUNT(*), 0)) * 100), 0)::int AS conversion_rate
-    FROM installment_plans
-  `);
-  res.json({
-    stats: {
-      activeInstallments: result.rows[0].active_installments,
-      totalPlans: result.rows[0].total_plans,
-      totalInstallmentAmount: result.rows[0].total_installment_amount,
-      totalPaid: result.rows[0].total_paid,
-      conversionRate: result.rows[0].conversion_rate
-    }
-  });
-}));
-
-app.put('/api/admin/installments/:id/status', checkPermission('manageOrders'), asyncHandler(async (req, res) => {
-  await expireOverdueInstallments();
-  const status = req.body.status;
-  if (!['pending', 'approved', 'active', 'completed', 'rejected', 'refunded'].includes(status)) {
-    return res.status(400).json({ error: 'Invalid installment status' });
-  }
-  const current = await pool.query('SELECT * FROM installment_plans WHERE id = $1', [req.params.id]);
-  if (current.rowCount === 0) return res.status(404).json({ error: 'Installment plan not found' });
-  const plan = current.rows[0];
-  const refundedAmount = status === 'refunded'
-    ? Math.max(0, Number(plan.paid_amount || 0) - Math.round(Number(plan.paid_amount || 0) * (Number(plan.charge_percent || 0) / 100)))
-    : Number(plan.refunded_amount || 0);
-  const dueDate = req.body.dueDate || plan.due_date || new Date(Date.now() + Number(plan.duration_months || 3) * 30 * 24 * 60 * 60 * 1000);
-  await pool.query(
-    `UPDATE installment_plans
-     SET status = $1,
-         admin_note = $2,
-         refunded_amount = $3,
-         due_date = CASE WHEN $1 IN ('approved', 'active') THEN $4 ELSE due_date END,
-         approved_at = CASE WHEN $1 IN ('approved', 'active') AND approved_at IS NULL THEN NOW() ELSE approved_at END,
-         updated_at = NOW()
-     WHERE id = $5`,
-    [status, req.body.adminNote || req.body.admin_note || plan.admin_note || '', refundedAmount, dueDate, req.params.id]
-  );
-  const updated = await fetchInstallmentPlan(req.params.id);
-  await logActivity(req, 'update_installment_status', { installmentId: req.params.id, status });
-  res.json(updated);
-}));
-
-app.post('/api/admin/installments/:id/payments', checkPermission('manageOrders'), validate([
-  body('amount').isInt({ min: 1 }).withMessage('Payment amount is required')
-]), asyncHandler(async (req, res) => {
-  await expireOverdueInstallments();
-  const current = await pool.query('SELECT * FROM installment_plans WHERE id = $1', [req.params.id]);
-  if (current.rowCount === 0) return res.status(404).json({ error: 'Installment plan not found' });
-  const plan = current.rows[0];
-  if (['rejected', 'refunded', 'completed'].includes(plan.status)) {
-    return res.status(400).json({ error: 'This installment plan cannot receive new payments' });
-  }
-  const amount = Number(req.body.amount);
-  await pool.query(
-    `INSERT INTO installment_payments (plan_id, customer_id, amount, payment_method, reference, note)
-     VALUES ($1, $2, $3, $4, $5, $6)`,
-    [req.params.id, plan.customer_id, amount, req.body.paymentMethod || 'manual', req.body.reference || '', req.body.note || `Recorded by ${req.admin.name}`]
-  );
-  const paidAmount = Number(plan.paid_amount || 0) + amount;
-  const status = paidAmount >= Number(plan.total_amount || 0) ? 'completed' : 'active';
-  await pool.query(
-    `UPDATE installment_plans
-     SET paid_amount = $1, status = $2, updated_at = NOW()
-     WHERE id = $3`,
-    [paidAmount, status, req.params.id]
-  );
-  const updated = await fetchInstallmentPlan(req.params.id);
-  await logActivity(req, 'record_installment_payment', { installmentId: req.params.id, amount });
-  res.status(201).json(updated);
-}));
+app.get('/api/admin/customers-with-installments', checkPermission('viewAnalytics'), (req, res) => res.json([]));
+app.get('/api/admin/installment-stats', checkPermission('viewAnalytics'), (req, res) => {
+  res.json({ activeInstallments: 0, totalInstallmentAmount: 0, conversionRate: 0 });
+});
 
 app.get('/api/admin/data-management/deleted', (req, res) => res.json([]));
 app.get('/api/admin/data-management/stats', (req, res) => {
@@ -1757,7 +1515,6 @@ app.post('/api/customer/signup', validate([
   body('email').isEmail().withMessage('Enter a valid email address').normalizeEmail(),
   body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
 ]), asyncHandler(async (req, res) => {
-  requireJwtSecret();
   const passwordHash = await bcrypt.hash(req.body.password, 12);
   const result = await pool.query(
     `INSERT INTO customers (name, email, phone, address, password_hash)
@@ -1765,9 +1522,7 @@ app.post('/api/customer/signup', validate([
      RETURNING id, name, email, phone, address, created_at`,
     [req.body.name, req.body.email, req.body.phone || '', req.body.address || '', passwordHash]
   );
-  const customer = result.rows[0];
-  const token = jwt.sign({ id: customer.id, email: customer.email, role: 'customer' }, JWT_SECRET, { expiresIn: '30d' });
-  res.status(201).json({ token, customer, message: 'Customer account created' });
+  res.status(201).json({ customer: result.rows[0], message: 'Customer account created' });
 }));
 
 app.post('/api/customer/login', loginValidation, asyncHandler(async (req, res) => {
@@ -1777,107 +1532,17 @@ app.post('/api/customer/login', loginValidation, asyncHandler(async (req, res) =
   const valid = await bcrypt.compare(req.body.password, result.rows[0].password_hash);
   if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
   const token = jwt.sign({ id: result.rows[0].id, email: result.rows[0].email, role: 'customer' }, JWT_SECRET, { expiresIn: '30d' });
-  res.json({ token, customer: { id: result.rows[0].id, name: result.rows[0].name, email: result.rows[0].email, phone: result.rows[0].phone, address: result.rows[0].address } });
-}));
-
-app.get('/api/customer/profile', authenticateCustomer, asyncHandler(async (req, res) => {
-  const result = await pool.query('SELECT id, name, email, phone, address, created_at FROM customers WHERE id = $1', [req.customer.id]);
-  if (result.rowCount === 0) return res.status(404).json({ error: 'Customer not found' });
-  res.json(result.rows[0]);
+  res.json({ token, customer: { id: result.rows[0].id, name: result.rows[0].name, email: result.rows[0].email } });
 }));
 
 app.get('/api/customer/orders', authenticateCustomer, asyncHandler(async (req, res) => {
   const result = await pool.query('SELECT * FROM orders WHERE LOWER(buyer_email) = LOWER($1) ORDER BY created_at DESC', [req.customer.email]);
   res.json(result.rows.map(orderFromRow));
 }));
-
-app.get('/api/customer/product-updates', authenticateCustomer, asyncHandler(async (req, res) => {
-  const result = await pool.query('SELECT * FROM products ORDER BY created_at DESC LIMIT 12');
-  res.json(result.rows.map(productFromRow));
-}));
-
-app.get('/api/customer/installment-plans', authenticateCustomer, asyncHandler(async (req, res) => {
-  await expireOverdueInstallments();
-  const result = await pool.query(
-    installmentPlanQuery('WHERE ip.customer_id = $1', 'ORDER BY ip.created_at DESC'),
-    [req.customer.id]
-  );
-  res.json(result.rows.map(installmentPlanFromRow));
-}));
-
-app.post('/api/customer/create-installment', authenticateCustomer, validate([
-  body('productId').notEmpty().withMessage('Product is required'),
-  body('durationMonths').optional().isInt({ min: 1, max: 24 }).withMessage('Duration must be between 1 and 24 months')
-]), asyncHandler(async (req, res) => {
-  await expireOverdueInstallments();
-  const customerResult = await pool.query('SELECT id, name, email, phone FROM customers WHERE id = $1', [req.customer.id]);
-  if (customerResult.rowCount === 0) return res.status(404).json({ error: 'Customer not found' });
-  const productResult = await pool.query('SELECT * FROM products WHERE id = $1', [req.body.productId]);
-  if (productResult.rowCount === 0) return res.status(404).json({ error: 'Product not found' });
-  const product = productResult.rows[0];
-  if (!product.installment_available) return res.status(400).json({ error: 'This product is not available for installment purchase' });
-
-  const existing = await pool.query(
-    `SELECT id FROM installment_plans
-     WHERE customer_id = $1 AND product_id = $2 AND status IN ('pending', 'approved', 'active')
-     LIMIT 1`,
-    [req.customer.id, product.id]
-  );
-  if (existing.rowCount > 0) return res.status(409).json({ error: 'You already have an open installment request for this product' });
-
-  const customer = customerResult.rows[0];
-  const totalAmount = Number(product.price || 0);
-  const depositPercent = Number(product.installment_deposit_percent || 30);
-  const depositRequired = Math.ceil(totalAmount * (depositPercent / 100));
-  const durationMonths = Number(req.body.durationMonths || product.installment_duration_months || 3);
-  const dueDate = new Date(Date.now() + durationMonths * 30 * 24 * 60 * 60 * 1000);
-  const inserted = await pool.query(
-    `INSERT INTO installment_plans (
-      customer_id, product_id, product_name, product_image, customer_name, customer_email,
-      customer_phone, total_amount, deposit_required, charge_percent, duration_months, due_date
-    )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-    RETURNING *`,
-    [
-      customer.id,
-      product.id,
-      product.name,
-      product.image_url,
-      customer.name,
-      customer.email,
-      customer.phone || '',
-      totalAmount,
-      depositRequired,
-      Number(product.installment_charge_percent || 10),
-      durationMonths,
-      dueDate
-    ]
-  );
-  res.status(201).json(installmentPlanFromRow({ ...inserted.rows[0], payments: [] }));
-}));
-
-app.post('/api/customer/installment-plans/:id/payments', authenticateCustomer, validate([
-  body('amount').isInt({ min: 1 }).withMessage('Payment amount is required')
-]), asyncHandler(async (req, res) => {
-  await expireOverdueInstallments();
-  const current = await pool.query('SELECT * FROM installment_plans WHERE id = $1 AND customer_id = $2', [req.params.id, req.customer.id]);
-  if (current.rowCount === 0) return res.status(404).json({ error: 'Installment plan not found' });
-  const plan = current.rows[0];
-  if (!['approved', 'active'].includes(plan.status)) {
-    return res.status(400).json({ error: 'The shop must approve this installment request before deposits can start' });
-  }
-  const amount = Number(req.body.amount);
-  await pool.query(
-    `INSERT INTO installment_payments (plan_id, customer_id, amount, payment_method, reference, note)
-     VALUES ($1, $2, $3, $4, $5, $6)`,
-    [plan.id, req.customer.id, amount, req.body.paymentMethod || 'manual', req.body.reference || '', req.body.note || 'Customer submitted payment']
-  );
-  const paidAmount = Number(plan.paid_amount || 0) + amount;
-  const status = paidAmount >= Number(plan.total_amount || 0) ? 'completed' : 'active';
-  await pool.query('UPDATE installment_plans SET paid_amount = $1, status = $2, updated_at = NOW() WHERE id = $3', [paidAmount, status, plan.id]);
-  const updated = await fetchInstallmentPlan(plan.id, req.customer.id);
-  res.status(201).json(updated);
-}));
+app.get('/api/customer/installment-plans', authenticateCustomer, (req, res) => res.json([]));
+app.post('/api/customer/create-installment', authenticateCustomer, (req, res) => {
+  res.status(400).json({ error: 'Installment payments are not enabled.' });
+});
 
 app.use((err, req, res, next) => {
   console.error(err.stack || err.message);

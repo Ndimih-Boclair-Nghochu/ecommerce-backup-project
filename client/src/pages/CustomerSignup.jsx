@@ -31,8 +31,8 @@ export default function CustomerSignup() {
       return
     }
 
-    if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters')
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters')
       return
     }
 
@@ -48,11 +48,10 @@ export default function CustomerSignup() {
         address: formData.address
       })
 
-      const customer = response.data.customer || {}
       setSuccess(true)
       localStorage.setItem('customerToken', response.data.token)
-      localStorage.setItem('customerEmail', customer.email || formData.email)
-      localStorage.setItem('customerName', customer.name || formData.name)
+      localStorage.setItem('customerEmail', response.data.email)
+      localStorage.setItem('customerName', response.data.name)
 
       setTimeout(() => {
         navigate('/customer-dashboard')
@@ -178,7 +177,7 @@ export default function CustomerSignup() {
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-              placeholder="At least 8 characters"
+              placeholder="At least 6 characters"
             />
           </div>
 
