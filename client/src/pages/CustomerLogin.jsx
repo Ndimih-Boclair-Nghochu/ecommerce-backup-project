@@ -19,7 +19,7 @@ export default function CustomerLogin() {
       localStorage.setItem('customerToken', response.data.token)
       localStorage.setItem('customerEmail', response.data.email)
       localStorage.setItem('customerName', response.data.name)
-      
+
       // Check if user is a sub-admin
       if (response.data.isSubAdmin) {
         localStorage.setItem('isSubAdmin', 'true')
@@ -38,7 +38,7 @@ export default function CustomerLogin() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-50 to-blue-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-stone-100 via-amber-50 to-stone-200 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md mx-auto bg-white rounded-2xl shadow-2xl p-8">
         <div className="text-center mb-8">
           <div className="text-5xl mb-4">👤</div>
@@ -62,7 +62,7 @@ export default function CustomerLogin() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 focus:border-transparent"
               placeholder="you@example.com"
             />
           </div>
@@ -76,7 +76,7 @@ export default function CustomerLogin() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 focus:border-transparent"
               placeholder="Enter your password"
             />
           </div>
@@ -84,7 +84,7 @@ export default function CustomerLogin() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-lg font-bold hover:from-blue-700 hover:to-blue-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+            className="w-full bg-gradient-to-r from-stone-900 to-stone-800 text-white py-3 rounded-lg font-bold hover:from-stone-950 hover:to-stone-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
           >
             {loading ? 'Logging in...' : 'Login'}
           </button>
@@ -92,7 +92,7 @@ export default function CustomerLogin() {
 
         <div className="mt-6 text-center">
           <p className="text-gray-600 text-sm">Don't have an account?</p>
-          <Link to="/customer-signup" className="text-blue-600 hover:text-blue-700 font-bold">
+          <Link to="/customer-signup" className="text-amber-700 hover:text-amber-700 font-bold">
             Create one here
           </Link>
         </div>

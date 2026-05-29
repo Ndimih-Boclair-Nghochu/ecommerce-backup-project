@@ -229,7 +229,7 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
         <section className="max-w-md text-center">
           <h1 className="text-3xl font-bold text-gray-950">Your cart is empty</h1>
           <p className="mt-3 text-gray-600">Browse products and add the items you want to order.</p>
-          <Link to="/products" className="mt-6 inline-flex rounded-md bg-blue-700 px-5 py-3 font-bold text-white hover:bg-blue-800">
+          <Link to="/products" className="mt-6 inline-flex rounded-md bg-stone-900 px-5 py-3 font-bold text-white hover:bg-stone-950">
             Browse Products
           </Link>
         </section>
@@ -241,7 +241,7 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
     <main className="min-h-screen bg-gray-50">
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         <div className="mb-6">
-          <Link to="/products" className="text-sm font-semibold text-blue-700 hover:text-blue-900">Back to products</Link>
+          <Link to="/products" className="text-sm font-semibold text-amber-700 hover:text-stone-900">Back to products</Link>
           <h1 className="mt-3 text-3xl sm:text-4xl font-bold text-gray-950">Shopping Cart</h1>
         </div>
 
@@ -305,19 +305,19 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
             <form onSubmit={placeOrder} className="mt-6 space-y-4">
               <div>
                 <RequiredLabel>Full Name</RequiredLabel>
-                <input value={buyer.name} onChange={(event) => handleBuyerChange('name', event.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none" />
+                <input value={buyer.name} onChange={(event) => handleBuyerChange('name', event.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-amber-700 focus:outline-none" />
                 {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
               </div>
 
               <div>
                 <RequiredLabel>Email</RequiredLabel>
-                <input type="email" value={buyer.email} onChange={(event) => handleBuyerChange('email', event.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none" />
+                <input type="email" value={buyer.email} onChange={(event) => handleBuyerChange('email', event.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-amber-700 focus:outline-none" />
                 {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
               </div>
 
               <div>
                 <RequiredLabel>Phone</RequiredLabel>
-                <input type="tel" value={buyer.phone} onChange={(event) => handleBuyerChange('phone', event.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none" placeholder="+237 6 52 882 753" />
+                <input type="tel" value={buyer.phone} onChange={(event) => handleBuyerChange('phone', event.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-amber-700 focus:outline-none" placeholder="+237 6 52 882 753" />
                 {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
               </div>
 
@@ -327,14 +327,14 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
                   <button
                     type="button"
                     onClick={() => chooseDeliveryOption('delivery')}
-                    className={`rounded-md px-3 py-2 text-sm font-bold transition ${deliveryOption === 'delivery' ? 'bg-white text-blue-800 shadow-sm' : 'text-gray-700 hover:text-gray-950'}`}
+                    className={`rounded-md px-3 py-2 text-sm font-bold transition ${deliveryOption === 'delivery' ? 'bg-white text-stone-900 shadow-sm' : 'text-gray-700 hover:text-gray-950'}`}
                   >
                     Delivery
                   </button>
                   <button
                     type="button"
                     onClick={() => chooseDeliveryOption('pickup')}
-                    className={`rounded-md px-3 py-2 text-sm font-bold transition ${deliveryOption === 'pickup' ? 'bg-white text-blue-800 shadow-sm' : 'text-gray-700 hover:text-gray-950'}`}
+                    className={`rounded-md px-3 py-2 text-sm font-bold transition ${deliveryOption === 'pickup' ? 'bg-white text-stone-900 shadow-sm' : 'text-gray-700 hover:text-gray-950'}`}
                   >
                     Pickup
                   </button>
@@ -345,7 +345,7 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
                 <>
                   <div>
                     <RequiredLabel>Delivery Region</RequiredLabel>
-                    <select value={region} onChange={(event) => setRegion(event.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none">
+                    <select value={region} onChange={(event) => setRegion(event.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-amber-700 focus:outline-none">
                       {(regions.length ? regions : [mainTown]).map((city) => (
                         <option key={city} value={city}>{city}</option>
                       ))}
@@ -354,7 +354,7 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
 
                   <div>
                     <RequiredLabel>Delivery Address</RequiredLabel>
-                    <textarea value={buyer.address} onChange={(event) => handleBuyerChange('address', event.target.value)} rows="3" className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none" />
+                    <textarea value={buyer.address} onChange={(event) => handleBuyerChange('address', event.target.value)} rows="3" className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-amber-700 focus:outline-none" />
                     {errors.address && <p className="mt-1 text-sm text-red-600">{errors.address}</p>}
                   </div>
 
@@ -369,7 +369,7 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
                               value={agency}
                               onChange={(event) => handleAgencyChange(index, event.target.value)}
                               placeholder={`Agency ${index + 1}`}
-                              className="min-w-0 flex-1 rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none"
+                              className="min-w-0 flex-1 rounded-md border border-gray-300 px-3 py-2 focus:border-amber-700 focus:outline-none"
                             />
                             {buyer.agencies.length > 1 && (
                               <button
@@ -383,7 +383,7 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
                           </div>
                         ))}
                       </div>
-                      <button type="button" onClick={addAgencyField} className="mt-2 text-sm font-bold text-blue-700 hover:text-blue-900">
+                      <button type="button" onClick={addAgencyField} className="mt-2 text-sm font-bold text-amber-700 hover:text-stone-900">
                         Add another agency
                       </button>
                     </div>
@@ -396,7 +396,7 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
                     <select
                       value={selectedPickupLocation?.id || ''}
                       onChange={(event) => setPickupLocationId(event.target.value)}
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none"
+                      className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-amber-700 focus:outline-none"
                     >
                       {availablePickupLocations.length ? (
                         availablePickupLocations.map((location) => (
@@ -409,7 +409,7 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
                       )}
                     </select>
                     {selectedPickupLocation?.address && (
-                      <p className="mt-2 rounded-md bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-900">
+                      <p className="mt-2 rounded-md bg-stone-100 px-3 py-2 text-xs font-semibold text-stone-900">
                         {selectedPickupLocation.address}
                       </p>
                     )}
@@ -425,7 +425,7 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
                         setPickupTime(event.target.value)
                         setErrors((current) => ({ ...current, pickupTime: undefined }))
                       }}
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none"
+                      className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-amber-700 focus:outline-none"
                     />
                     {errors.pickupTime && <p className="mt-1 text-sm text-red-600">{errors.pickupTime}</p>}
                   </div>
@@ -434,7 +434,7 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
 
               <div>
                 <label className="block text-sm font-bold text-gray-800 mb-1">Notes</label>
-                <textarea value={buyer.notes} onChange={(event) => handleBuyerChange('notes', event.target.value)} rows="2" className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none" />
+                <textarea value={buyer.notes} onChange={(event) => handleBuyerChange('notes', event.target.value)} rows="2" className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-amber-700 focus:outline-none" />
               </div>
 
               <div className="rounded-lg bg-gray-50 p-4 space-y-2">
@@ -456,7 +456,7 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
               <button
                 type="submit"
                 disabled={placingOrder}
-                className="w-full rounded-md bg-blue-700 px-5 py-3 font-bold text-white hover:bg-blue-800 disabled:bg-gray-300"
+                className="w-full rounded-md bg-stone-900 px-5 py-3 font-bold text-white hover:bg-stone-950 disabled:bg-gray-300"
               >
                 {placingOrder ? 'Submitting...' : 'Place Order'}
               </button>

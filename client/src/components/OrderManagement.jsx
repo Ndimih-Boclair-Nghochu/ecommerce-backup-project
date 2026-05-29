@@ -39,9 +39,9 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
 
   // Status colors and icons
   const statusConfig = {
-    pending: { color: 'yellow', icon: '⏳', label: 'Pending', bg: 'bg-yellow-50', badge: 'bg-yellow-100 text-yellow-800' },
-    processing: { color: 'blue', icon: '⚙️', label: 'Processing', bg: 'bg-blue-50', badge: 'bg-blue-100 text-blue-800' },
-    shipped: { color: 'purple', icon: '📦', label: 'Shipped', bg: 'bg-purple-50', badge: 'bg-purple-100 text-purple-800' },
+    pending: { color: 'yellow', icon: '⏳', label: 'Pending', bg: 'bg-yellow-50', badge: 'bg-yellow-100 text-amber-900' },
+    processing: { color: 'blue', icon: '⚙️', label: 'Processing', bg: 'bg-stone-100', badge: 'bg-stone-100 text-stone-900' },
+    shipped: { color: 'purple', icon: '📦', label: 'Shipped', bg: 'bg-yellow-50', badge: 'bg-yellow-100 text-yellow-900' },
     delivered: { color: 'green', icon: '✓', label: 'Delivered', bg: 'bg-green-50', badge: 'bg-green-100 text-green-800' },
     cancelled: { color: 'red', icon: '✕', label: 'Cancelled', bg: 'bg-red-50', badge: 'bg-red-100 text-red-800' }
   }
@@ -60,7 +60,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
   // Filter and search logic
   const filteredOrders = useMemo(() => {
     if (!orders || orders.length === 0) return []
-    
+
     let result = [...orders]
 
     // Status filter
@@ -125,14 +125,14 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
 
   // Handle status update
   const handleStatusChange = async (orderId, newStatus, order) => {
-    console.debug('🔍 handleStatusChange called', { 
-      orderId, 
-      newStatus, 
+    console.debug('🔍 handleStatusChange called', {
+      orderId,
+      newStatus,
       currentStatus: order.status,
       hasAgencies: order.buyer?.agencies?.length || 0,
       agencies: order.buyer?.agencies
     })
-    
+
     console.debug('⏭️ Proceeding with direct status change')
     await completeStatusChange(orderId, newStatus, order)
   }
@@ -143,14 +143,14 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
       console.debug('🔄 Status change initiated')
       console.debug('Updating order:', { orderId, newStatus, token: !!token, agency: selectedAgency })
       console.debug('📝 Order object:', order)
-      
+
       const updateData = {
         status: newStatus,
         deliveryAgency: selectedAgency || order.deliveryAgency || ''
       }
-      
-      const resp = await axios.put(`/api/admin/orders/${orderId}`, 
-        updateData, 
+
+      const resp = await axios.put(`/api/admin/orders/${orderId}`,
+        updateData,
         { headers: { Authorization: `Bearer ${token}` } }
       )
       console.debug('Status update response:', resp.data)
@@ -168,14 +168,14 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
   const handlePaymentStatusUpdate = async (orderId, isPaid, paidAmount) => {
     try {
       console.debug('💳 Payment status update initiated', { orderId, isPaid, paidAmount })
-      
+
       const updateData = {
         isPaid,
         paidAmount: isPaid ? (paidAmount || 0) : 0
       }
-      
-      const resp = await axios.put(`/api/admin/orders/${orderId}`, 
-        updateData, 
+
+      const resp = await axios.put(`/api/admin/orders/${orderId}`,
+        updateData,
         { headers: { Authorization: `Bearer ${token}` } }
       )
       console.debug('Payment update response:', resp.data)
@@ -193,7 +193,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
 
     let agencyName = ''
     const agencies = orderForAgency.buyer?.agencies || []
-    
+
     if (agencies[agencyIndex]) {
       const selectedAgency = agencies[agencyIndex]
       // Handle both string and object formats
@@ -226,8 +226,8 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
       console.debug('Bulk updating orders:', { count: selectedOrders.length, newStatus: bulkAction })
       const responses = []
       for (const orderId of selectedOrders) {
-        const resp = await axios.put(`/api/admin/orders/${orderId}`, 
-          { status: bulkAction }, 
+        const resp = await axios.put(`/api/admin/orders/${orderId}`,
+          { status: bulkAction },
           { headers: { Authorization: `Bearer ${token}` } }
         )
         responses.push(resp.data)
@@ -296,17 +296,17 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
 
       {/* Platform Reset Notice */}
       {resetStatus?.isReset && (
-        <div className="bg-orange-100 border-l-4 border-orange-600 p-4 rounded-lg">
-          <p className="font-bold text-orange-900">🔄 Platform Reset Active</p>
-          <p className="text-sm text-orange-800 mt-1">All orders are temporarily hidden. Restore your data to display them again.</p>
+        <div className="bg-amber-100 border-l-4 border-amber-700 p-4 rounded-lg">
+          <p className="font-bold text-amber-900">🔄 Platform Reset Active</p>
+          <p className="text-sm text-amber-900 mt-1">All orders are temporarily hidden. Restore your data to display them again.</p>
         </div>
       )}
 
       {/* Message Alert */}
       {message.text && (
         <div className={`p-4 rounded-lg font-semibold ${
-          message.type === 'success' 
-            ? 'bg-green-100 text-green-800' 
+          message.type === 'success'
+            ? 'bg-green-100 text-green-800'
             : 'bg-red-100 text-red-800'
         }`}>
           {message.text}
@@ -405,7 +405,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
               placeholder="Name, email, phone, or ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700"
             />
           </div>
 
@@ -415,7 +415,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700"
             >
               <option value="newest">Newest First</option>
               <option value="oldest">Oldest First</option>
@@ -430,7 +430,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
             <select
               value={activeFilter}
               onChange={(e) => setActiveFilter(e.target.value || '')}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700"
             >
               <option value="">All Orders</option>
               <option value="pending">Pending</option>
@@ -447,7 +447,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
             <select
               value={bulkAction}
               onChange={(e) => setBulkAction(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700"
             >
               <option value="">Select status...</option>
               {Object.entries(statusConfig).map(([key, config]) => (
@@ -461,7 +461,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
             <button
               onClick={handleBulkAction}
               disabled={!bulkAction || selectedOrders.length === 0}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-semibold transition"
+              className="flex-1 bg-stone-900 hover:bg-stone-900 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-semibold transition"
             >
               Apply to {selectedOrders.length}
             </button>
@@ -484,7 +484,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+              <thead className="bg-gradient-to-r from-stone-900 to-stone-800 text-white">
                 <tr>
                   <th className="px-4 py-4 text-left">
                     <input
@@ -529,7 +529,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
                         <div className="text-xs text-gray-600">{order.buyer?.email}</div>
                       </td>
                       <td className="px-4 py-4">
-                        <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
+                        <span className="bg-stone-100 text-stone-900 px-3 py-1 rounded-full text-sm font-semibold">
                           {order.items?.length} item(s)
                         </span>
                       </td>
@@ -540,8 +540,8 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
                       <td className="px-4 py-4">
                         <span className={`inline-block px-2 py-1 rounded-lg text-xs font-bold ${
                           order.deliveryOption !== 'pickup'
-                            ? 'bg-purple-100 text-purple-800' 
-                            : 'bg-orange-100 text-orange-800'
+                            ? 'bg-yellow-100 text-yellow-900'
+                            : 'bg-amber-100 text-amber-900'
                         }`}>
                           {order.deliveryOption === 'pickup' ? '🏪 Pickup' : '🚚 Delivery'}
                         </span>
@@ -551,7 +551,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
                         <span className={`inline-block px-2 py-1 rounded-lg text-xs font-bold ${
                           order.isPaid
                             ? 'bg-green-100 text-green-800'
-                            : 'bg-yellow-100 text-yellow-800'
+                            : 'bg-yellow-100 text-amber-900'
                         }`}>
                           {order.isPaid ? '✅ Paid' : '⏳ Pending'}
                         </span>
@@ -574,7 +574,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
                       <td className="px-4 py-4">
                         <button
                           onClick={() => setExpandedOrderId(expandedOrderId === order.id ? null : order.id)}
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition mr-2 w-20"
+                          className="bg-stone-900 hover:bg-stone-900 text-white px-3 py-2 rounded-lg text-sm font-semibold transition mr-2 w-20"
                         >
                           {expandedOrderId === order.id ? 'Hide' : 'View'}
                         </button>
@@ -611,15 +611,15 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
 
                             {/* Buyer Information */}
                             <div className="grid grid-cols-2 gap-6">
-                              <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg p-4 border border-blue-200">
-                                <h5 className="font-bold text-blue-900 mb-3 flex items-center gap-2">👤 Buyer Information</h5>
+                              <div className="bg-gradient-to-br from-stone-100 to-stone-50 rounded-lg p-4 border border-stone-300">
+                                <h5 className="font-bold text-stone-900 mb-3 flex items-center gap-2">👤 Buyer Information</h5>
                                 <div className="space-y-2 text-sm text-gray-700">
                                   <div><span className="font-semibold">Name:</span> {order.buyer?.name}</div>
                                   <div><span className="font-semibold">Email:</span> {order.buyer?.email}</div>
                                   <div><span className="font-semibold">Phone:</span> {order.buyer?.phone}</div>
                                   <div><span className="font-semibold">Address:</span> {order.buyer?.address || 'N/A'}</div>
-                                  <div className="pt-2 border-t border-blue-200">
-                                    <span className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">
+                                  <div className="pt-2 border-t border-stone-300">
+                                    <span className="inline-block bg-stone-100 text-stone-900 px-3 py-1 rounded-full text-xs font-semibold">
                                       📧 {order.buyer?.email ? 'Email Available' : 'No Email'}
                                     </span>
                                   </div>
@@ -632,8 +632,8 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
                                     <span className="font-semibold">Delivery Method:</span>
                                     <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
                                       order.deliveryOption !== 'pickup'
-                                        ? 'bg-purple-100 text-purple-800' 
-                                        : 'bg-orange-100 text-orange-800'
+                                        ? 'bg-yellow-100 text-yellow-900'
+                                        : 'bg-amber-100 text-amber-900'
                                     }`}>
                                       {order.deliveryOption === 'pickup' ? '🏪 Pickup in Store' : '🚚 Delivery'}
                                     </span>
@@ -656,9 +656,9 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
 
                             {/* Special Instructions */}
                             {order.specialInstructions && (
-                              <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-lg p-4 border-2 border-violet-300">
-                                <h5 className="font-bold text-violet-900 mb-3 flex items-center gap-2">📝 Special Instructions</h5>
-                                <div className="text-sm text-gray-700 bg-white rounded-lg p-3 border border-violet-200 italic">
+                              <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-lg p-4 border-2 border-yellow-200">
+                                <h5 className="font-bold text-yellow-900 mb-3 flex items-center gap-2">📝 Special Instructions</h5>
+                                <div className="text-sm text-gray-700 bg-white rounded-lg p-3 border border-yellow-200 italic">
                                   {order.specialInstructions}
                                 </div>
                               </div>
@@ -677,10 +677,10 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
                                   {order.paidAmount > 0 && (
                                     <div><span className="font-semibold">Paid Amount:</span> XAF {order.paidAmount.toLocaleString()}</div>
                                   )}
-                                  
+
                                   {/* Payment Update Controls for Pickup Orders */}
                                   {order.deliveryOption === 'pickup' && order.paymentMethod?.toLowerCase() === 'cash' && (
-                                    <div className="pt-2 border-t border-yellow-300 space-y-2">
+                                    <div className="pt-2 border-t border-yellow-200 space-y-2">
                                       <p className="text-xs text-yellow-900 font-semibold">💰 Update Payment:</p>
                                       {!order.isPaid ? (
                                         <button
@@ -692,7 +692,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
                                       ) : (
                                         <button
                                           onClick={() => handlePaymentStatusUpdate(order.id, false, 0)}
-                                          className="w-full bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded-lg font-semibold text-xs transition"
+                                          className="w-full bg-amber-700 hover:bg-amber-800 text-white px-3 py-2 rounded-lg font-semibold text-xs transition"
                                         >
                                           ⏳ Mark as Pending
                                         </button>
@@ -702,15 +702,15 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
                                 </div>
                               </div>
 
-                              <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-lg p-4 border border-indigo-200">
-                                <h5 className="font-bold text-indigo-900 mb-3 flex items-center gap-2">📊 Order Status</h5>
+                              <div className="bg-gradient-to-br from-amber-50 to-stone-50 rounded-lg p-4 border border-amber-300">
+                                <h5 className="font-bold text-amber-900 mb-3 flex items-center gap-2">📊 Order Status</h5>
                                 <div className="space-y-3 text-sm">
                                   {/* For pickup orders, show payment focus instead of delivery status */}
                                   {order.deliveryOption === 'pickup' ? (
                                     <div>
                                       <div><span className="font-semibold">Order Number:</span> {order.orderNumber || order.id.slice(0, 8)}</div>
-                                      <div className="pt-2 mt-2 border-t border-indigo-200">
-                                        <p className="text-xs font-semibold text-indigo-700 mb-2">Payment Priority:</p>
+                                      <div className="pt-2 mt-2 border-t border-amber-300">
+                                        <p className="text-xs font-semibold text-amber-800 mb-2">Payment Priority:</p>
                                         <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
                                           order.isPaid
                                             ? 'bg-green-100 text-green-800'
@@ -724,23 +724,23 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
                                     <div>
                                       <div className="flex items-center gap-2">
                                         <span className="text-2xl">{statusConfig[order.status]?.icon}</span>
-                                        <span className="font-bold text-indigo-900">{statusConfig[order.status]?.label}</span>
+                                        <span className="font-bold text-amber-900">{statusConfig[order.status]?.label}</span>
                                       </div>
                                       <div><span className="font-semibold">Order Number:</span> {order.orderNumber || order.id.slice(0, 8)}</div>
-                                      <div className="pt-1 text-xs text-indigo-700">{getOrderAge(order.createdAt)}</div>
+                                      <div className="pt-1 text-xs text-amber-800">{getOrderAge(order.createdAt)}</div>
                                     </div>
                                   )}
                                 </div>
                               </div>
 
-                              <div className="bg-gradient-to-br from-rose-50 to-pink-50 rounded-lg p-4 border border-rose-200">
-                                <h5 className="font-bold text-rose-900 mb-3 flex items-center gap-2">💰 Financial Summary</h5>
+                              <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-lg p-4 border border-amber-200">
+                                <h5 className="font-bold text-amber-900 mb-3 flex items-center gap-2">💰 Financial Summary</h5>
                                 <div className="space-y-2 text-sm">
                                   <div><span className="font-semibold">Subtotal:</span> XAF {(order.totals?.subtotal || 0).toLocaleString()}</div>
                                   {order.totals?.discount > 0 && (
                                     <div className="text-green-700"><span className="font-semibold">Discount:</span> -XAF {(order.totals?.discount || 0).toLocaleString()}</div>
                                   )}
-                                  <div className="border-t border-rose-200 pt-2 font-bold text-lg text-rose-900">
+                                  <div className="border-t border-amber-200 pt-2 font-bold text-lg text-amber-900">
                                     Total: XAF {(order.totals?.total || 0).toLocaleString()}
                                   </div>
                                 </div>
@@ -777,7 +777,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
                             </div>
 
                             {/* Order Summary */}
-                            <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 border border-blue-200">
+                            <div className="bg-gradient-to-r from-stone-100 to-yellow-50 rounded-lg p-4 border border-stone-300">
                               <div className="grid grid-cols-4 gap-4 text-center">
                                 <div>
                                   <div className="text-xs text-gray-600 font-semibold">Subtotal</div>
@@ -820,9 +820,9 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
 // Stat Card Component
 function StatCard({ label, value, icon, color, onClick, active }) {
   const colors = {
-    blue: 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100',
+    blue: 'bg-stone-100 text-amber-700 border-stone-300 hover:bg-stone-100',
     yellow: 'bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100',
-    purple: 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100',
+    purple: 'bg-yellow-50 text-yellow-900 border-yellow-200 hover:bg-yellow-100',
     green: 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100',
     red: 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
   }
@@ -842,14 +842,14 @@ function StatCard({ label, value, icon, color, onClick, active }) {
 // Metric Box Component
 function MetricBox({ label, value, color, icon, highlight }) {
   const colors = {
-    blue: 'bg-gradient-to-br from-blue-50 to-blue-100 text-blue-900 border-blue-200',
+    blue: 'bg-gradient-to-br from-stone-100 to-stone-200 text-stone-900 border-stone-300',
     green: 'bg-gradient-to-br from-green-50 to-green-100 text-green-900 border-green-200',
-    orange: 'bg-gradient-to-br from-orange-50 to-orange-100 text-orange-900 border-orange-200',
-    purple: 'bg-gradient-to-br from-purple-50 to-purple-100 text-purple-900 border-purple-200'
+    orange: 'bg-gradient-to-br from-amber-50 to-amber-100 text-amber-900 border-amber-200',
+    purple: 'bg-gradient-to-br from-amber-50 to-yellow-100 text-yellow-900 border-yellow-200'
   }
 
   return (
-    <div className={`p-6 rounded-xl border-2 ${colors[color]} ${highlight ? 'ring-2 ring-yellow-400' : ''}`}>
+    <div className={`p-6 rounded-xl border-2 ${colors[color]} ${highlight ? 'ring-2 ring-amber-700' : ''}`}>
       <div className="flex justify-between items-start">
         <div>
           <p className="text-sm font-semibold opacity-75 mb-1">{label}</p>

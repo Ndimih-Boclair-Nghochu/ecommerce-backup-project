@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react'import toast from 'react-hot-toast'
+import React, { useState, useEffect } from 'react'
+import toast from 'react-hot-toast'
 
 import { useNavigate, Link } from 'react-router-dom'
 import axios from 'axios'
@@ -88,7 +89,7 @@ export default function CustomerDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-50 to-blue-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-stone-100 via-amber-50 to-stone-200 flex items-center justify-center">
         <div className="text-center">
           <div className="text-6xl mb-4">⏳</div>
           <p className="text-gray-600 font-semibold">Loading your dashboard...</p>
@@ -98,14 +99,14 @@ export default function CustomerDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-50 to-blue-100 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-stone-100 via-amber-50 to-stone-200 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
           <div className="flex justify-between items-start sm:items-center gap-4 flex-col sm:flex-row mb-4">
             <div>
               <h1 className="text-4xl font-bold text-gray-800 mb-2">👤 My Dashboard</h1>
-              <p className="text-gray-600">Welcome back, <span className="font-bold text-blue-600">{customerData?.name}</span>!</p>
+              <p className="text-gray-600">Welcome back, <span className="font-bold text-amber-700">{customerData?.name}</span>!</p>
             </div>
             <button
               onClick={handleLogout}
@@ -114,12 +115,12 @@ export default function CustomerDashboard() {
               Logout
             </button>
           </div>
-          
+
           <div className="flex gap-4 items-center flex-wrap">
-            <div className="bg-gradient-to-r from-amber-400 to-amber-500 text-white px-4 py-2 rounded-full font-bold">
+            <div className="bg-gradient-to-r from-amber-700 to-yellow-900 text-white px-4 py-2 rounded-full font-bold">
               ⭐ {customerData?.memberTier} Member
             </div>
-            <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full font-bold">
+            <div className="bg-stone-100 text-stone-900 px-4 py-2 rounded-full font-bold">
               🎁 {customerData?.loyaltyPoints} Loyalty Points
             </div>
           </div>
@@ -133,7 +134,7 @@ export default function CustomerDashboard() {
               onClick={() => setActiveTab(tab)}
               className={`px-6 py-3 rounded-lg font-bold transition whitespace-nowrap ${
                 activeTab === tab
-                  ? 'bg-blue-600 text-white shadow-lg'
+                  ? 'bg-stone-900 text-white shadow-lg'
                   : 'bg-white text-gray-700 hover:bg-gray-50 shadow'
               }`}
             >
@@ -151,9 +152,9 @@ export default function CustomerDashboard() {
         {activeTab === 'overview' && (
           <div className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-2xl shadow-lg p-6">
+              <div className="bg-gradient-to-br from-stone-700 to-stone-800 text-white rounded-2xl shadow-lg p-6">
                 <div className="text-4xl mb-2">📦</div>
-                <p className="text-blue-100">Total Orders</p>
+                <p className="text-stone-300">Total Orders</p>
                 <p className="text-5xl font-bold mt-2">{orders.length}</p>
               </div>
               <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-2xl shadow-lg p-6">
@@ -161,14 +162,14 @@ export default function CustomerDashboard() {
                 <p className="text-green-100">Completed Orders</p>
                 <p className="text-5xl font-bold mt-2">{orders.filter(o => o.status === 'delivered').length}</p>
               </div>
-              <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-2xl shadow-lg p-6">
+              <div className="bg-gradient-to-br from-amber-700 to-amber-800 text-white rounded-2xl shadow-lg p-6">
                 <div className="text-4xl mb-2">💰</div>
-                <p className="text-orange-100">Total Spent</p>
+                <p className="text-amber-100">Total Spent</p>
                 <p className="text-5xl font-bold mt-2">{orders.reduce((sum, o) => sum + (o.total || 0), 0).toLocaleString()} XAF</p>
               </div>
-              <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-2xl shadow-lg p-6">
+              <div className="bg-gradient-to-br from-amber-700 to-amber-800 text-white rounded-2xl shadow-lg p-6">
                 <div className="text-4xl mb-2">💳</div>
-                <p className="text-purple-100">Active Plans</p>
+                <p className="text-stone-300">Active Plans</p>
                 <p className="text-5xl font-bold mt-2">{installmentPlans.filter(p => p.status === 'active').length}</p>
               </div>
             </div>
@@ -176,11 +177,11 @@ export default function CustomerDashboard() {
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <h2 className="text-2xl font-bold text-gray-800 mb-4">🚀 Quick Actions</h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Link to="/products" className="bg-blue-50 hover:bg-blue-100 border-2 border-blue-300 rounded-lg p-4 text-center transition">
+                <Link to="/products" className="bg-stone-100 hover:bg-stone-100 border-2 border-stone-300 rounded-lg p-4 text-center transition">
                   <div className="text-4xl mb-2">🛍️</div>
                   <p className="font-bold text-gray-800">Continue Shopping</p>
                 </Link>
-                <Link to="/cart" className="bg-orange-50 hover:bg-orange-100 border-2 border-orange-300 rounded-lg p-4 text-center transition">
+                <Link to="/cart" className="bg-amber-50 hover:bg-amber-100 border-2 border-amber-700 rounded-lg p-4 text-center transition">
                   <div className="text-4xl mb-2">🛒</div>
                   <p className="font-bold text-gray-800">View Cart</p>
                 </Link>
@@ -202,7 +203,7 @@ export default function CustomerDashboard() {
                 <div className="text-6xl mb-4">📭</div>
                 <p className="text-gray-600 text-lg">No orders yet</p>
                 <p className="text-gray-500 mt-2">Start shopping to create your first order</p>
-                <Link to="/products" className="mt-4 inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 transition">
+                <Link to="/products" className="mt-4 inline-block bg-stone-900 text-white px-6 py-2 rounded-lg font-bold hover:bg-stone-900 transition">
                   Shop Now
                 </Link>
               </div>
@@ -225,13 +226,13 @@ export default function CustomerDashboard() {
                       </div>
                       <div>
                         <p className="text-xs text-gray-500 uppercase">Total</p>
-                        <p className="font-bold text-blue-600">{order.total?.toLocaleString() || '0'} XAF</p>
+                        <p className="font-bold text-amber-700">{order.total?.toLocaleString() || '0'} XAF</p>
                       </div>
                       <div>
                         <p className="text-xs text-gray-500 uppercase">Status</p>
                         <p className={`font-bold ${
                           order.status === 'delivered' ? 'text-green-600' :
-                          order.status === 'processing' ? 'text-orange-600' :
+                          order.status === 'processing' ? 'text-amber-700' :
                           'text-gray-600'
                         }`}>
                           {order.status?.toUpperCase() || 'PENDING'}
@@ -254,14 +255,14 @@ export default function CustomerDashboard() {
                 <div className="text-6xl mb-4">📋</div>
                 <p className="text-gray-600 text-lg">No active installment plans</p>
                 <p className="text-gray-500 mt-2">Buy items in installments when you checkout</p>
-                <Link to="/products" className="mt-4 inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 transition">
+                <Link to="/products" className="mt-4 inline-block bg-stone-900 text-white px-6 py-2 rounded-lg font-bold hover:bg-stone-900 transition">
                   Shop with Installments
                 </Link>
               </div>
             ) : (
               <div className="space-y-4">
                 {installmentPlans.map(plan => (
-                  <div key={plan.id} className="border-l-4 border-blue-600 bg-gradient-to-r from-blue-50 to-transparent p-4 rounded-lg">
+                  <div key={plan.id} className="border-l-4 border-amber-700 bg-gradient-to-r from-stone-100 to-transparent p-4 rounded-lg">
                     <div className="grid grid-cols-1 sm:grid-cols-6 gap-4">
                       <div>
                         <p className="text-xs text-gray-500 uppercase">Plan ID</p>
@@ -273,7 +274,7 @@ export default function CustomerDashboard() {
                       </div>
                       <div>
                         <p className="text-xs text-gray-500 uppercase">Monthly Payment</p>
-                        <p className="font-bold text-blue-600">{plan.monthlyPayment?.toLocaleString()} XAF</p>
+                        <p className="font-bold text-amber-700">{plan.monthlyPayment?.toLocaleString()} XAF</p>
                       </div>
                       <div>
                         <p className="text-xs text-gray-500 uppercase">Duration</p>
@@ -286,7 +287,7 @@ export default function CustomerDashboard() {
                       <div>
                         <p className="text-xs text-gray-500 uppercase">Status</p>
                         <p className={`font-bold ${
-                          plan.status === 'active' ? 'text-orange-600' :
+                          plan.status === 'active' ? 'text-amber-700' :
                           plan.status === 'completed' ? 'text-green-600' :
                           'text-gray-600'
                         }`}>
@@ -298,7 +299,7 @@ export default function CustomerDashboard() {
                 ))}
               </div>
             )}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-6">
+            <div className="bg-stone-100 border border-stone-300 rounded-lg p-4 mt-6">
               <p className="text-sm text-gray-700">
                 <strong>💡 Installment Tips:</strong> Spread payments over 3, 6, or 12 months. First month is 1.5x, others are equal.
               </p>
@@ -313,35 +314,35 @@ export default function CustomerDashboard() {
               <h2 className="text-2xl font-bold text-gray-800">📍 Delivery Addresses</h2>
               <button
                 onClick={() => setShowAddressForm(!showAddressForm)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold transition"
+                className="bg-stone-900 hover:bg-stone-900 text-white px-4 py-2 rounded-lg font-bold transition"
               >
                 + Add Address
               </button>
             </div>
 
             {showAddressForm && (
-              <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-4 mb-6">
+              <div className="bg-stone-100 border-2 border-stone-300 rounded-lg p-4 mb-6">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <input
                     type="text"
                     placeholder="Street Address"
                     value={newAddress.street}
                     onChange={(e) => setNewAddress({ ...newAddress, street: e.target.value })}
-                    className="px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-600"
+                    className="px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-amber-700"
                   />
                   <input
                     type="text"
                     placeholder="City"
                     value={newAddress.city}
                     onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })}
-                    className="px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-600"
+                    className="px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-amber-700"
                   />
                   <input
                     type="tel"
                     placeholder="Phone Number"
                     value={newAddress.phone}
                     onChange={(e) => setNewAddress({ ...newAddress, phone: e.target.value })}
-                    className="px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-600"
+                    className="px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-amber-700"
                   />
                 </div>
                 <div className="flex gap-2 mt-4">
@@ -405,9 +406,9 @@ export default function CustomerDashboard() {
               </div>
               <div className="border-b pb-4">
                 <p className="text-sm text-gray-500 uppercase mb-1">Member Tier</p>
-                <p className="text-lg font-bold text-amber-600">⭐ {customerData?.memberTier}</p>
+                <p className="text-lg font-bold text-amber-700">⭐ {customerData?.memberTier}</p>
               </div>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-6">
+              <div className="bg-stone-100 border border-stone-300 rounded-lg p-4 mt-6">
                 <p className="text-sm text-gray-700">
                   <strong>🎯 Next Tier:</strong> Gold tier unlocks at 5000 points with exclusive discounts and priority support.
                 </p>

@@ -65,7 +65,7 @@ export default function CustomerSignup() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-50 to-blue-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-stone-100 via-amber-50 to-stone-200 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
           <div className="text-6xl mb-4 animate-bounce">✅</div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Welcome!</h2>
@@ -77,7 +77,7 @@ export default function CustomerSignup() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-50 to-blue-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-stone-100 via-amber-50 to-stone-200 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md mx-auto bg-white rounded-2xl shadow-2xl p-8">
         <div className="text-center mb-8">
           <div className="text-5xl mb-4">👤</div>
@@ -102,7 +102,7 @@ export default function CustomerSignup() {
               value={formData.name}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 focus:border-transparent"
               placeholder="John Doe"
             />
           </div>
@@ -117,7 +117,7 @@ export default function CustomerSignup() {
               value={formData.email}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 focus:border-transparent"
               placeholder="you@example.com"
             />
           </div>
@@ -132,7 +132,7 @@ export default function CustomerSignup() {
               value={formData.phone}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 focus:border-transparent"
               placeholder="+237 XXX XXX XXX"
             />
           </div>
@@ -147,7 +147,7 @@ export default function CustomerSignup() {
               value={formData.city}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 focus:border-transparent"
               placeholder="Douala"
             />
           </div>
@@ -160,7 +160,7 @@ export default function CustomerSignup() {
               name="address"
               value={formData.address}
               onChange={handleChange}
-              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 focus:border-transparent"
               placeholder="Your address (optional)"
               rows="3"
             />
@@ -176,7 +176,7 @@ export default function CustomerSignup() {
               value={formData.password}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 focus:border-transparent"
               placeholder="At least 6 characters"
             />
           </div>
@@ -191,7 +191,7 @@ export default function CustomerSignup() {
               value={formData.confirmPassword}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 focus:border-transparent"
               placeholder="Confirm password"
             />
           </div>
@@ -199,7 +199,7 @@ export default function CustomerSignup() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-lg font-bold hover:from-blue-700 hover:to-blue-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+            className="w-full bg-gradient-to-r from-stone-900 to-stone-800 text-white py-3 rounded-lg font-bold hover:from-stone-950 hover:to-stone-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
           >
             {loading ? 'Creating Account...' : 'Create Account'}
           </button>
@@ -207,7 +207,7 @@ export default function CustomerSignup() {
 
         <div className="mt-6 text-center">
           <p className="text-gray-600 text-sm">Already have an account?</p>
-          <Link to="/customer-login" className="text-blue-600 hover:text-blue-700 font-bold">
+          <Link to="/customer-login" className="text-amber-700 hover:text-amber-700 font-bold">
             Login here
           </Link>
         </div>

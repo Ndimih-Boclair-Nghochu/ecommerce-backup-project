@@ -21,7 +21,7 @@ export default class ErrorBoundary extends React.Component {
           <p className="text-gray-600 mb-6">
             The page could not load correctly. Please go back home and try again.
           </p>
-          <Link to="/" className="inline-flex items-center justify-center rounded-md bg-blue-700 px-5 py-3 text-white font-semibold hover:bg-blue-800">
+          <Link to="/" className="inline-flex items-center justify-center rounded-md bg-stone-900 px-5 py-3 text-white font-semibold hover:bg-stone-950">
             Go Home
           </Link>
         </div>

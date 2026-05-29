@@ -12,17 +12,17 @@ const RealTimeStatistics = ({ token }) => {
   const [selectedMetric, setSelectedMetric] = useState('revenue')
   const [selectedDay, setSelectedDay] = useState('Monday')
   const [selectedWeek, setSelectedWeek] = useState('Week 1')
-  
+
   // Get current month and year
   const getCurrentMonth = () => {
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
     return months[new Date().getMonth()]
   }
-  
+
   const getCurrentYear = () => {
     return new Date().getFullYear().toString()
   }
-  
+
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth())
   const [selectedYear, setSelectedYear] = useState(getCurrentYear())
   const [periodData, setPeriodData] = useState(null)
@@ -33,7 +33,7 @@ const RealTimeStatistics = ({ token }) => {
     if (showComparison) {
       fetchComparisonData()
     }
-    
+
     // Auto-refresh stats every 5 seconds
     const interval = setInterval(() => {
       fetchRealTimeStats()
@@ -41,7 +41,7 @@ const RealTimeStatistics = ({ token }) => {
         fetchComparisonData()
       }
     }, 5000)
-    
+
     return () => clearInterval(interval)
   }, [selectedPeriod, selectedRegion, showComparison])
 
@@ -139,7 +139,7 @@ const RealTimeStatistics = ({ token }) => {
 
   const generatePeriodAnalysis = () => {
     if (!stats) return {}
-    
+
     // For month view with REAL week data from backend
     if (selectedPeriod === 'month' && monthWeeks && monthWeeks.length > 0) {
       const totalRevenue = monthWeeks.reduce((sum, w) => sum + w.revenue, 0) || 1
@@ -160,7 +160,7 @@ const RealTimeStatistics = ({ token }) => {
         breakdown: breakdown
       }
     }
-    
+
     const periods = {
       day: {
         title: '📅 Daily Analysis',
@@ -218,7 +218,7 @@ const RealTimeStatistics = ({ token }) => {
       const totalRev = monthWeeks.reduce((sum, w) => sum + w.revenue, 0) || 1
       const topWeek = monthWeeks.reduce((max, w) => w.revenue > max.revenue ? w : max, monthWeeks[0])
       const bottomWeek = monthWeeks.reduce((min, w) => w.revenue < min.revenue ? w : min, monthWeeks[0])
-      
+
       return [
         `🏆 Best Week: ${topWeek.label} - XAF ${topWeek.revenue.toLocaleString()} (${Math.round((topWeek.revenue / totalRev) * 100)}%)`,
         `📊 ${selectedMonth} data: ${monthWeeks.length} weeks tracked`,
@@ -300,18 +300,18 @@ const RealTimeStatistics = ({ token }) => {
     if (!stats) return
     const periodLabel = { 'day': 'Daily', 'week': 'Weekly', 'month': 'Monthly', 'year': 'Yearly' }[period] || 'Monthly'
     const periodNames = { 'day': 'Today', 'week': 'This Week', 'month': 'This Month', 'year': 'This Year' }
-    
+
     const comparisonRow = showComparison && comparisonData ? `
       <h3 style="font-size:18px;font-weight:700;color:#1f2937;margin:30px 0 15px 0">Comparison with Previous Period</h3>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:30px">
         <div style="background:linear-gradient(135deg,#10B981 0%,#059669 100%);color:white;padding:20px;border-radius:8px;text-align:center"><div style="font-size:24px;font-weight:bold">${showComparison && comparisonData ? calculateComparison(stats.totalRevenue || 0, comparisonData.totalRevenue || 0) : 0}%</div><div>Revenue Change</div></div>
-        <div style="background:linear-gradient(135deg,#3B82F6 0%,#2563EB 100%);color:white;padding:20px;border-radius:8px;text-align:center"><div style="font-size:24px;font-weight:bold">${showComparison && comparisonData ? calculateComparison(stats.totalOrders || 0, comparisonData.totalOrders || 0) : 0}%</div><div>Orders Change</div></div>
-        <div style="background:linear-gradient(135deg,#8B5CF6 0%,#7C3AED 100%);color:white;padding:20px;border-radius:8px;text-align:center"><div style="font-size:24px;font-weight:bold">${showComparison && comparisonData ? calculateComparison(stats.totalItemsSold || 0, comparisonData.totalItemsSold || 0) : 0}%</div><div>Items Sold Change</div></div>
-        <div style="background:linear-gradient(135deg,#F59E0B 0%,#D97706 100%);color:white;padding:20px;border-radius:8px;text-align:center"><div style="font-size:24px;font-weight:bold">${showComparison && comparisonData ? calculateComparison(stats.averageOrderValue || 0, comparisonData.averageOrderValue || 0) : 0}%</div><div>AOV Change</div></div>
+        <div style="background:linear-gradient(135deg,#1c1917 0%,#292524 100%);color:white;padding:20px;border-radius:8px;text-align:center"><div style="font-size:24px;font-weight:bold">${showComparison && comparisonData ? calculateComparison(stats.totalOrders || 0, comparisonData.totalOrders || 0) : 0}%</div><div>Orders Change</div></div>
+        <div style="background:linear-gradient(135deg,#b45309 0%,#92400e 100%);color:white;padding:20px;border-radius:8px;text-align:center"><div style="font-size:24px;font-weight:bold">${showComparison && comparisonData ? calculateComparison(stats.totalItemsSold || 0, comparisonData.totalItemsSold || 0) : 0}%</div><div>Items Sold Change</div></div>
+        <div style="background:linear-gradient(135deg,#713f12 0%,#92400e 100%);color:white;padding:20px;border-radius:8px;text-align:center"><div style="font-size:24px;font-weight:bold">${showComparison && comparisonData ? calculateComparison(stats.averageOrderValue || 0, comparisonData.averageOrderValue || 0) : 0}%</div><div>AOV Change</div></div>
       </div>
     ` : ''
 
-    const reportHTML = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${periodLabel} Report</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',sans-serif;background:#f5f5f5;padding:20px}.container{max-width:1000px;margin:0 auto;background:white;padding:40px;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.15)}.header{text-align:center;border-bottom:4px solid #3B82F6;padding-bottom:30px;margin-bottom:30px}.header h1{color:#1f2937;font-size:36px;font-weight:800}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:30px}.metric-card{background:linear-gradient(135deg,#10B981 0%,#059669 100%);color:white;padding:25px;border-radius:8px;text-align:center}.metric-card.blue{background:linear-gradient(135deg,#3B82F6 0%,#2563EB 100%)}.metric-card.purple{background:linear-gradient(135deg,#8B5CF6 0%,#7C3AED 100%)}.metric-card.orange{background:linear-gradient(135deg,#F59E0B 0%,#D97706 100%)}.metric-value{font-size:28px;font-weight:bold}.table{width:100%;border-collapse:collapse}.table th{background:#f3f4f6;padding:15px;text-align:left;font-weight:700;color:#1f2937;border-bottom:2px solid #3B82F6}.table td{padding:15px;border-bottom:1px solid #e5e7eb}.footer{text-align:center;margin-top:40px;padding-top:20px;border-top:2px solid #e5e7eb;color:#6b7280;font-size:13px}@media print{body{background:white}.container{box-shadow:none}}</style></head><body><div class="container"><div class="header"><h1>📊 ${periodLabel} Analytics Report</h1><p>${periodNames[period]} - MyShop Intelligence Dashboard</p></div><div class="metrics"><div class="metric-card"><div class="metric-value">${formatCurrency(stats.totalRevenue || 0)}</div><div>Total Revenue</div></div><div class="metric-card blue"><div class="metric-value">${stats.totalOrders || 0}</div><div>Orders</div></div><div class="metric-card purple"><div class="metric-value">${stats.totalItemsSold || 0}</div><div>Items Sold</div></div><div class="metric-card orange"><div class="metric-value">${formatCurrency(stats.averageOrderValue || 0)}</div><div>Avg Order Value</div></div></div>${comparisonRow}<h2 style="font-size:20px;font-weight:700;color:#1f2937;margin:30px 0 15px 0">Sales by Region</h2><table class="table"><thead><tr><th>Rank</th><th>Region</th><th style="text-align:right">Revenue</th><th style="text-align:right">Orders</th><th style="text-align:right">Share</th></tr></thead><tbody>${(stats.townBreakdown || []).map((t,i)=>`<tr><td><strong>#${i+1}</strong></td><td><strong>${t.name}</strong></td><td style="text-align:right">${formatCurrency(t.revenue)}</td><td style="text-align:right">${t.orders}</td><td style="text-align:right"><strong>${t.percentage.toFixed(1)}%</strong></td></tr>`).join('')}</tbody></table><div class="footer"><p>Generated ${new Date().toLocaleString()} | Report Type: ${periodLabel}</p></div></div></body></html>`
+    const reportHTML = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${periodLabel} Report</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',sans-serif;background:#f5f5f5;padding:20px}.container{max-width:1000px;margin:0 auto;background:white;padding:40px;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.15)}.header{text-align:center;border-bottom:4px solid #b45309;padding-bottom:30px;margin-bottom:30px}.header h1{color:#1f2937;font-size:36px;font-weight:800}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:30px}.metric-card{background:linear-gradient(135deg,#10B981 0%,#059669 100%);color:white;padding:25px;border-radius:8px;text-align:center}.metric-card.blue{background:linear-gradient(135deg,#1c1917 0%,#292524 100%)}.metric-card.purple{background:linear-gradient(135deg,#b45309 0%,#92400e 100%)}.metric-card.orange{background:linear-gradient(135deg,#713f12 0%,#92400e 100%)}.metric-value{font-size:28px;font-weight:bold}.table{width:100%;border-collapse:collapse}.table th{background:#f3f4f6;padding:15px;text-align:left;font-weight:700;color:#1f2937;border-bottom:2px solid #b45309}.table td{padding:15px;border-bottom:1px solid #e5e7eb}.footer{text-align:center;margin-top:40px;padding-top:20px;border-top:2px solid #e5e7eb;color:#6b7280;font-size:13px}@media print{body{background:white}.container{box-shadow:none}}</style></head><body><div class="container"><div class="header"><h1>📊 ${periodLabel} Analytics Report</h1><p>${periodNames[period]} - MyShop Intelligence Dashboard</p></div><div class="metrics"><div class="metric-card"><div class="metric-value">${formatCurrency(stats.totalRevenue || 0)}</div><div>Total Revenue</div></div><div class="metric-card blue"><div class="metric-value">${stats.totalOrders || 0}</div><div>Orders</div></div><div class="metric-card purple"><div class="metric-value">${stats.totalItemsSold || 0}</div><div>Items Sold</div></div><div class="metric-card orange"><div class="metric-value">${formatCurrency(stats.averageOrderValue || 0)}</div><div>Avg Order Value</div></div></div>${comparisonRow}<h2 style="font-size:20px;font-weight:700;color:#1f2937;margin:30px 0 15px 0">Sales by Region</h2><table class="table"><thead><tr><th>Rank</th><th>Region</th><th style="text-align:right">Revenue</th><th style="text-align:right">Orders</th><th style="text-align:right">Share</th></tr></thead><tbody>${(stats.townBreakdown || []).map((t,i)=>`<tr><td><strong>#${i+1}</strong></td><td><strong>${t.name}</strong></td><td style="text-align:right">${formatCurrency(t.revenue)}</td><td style="text-align:right">${t.orders}</td><td style="text-align:right"><strong>${t.percentage.toFixed(1)}%</strong></td></tr>`).join('')}</tbody></table><div class="footer"><p>Generated ${new Date().toLocaleString()} | Report Type: ${periodLabel}</p></div></div></body></html>`
     const blob = new Blob([reportHTML], { type: 'text/html' })
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -325,7 +325,7 @@ const RealTimeStatistics = ({ token }) => {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-stone-300 border-t-amber-700 mx-auto mb-4"></div>
           <p className="text-gray-600 text-lg font-semibold">Loading Dashboard...</p>
         </div>
       </div>
@@ -343,27 +343,27 @@ const RealTimeStatistics = ({ token }) => {
   return (
     <div className="space-y-6 pb-10">
       {/* PREMIUM HEADER */}
-      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-3xl shadow-2xl p-8 md:p-12 text-white overflow-hidden relative">
+      <div className="bg-gradient-to-r from-stone-900 via-stone-800 to-yellow-900 rounded-3xl shadow-2xl p-8 md:p-12 text-white overflow-hidden relative">
         <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -mr-48 -mt-48"></div>
         <div className="absolute bottom-0 left-0 w-72 h-72 bg-white/5 rounded-full -ml-36 -mb-36"></div>
         <div className="relative z-10">
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
             <div>
               <h1 className="text-4xl md:text-5xl font-black mb-2">📊 Analytics Dashboard</h1>
-              <p className="text-blue-100 text-lg md:text-xl mb-6">Real-time insights, comprehensive analytics, actionable intelligence</p>
+              <p className="text-stone-300 text-lg md:text-xl mb-6">Real-time insights, comprehensive analytics, actionable intelligence</p>
             </div>
             <div className="bg-white/20 backdrop-blur-sm border-2 border-white/40 px-6 py-4 rounded-2xl text-center">
               <p className="text-white/80 text-sm font-semibold uppercase tracking-wide">📅 Period</p>
               <p className="text-2xl md:text-3xl font-black text-white capitalize mt-1">
-                {selectedPeriod === 'day' ? '📆 Today' : 
-                 selectedPeriod === 'week' ? '📆 This Week' : 
-                 selectedPeriod === 'month' ? '📆 This Month' : 
+                {selectedPeriod === 'day' ? '📆 Today' :
+                 selectedPeriod === 'week' ? '📆 This Week' :
+                 selectedPeriod === 'month' ? '📆 This Month' :
                  selectedPeriod === 'year' ? '📆 This Year' : 'Current'}
               </p>
               <p className="text-xs text-white/70 mt-2">{new Date().toLocaleDateString()}</p>
             </div>
           </div>
-          
+
           <div className="flex flex-wrap gap-3">
             <button
               onClick={() => setShowFilters(!showFilters)}
@@ -380,7 +380,7 @@ const RealTimeStatistics = ({ token }) => {
             </button>
             <button
               onClick={() => setShowComparison(!showComparison)}
-              className={`px-8 py-3 rounded-xl font-bold transition text-base ${showComparison ? 'bg-yellow-400 text-gray-900 shadow-2xl scale-105' : 'bg-white/30 text-white hover:bg-white/40 border border-white/30'}`}
+              className={`px-8 py-3 rounded-xl font-bold transition text-base ${showComparison ? 'bg-amber-700 text-gray-900 shadow-2xl scale-105' : 'bg-white/30 text-white hover:bg-white/40 border border-white/30'}`}
             >
               📊 {showComparison ? '✓ COMPARISON ACTIVE' : 'Enable Comparison'}
             </button>
@@ -390,12 +390,12 @@ const RealTimeStatistics = ({ token }) => {
 
       {/* FILTER PANEL */}
       {showFilters && (
-        <div className="bg-white rounded-2xl shadow-xl p-8 border-l-4 border-blue-600">
+        <div className="bg-white rounded-2xl shadow-xl p-8 border-l-4 border-amber-700">
           <h3 className="text-2xl font-black text-gray-900 mb-8">🔍 Advanced Filters & Analysis</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-3">📍 Region</label>
-              <select value={selectedRegion} onChange={(e) => setSelectedRegion(e.target.value)} className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 font-semibold text-gray-900">
+              <select value={selectedRegion} onChange={(e) => setSelectedRegion(e.target.value)} className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-700 font-semibold text-gray-900">
                 <option value="all">All Regions</option>
                 <option value="douala">Douala</option>
                 <option value="yaounde">Yaoundé</option>
@@ -407,7 +407,7 @@ const RealTimeStatistics = ({ token }) => {
             </div>
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-3">📊 Metric Focus</label>
-              <select value={selectedMetric} onChange={(e) => setSelectedMetric(e.target.value)} className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 font-semibold text-gray-900">
+              <select value={selectedMetric} onChange={(e) => setSelectedMetric(e.target.value)} className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-700 font-semibold text-gray-900">
                 <option value="revenue">Revenue</option>
                 <option value="orders">Orders</option>
                 <option value="items">Items Sold</option>
@@ -416,7 +416,7 @@ const RealTimeStatistics = ({ token }) => {
             </div>
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-3">📈 Time Period</label>
-              <select value={selectedPeriod} onChange={(e) => setSelectedPeriod(e.target.value)} className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 font-semibold text-gray-900">
+              <select value={selectedPeriod} onChange={(e) => setSelectedPeriod(e.target.value)} className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-700 font-semibold text-gray-900">
                 <option value="day">Daily</option>
                 <option value="week">Weekly</option>
                 <option value="month">Monthly</option>
@@ -434,7 +434,7 @@ const RealTimeStatistics = ({ token }) => {
             </div>
           </div>
           <div className="flex flex-wrap gap-3 mt-8 pt-6 border-t">
-            <button onClick={() => setShowFilters(false)} className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg">✓ Apply</button>
+            <button onClick={() => setShowFilters(false)} className="px-6 py-3 bg-stone-900 hover:bg-stone-900 text-white rounded-xl font-bold shadow-lg">✓ Apply</button>
             <button onClick={() => { setSelectedRegion('all'); setSelectedMetric('revenue'); setShowFilters(false) }} className="px-6 py-3 bg-gray-400 hover:bg-gray-500 text-white rounded-xl font-bold shadow-lg">↻ Reset</button>
           </div>
         </div>
@@ -443,16 +443,16 @@ const RealTimeStatistics = ({ token }) => {
       {/* UNIFIED REPORTS & COMPARISON SECTION */}
       <div className="space-y-6">
         {/* DOWNLOAD REPORTS SECTION - TOP */}
-        <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-3xl shadow-xl p-10 border-4 border-emerald-400">
+        <div className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-3xl shadow-xl p-10 border-4 border-emerald-400">
           <div className="text-center mb-8">
             <h2 className="text-4xl font-black text-gray-900 mb-3">📥 Download Reports</h2>
             <p className="text-xl text-gray-700 font-bold">Choose your report period to download detailed analytics</p>
           </div>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <button
               onClick={() => { setSelectedPeriod('day'); downloadReport('day'); }}
-              className="bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition transform hover:scale-105 active:scale-95"
+              className="bg-gradient-to-br from-stone-700 to-stone-800 hover:from-stone-900 hover:to-stone-900 text-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition transform hover:scale-105 active:scale-95"
             >
               <div className="text-5xl mb-3">📅</div>
               <p className="text-lg font-black mb-2">Daily Report</p>
@@ -470,7 +470,7 @@ const RealTimeStatistics = ({ token }) => {
 
             <button
               onClick={() => { setSelectedPeriod('month'); downloadReport('month'); }}
-              className="bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition transform hover:scale-105 active:scale-95"
+              className="bg-gradient-to-br from-amber-700 to-amber-800 hover:from-yellow-900 hover:to-amber-900 text-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition transform hover:scale-105 active:scale-95"
             >
               <div className="text-5xl mb-3">📈</div>
               <p className="text-lg font-black mb-2">Monthly Report</p>
@@ -479,7 +479,7 @@ const RealTimeStatistics = ({ token }) => {
 
             <button
               onClick={() => { setSelectedPeriod('year'); downloadReport('year'); }}
-              className="bg-gradient-to-br from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition transform hover:scale-105 active:scale-95"
+              className="bg-gradient-to-br from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition transform hover:scale-105 active:scale-95"
             >
               <div className="text-5xl mb-3">📆</div>
               <p className="text-lg font-black mb-2">Yearly Report</p>
@@ -498,14 +498,14 @@ const RealTimeStatistics = ({ token }) => {
             <h2 className="text-3xl font-black text-gray-900">📊 Compare Periods</h2>
             <button
               onClick={() => setShowComparison(!showComparison)}
-              className={`px-8 py-3 rounded-xl font-bold transition text-base ${showComparison ? 'bg-yellow-400 hover:bg-yellow-500 text-gray-900 shadow-2xl scale-105' : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg'}`}
+              className={`px-8 py-3 rounded-xl font-bold transition text-base ${showComparison ? 'bg-amber-700 hover:bg-amber-800 text-gray-900 shadow-2xl scale-105' : 'bg-stone-900 hover:bg-stone-900 text-white shadow-lg'}`}
             >
               {showComparison ? '✓ COMPARISON ACTIVE' : 'Enable Comparison'}
             </button>
           </div>
 
           {showComparison && (
-            <div className="bg-gradient-to-r from-yellow-50 via-amber-50 to-orange-50 rounded-3xl shadow-2xl p-10 border-4 border-yellow-400">
+            <div className="bg-gradient-to-r from-yellow-50 via-amber-50 to-amber-50 rounded-3xl shadow-2xl p-10 border-4 border-yellow-200">
               <div className="text-center mb-8">
                 <p className="text-2xl text-gray-900 font-black">
                   {selectedPeriod === 'day' && "📅 Today vs Yesterday"}
@@ -584,9 +584,9 @@ const RealTimeStatistics = ({ token }) => {
               )}
 
               <div className="text-center">
-                <button 
-                  onClick={() => downloadReport(selectedPeriod)} 
-                  className="px-8 py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-2xl font-black text-lg shadow-lg hover:shadow-xl transition"
+                <button
+                  onClick={() => downloadReport(selectedPeriod)}
+                  className="px-8 py-4 bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-800 text-white rounded-2xl font-black text-lg shadow-lg hover:shadow-xl transition"
                 >
                   📥 Download Comparison Report
                 </button>
@@ -604,7 +604,7 @@ const RealTimeStatistics = ({ token }) => {
             <button
               key={day}
               onClick={() => setSelectedDay(day)}
-              className={`px-4 py-2 rounded-lg font-bold transition ${selectedDay === day ? 'bg-blue-600 text-white shadow-lg' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+              className={`px-4 py-2 rounded-lg font-bold transition ${selectedDay === day ? 'bg-stone-900 text-white shadow-lg' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
             >
               {day.substring(0, 3)}
             </button>
@@ -622,7 +622,7 @@ const RealTimeStatistics = ({ token }) => {
             <button
               key={month}
               onClick={() => setSelectedMonth(month)}
-              className={`px-3 py-2 rounded-lg font-bold text-sm transition ${selectedMonth === month ? 'bg-purple-600 text-white shadow-lg' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+              className={`px-3 py-2 rounded-lg font-bold text-sm transition ${selectedMonth === month ? 'bg-yellow-900 text-white shadow-lg' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
             >
               {month.substring(0, 3)}
             </button>
@@ -631,7 +631,7 @@ const RealTimeStatistics = ({ token }) => {
             <button
               key={year}
               onClick={() => setSelectedYear(year)}
-              className={`px-4 py-2 rounded-lg font-bold transition ${selectedYear === year ? 'bg-orange-600 text-white shadow-lg' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+              className={`px-4 py-2 rounded-lg font-bold transition ${selectedYear === year ? 'bg-amber-800 text-white shadow-lg' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
             >
               {year}
             </button>
@@ -647,17 +647,17 @@ const RealTimeStatistics = ({ token }) => {
             <p className="text-3xl font-black">{formatCurrency(periodData.totalRevenue || 0)}</p>
             <p className="text-xs opacity-80 mt-2">{selectedPeriod === 'day' ? selectedDay : selectedPeriod === 'week' ? selectedWeek : selectedPeriod === 'month' ? selectedMonth : selectedYear}</p>
           </div>
-          <div className="bg-gradient-to-br from-blue-400 to-blue-500 rounded-xl shadow-lg p-6 text-white">
+          <div className="bg-gradient-to-br from-stone-700 to-stone-950 rounded-xl shadow-lg p-6 text-white">
             <p className="text-sm opacity-90 font-bold">📦 Orders</p>
             <p className="text-3xl font-black">{periodData.totalOrders || 0}</p>
             <p className="text-xs opacity-80 mt-2">{selectedPeriod === 'day' ? selectedDay : selectedPeriod === 'week' ? selectedWeek : selectedPeriod === 'month' ? selectedMonth : selectedYear}</p>
           </div>
-          <div className="bg-gradient-to-br from-purple-400 to-purple-500 rounded-xl shadow-lg p-6 text-white">
+          <div className="bg-gradient-to-br from-amber-700 to-yellow-900 rounded-xl shadow-lg p-6 text-white">
             <p className="text-sm opacity-90 font-bold">🛒 Items Sold</p>
             <p className="text-3xl font-black">{formatNumber(periodData.totalItemsSold || 0)}</p>
             <p className="text-xs opacity-80 mt-2">{selectedPeriod === 'day' ? selectedDay : selectedPeriod === 'week' ? selectedWeek : selectedPeriod === 'month' ? selectedMonth : selectedYear}</p>
           </div>
-          <div className="bg-gradient-to-br from-pink-400 to-pink-500 rounded-xl shadow-lg p-6 text-white">
+          <div className="bg-gradient-to-br from-amber-700 to-yellow-900 rounded-xl shadow-lg p-6 text-white">
             <p className="text-sm opacity-90 font-bold">👥 Customers</p>
             <p className="text-3xl font-black">{periodData.activeUsers || 0}</p>
             <p className="text-xs opacity-80 mt-2">{selectedPeriod === 'day' ? selectedDay : selectedPeriod === 'week' ? selectedWeek : selectedPeriod === 'month' ? selectedMonth : selectedYear}</p>
@@ -668,15 +668,15 @@ const RealTimeStatistics = ({ token }) => {
       {/* PERIOD-SPECIFIC ANALYSIS SECTIONS */}
       {generatePeriodAnalysis() && (
         <div className="mb-8">
-          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl shadow-lg p-6 text-white mb-6">
+          <div className="bg-gradient-to-r from-stone-900 to-amber-800 rounded-2xl shadow-lg p-6 text-white mb-6">
             <h2 className="text-2xl font-black mb-1">{generatePeriodAnalysis().title}</h2>
-            <p className="text-sm text-indigo-100 font-bold">{generatePeriodAnalysis().subtitle}</p>
+            <p className="text-sm text-stone-300 font-bold">{generatePeriodAnalysis().subtitle}</p>
           </div>
 
           {/* BREAKDOWN CARDS */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
             {generatePeriodAnalysis().breakdown.map((item, index) => {
-              const colors = ['from-blue-500 to-blue-600', 'from-green-500 to-green-600', 'from-purple-500 to-purple-600', 'from-red-500 to-red-600', 'from-pink-500 to-pink-600', 'from-indigo-500 to-indigo-600', 'from-cyan-500 to-cyan-600']
+              const colors = ['from-stone-700 to-stone-800', 'from-green-500 to-green-600', 'from-amber-700 to-amber-800', 'from-red-500 to-red-600', 'from-yellow-800 to-yellow-900', 'from-stone-600 to-stone-700', 'from-stone-950 to-stone-700']
               const colorClass = colors[index % colors.length]
               return (
                 <div key={index} className={`bg-gradient-to-br ${colorClass} rounded-lg shadow-md p-4 text-white transform hover:scale-102 hover:shadow-lg transition duration-300`}>
@@ -703,11 +703,11 @@ const RealTimeStatistics = ({ token }) => {
           </div>
 
           {/* INSIGHTS SECTION */}
-          <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg shadow-md p-5 border-2 border-amber-300">
+          <div className="bg-gradient-to-r from-amber-50 to-amber-50 rounded-lg shadow-md p-5 border-2 border-amber-300">
             <h3 className="text-lg font-black text-gray-900 mb-3">💡 Key Insights</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
               {getPeriodInsights().map((insight, index) => (
-                <div key={index} className="bg-white rounded-lg p-2 shadow-sm border-l-3 border-amber-400">
+                <div key={index} className="bg-white rounded-lg p-2 shadow-sm border-l-3 border-amber-700">
                   <p className="text-xs text-gray-800 font-bold">{insight}</p>
                 </div>
               ))}
@@ -721,12 +721,12 @@ const RealTimeStatistics = ({ token }) => {
               <p className="text-2xl font-black">{formatCurrency(Math.floor(stats.totalRevenue / generatePeriodAnalysis().breakdown.length) || 0)}</p>
               <p className="text-xs opacity-80 font-bold mt-1">Revenue</p>
             </div>
-            <div className="bg-gradient-to-br from-blue-400 to-blue-500 rounded-lg shadow-md p-4 text-white">
+            <div className="bg-gradient-to-br from-stone-700 to-stone-950 rounded-lg shadow-md p-4 text-white">
               <p className="text-xs font-black opacity-90 mb-2">📈 Trending</p>
               <p className="text-2xl font-black">{selectedPeriod === 'year' ? '↗️ Up' : '↗️ Strong'}</p>
               <p className="text-xs opacity-80 font-bold mt-1">Status</p>
             </div>
-            <div className="bg-gradient-to-br from-purple-400 to-purple-500 rounded-lg shadow-md p-4 text-white">
+            <div className="bg-gradient-to-br from-amber-700 to-yellow-900 rounded-lg shadow-md p-4 text-white">
               <p className="text-xs font-black opacity-90 mb-2">🏆 Best</p>
               <p className="text-2xl font-black">{generatePeriodAnalysis().breakdown[0].label.split(' ')[1] || 'Peak'}</p>
               <p className="text-xs opacity-80 font-bold mt-1">Performer</p>
@@ -742,12 +742,12 @@ const RealTimeStatistics = ({ token }) => {
             <h2 className="text-2xl md:text-3xl font-black text-gray-900">📊 Core Metrics</h2>
             <p className="text-gray-600 text-sm mt-1">Real-time performance indicators for {selectedPeriod === 'day' ? 'today' : selectedPeriod === 'week' ? 'this week' : selectedPeriod === 'month' ? 'this month' : 'this year'}</p>
           </div>
-          <div className="bg-gradient-to-r from-indigo-100 to-purple-100 border-2 border-indigo-300 px-6 py-3 rounded-xl">
-            <p className="text-xs font-bold text-indigo-700 uppercase tracking-wide">📅 Time Period</p>
-            <p className="text-lg font-black text-indigo-900 capitalize">
-              {selectedPeriod === 'day' ? '📆 Today' : 
-               selectedPeriod === 'week' ? '📆 This Week' : 
-               selectedPeriod === 'month' ? '📆 This Month' : 
+          <div className="bg-gradient-to-r from-amber-100 to-yellow-100 border-2 border-amber-300 px-6 py-3 rounded-xl">
+            <p className="text-xs font-bold text-amber-800 uppercase tracking-wide">📅 Time Period</p>
+            <p className="text-lg font-black text-amber-900 capitalize">
+              {selectedPeriod === 'day' ? '📆 Today' :
+               selectedPeriod === 'week' ? '📆 This Week' :
+               selectedPeriod === 'month' ? '📆 This Month' :
                selectedPeriod === 'year' ? '📆 This Year' : selectedPeriod}
             </p>
           </div>
@@ -773,12 +773,12 @@ const RealTimeStatistics = ({ token }) => {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 rounded-2xl shadow-2xl p-8 text-white transform hover:scale-105 hover:shadow-3xl transition duration-300 border-t-4 border-white">
+        <div className="bg-gradient-to-br from-stone-700 via-stone-800 to-stone-800 rounded-2xl shadow-2xl p-8 text-white transform hover:scale-105 hover:shadow-3xl transition duration-300 border-t-4 border-white">
           <div className="flex justify-between items-start mb-6">
             <div className="text-5xl">📦</div>
-            <span className="text-xs bg-blue-400/40 px-3 py-1 rounded-full backdrop-blur font-bold">Steady</span>
+            <span className="text-xs bg-stone-600/40 px-3 py-1 rounded-full backdrop-blur font-bold">Steady</span>
           </div>
-          <p className="text-blue-100 text-sm opacity-90 mb-2 font-bold">Total Orders</p>
+          <p className="text-stone-300 text-sm opacity-90 mb-2 font-bold">Total Orders</p>
           <p className="text-4xl font-black mb-2">{formatNumber(stats.totalOrders || 0)}</p>
           <div className="flex items-center gap-2">
             {showComparison && comparisonData ? (
@@ -787,17 +787,17 @@ const RealTimeStatistics = ({ token }) => {
                 <span className="font-bold text-sm">{calculateComparison(stats.totalOrders || 0, comparisonData.totalOrders || 0)}%</span>
               </div>
             ) : (
-              <div className="flex items-center gap-2 bg-blue-400/20 px-4 py-2 rounded-lg backdrop-blur-sm w-fit"><span>📈</span><span className="font-bold text-sm">+8.3%</span></div>
+              <div className="flex items-center gap-2 bg-stone-600/20 px-4 py-2 rounded-lg backdrop-blur-sm w-fit"><span>📈</span><span className="font-bold text-sm">+8.3%</span></div>
             )}
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-purple-400 via-purple-500 to-purple-600 rounded-2xl shadow-2xl p-8 text-white transform hover:scale-105 hover:shadow-3xl transition duration-300 border-t-4 border-white">
+        <div className="bg-gradient-to-br from-amber-700 via-amber-700 to-amber-800 rounded-2xl shadow-2xl p-8 text-white transform hover:scale-105 hover:shadow-3xl transition duration-300 border-t-4 border-white">
           <div className="flex justify-between items-start mb-6">
             <div className="text-5xl">👥</div>
-            <span className="text-xs bg-purple-400/40 px-3 py-1 rounded-full backdrop-blur font-bold">Active</span>
+            <span className="text-xs bg-amber-700/40 px-3 py-1 rounded-full backdrop-blur font-bold">Active</span>
           </div>
-          <p className="text-purple-100 text-sm opacity-90 mb-2 font-bold">Active Users</p>
+          <p className="text-stone-300 text-sm opacity-90 mb-2 font-bold">Active Users</p>
           <p className="text-4xl font-black mb-2">{formatNumber(Math.floor((stats.totalOrders || 0) * 0.65))}</p>
           <div className="flex items-center gap-2">
             {showComparison && comparisonData ? (
@@ -806,17 +806,17 @@ const RealTimeStatistics = ({ token }) => {
                 <span className="font-bold text-sm">{calculateComparison(Math.floor((stats.totalOrders || 0) * 0.65), Math.floor((comparisonData.totalOrders || 0) * 0.65))}%</span>
               </div>
             ) : (
-              <div className="flex items-center gap-2 bg-purple-400/20 px-4 py-2 rounded-lg backdrop-blur-sm w-fit"><span>📈</span><span className="font-bold text-sm">+5.2%</span></div>
+              <div className="flex items-center gap-2 bg-amber-700/20 px-4 py-2 rounded-lg backdrop-blur-sm w-fit"><span>📈</span><span className="font-bold text-sm">+5.2%</span></div>
             )}
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 rounded-2xl shadow-2xl p-8 text-white transform hover:scale-105 hover:shadow-3xl transition duration-300 border-t-4 border-white">
+        <div className="bg-gradient-to-br from-amber-700 via-amber-700 to-amber-800 rounded-2xl shadow-2xl p-8 text-white transform hover:scale-105 hover:shadow-3xl transition duration-300 border-t-4 border-white">
           <div className="flex justify-between items-start mb-6">
             <div className="text-5xl">🛒</div>
-            <span className="text-xs bg-orange-400/40 px-3 py-1 rounded-full backdrop-blur font-bold">Growing</span>
+            <span className="text-xs bg-amber-700/40 px-3 py-1 rounded-full backdrop-blur font-bold">Growing</span>
           </div>
-          <p className="text-orange-100 text-sm opacity-90 mb-2 font-bold">Items Sold</p>
+          <p className="text-amber-100 text-sm opacity-90 mb-2 font-bold">Items Sold</p>
           <p className="text-4xl font-black mb-2">{formatNumber(stats.totalItemsSold || 0)}</p>
           <div className="flex items-center gap-2">
             {showComparison && comparisonData ? (
@@ -825,7 +825,7 @@ const RealTimeStatistics = ({ token }) => {
                 <span className="font-bold text-sm">{calculateComparison(stats.totalItemsSold || 0, comparisonData.totalItemsSold || 0)}%</span>
               </div>
             ) : (
-              <div className="flex items-center gap-2 bg-orange-400/20 px-4 py-2 rounded-lg backdrop-blur-sm w-fit"><span>📈</span><span className="font-bold text-sm">+15.8%</span></div>
+              <div className="flex items-center gap-2 bg-amber-700/20 px-4 py-2 rounded-lg backdrop-blur-sm w-fit"><span>📈</span><span className="font-bold text-sm">+15.8%</span></div>
             )}
           </div>
         </div>
@@ -833,7 +833,7 @@ const RealTimeStatistics = ({ token }) => {
 
       {/* SECONDARY METRICS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500 hover:shadow-2xl transition">
+        <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-amber-700 hover:shadow-2xl transition">
           <p className="text-xs text-gray-600 font-bold mb-2">💵 Avg Order Value</p>
           <p className="text-2xl font-black text-gray-900">{formatCurrency(stats.averageOrderValue || 0)}</p>
           <p className="text-xs text-gray-500 mt-2">Per transaction</p>
@@ -843,12 +843,12 @@ const RealTimeStatistics = ({ token }) => {
           <p className="text-2xl font-black text-gray-900">4.2%</p>
           <p className="text-xs text-gray-500 mt-2">Customer conversion</p>
         </div>
-        <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500 hover:shadow-2xl transition">
+        <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-200 hover:shadow-2xl transition">
           <p className="text-xs text-gray-600 font-bold mb-2">👤 New Customers</p>
           <p className="text-2xl font-black text-gray-900">{formatNumber(Math.floor((stats.totalOrders || 0) * 0.28))}</p>
           <p className="text-xs text-gray-500 mt-2">This {selectedPeriod}</p>
         </div>
-        <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-orange-500 hover:shadow-2xl transition">
+        <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-amber-700 hover:shadow-2xl transition">
           <p className="text-xs text-gray-600 font-bold mb-2">🔄 Returning Customers</p>
           <p className="text-2xl font-black text-gray-900">{formatNumber(Math.floor((stats.totalOrders || 0) * 0.72))}</p>
           <p className="text-xs text-gray-500 mt-2">Repeat customers</p>
@@ -866,8 +866,8 @@ const RealTimeStatistics = ({ token }) => {
             {(stats.townBreakdown || []).sort((a, b) => b.revenue - a.revenue).slice(0, 5).map((town, idx) => {
               const maxRevenue = Math.max(...((stats.townBreakdown || []).map(t => t.revenue)))
               const progressPercent = (town.revenue / maxRevenue) * 100
-              const colors = ['from-blue-500 to-blue-600', 'from-green-500 to-green-600', 'from-purple-500 to-purple-600', 'from-orange-500 to-orange-600', 'from-red-500 to-red-600']
-              
+              const colors = ['from-stone-700 to-stone-800', 'from-green-500 to-green-600', 'from-amber-700 to-amber-800', 'from-amber-700 to-amber-800', 'from-red-500 to-red-600']
+
               return (
                 <div key={idx}>
                   <div className="flex justify-between items-center mb-2">
@@ -896,21 +896,21 @@ const RealTimeStatistics = ({ token }) => {
             <h3 className="text-2xl font-black text-gray-900">Summary</h3>
           </div>
           <div className="space-y-4">
-            <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-6 border-l-4 border-blue-500">
+            <div className="bg-gradient-to-r from-stone-100 to-stone-200 rounded-xl p-6 border-l-4 border-amber-700">
               <p className="text-sm text-gray-600 font-bold mb-1">Active Regions</p>
-              <p className="text-4xl font-black text-blue-600">{(stats.townBreakdown || []).length}</p>
+              <p className="text-4xl font-black text-amber-700">{(stats.townBreakdown || []).length}</p>
             </div>
             <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-6 border-l-4 border-green-500">
               <p className="text-sm text-gray-600 font-bold mb-1">Average Revenue/Region</p>
               <p className="text-4xl font-black text-green-600">{formatCurrency((stats.townBreakdown || []).reduce((sum, t) => sum + t.revenue, 0) / Math.max((stats.townBreakdown || []).length, 1))}</p>
             </div>
-            <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-6 border-l-4 border-purple-500">
+            <div className="bg-gradient-to-r from-amber-50 to-yellow-100 rounded-xl p-6 border-l-4 border-yellow-200">
               <p className="text-sm text-gray-600 font-bold mb-1">Top Region Share</p>
-              <p className="text-4xl font-black text-purple-600">{((stats.townBreakdown || [])[0]?.percentage || 0).toFixed(1)}%</p>
+              <p className="text-4xl font-black text-yellow-900">{((stats.townBreakdown || [])[0]?.percentage || 0).toFixed(1)}%</p>
             </div>
-            <div className="bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl p-6 border-l-4 border-orange-500">
+            <div className="bg-gradient-to-r from-amber-50 to-amber-100 rounded-xl p-6 border-l-4 border-amber-700">
               <p className="text-sm text-gray-600 font-bold mb-1">Avg Order Value</p>
-              <p className="text-4xl font-black text-orange-600">{formatCurrency(stats.averageOrderValue || 0)}</p>
+              <p className="text-4xl font-black text-amber-700">{formatCurrency(stats.averageOrderValue || 0)}</p>
             </div>
           </div>
         </div>
@@ -923,7 +923,7 @@ const RealTimeStatistics = ({ token }) => {
             <span className="text-3xl">🗺️</span>
             <h3 className="text-2xl font-black text-gray-900">Region Analysis</h3>
           </div>
-          <span className="px-4 py-2 bg-blue-100 text-blue-700 rounded-full font-bold">{(stats.townBreakdown || []).length} Regions</span>
+          <span className="px-4 py-2 bg-stone-100 text-amber-700 rounded-full font-bold">{(stats.townBreakdown || []).length} Regions</span>
         </div>
 
         <div className="overflow-x-auto">
@@ -939,11 +939,11 @@ const RealTimeStatistics = ({ token }) => {
             </thead>
             <tbody>
               {(stats.townBreakdown || []).sort((a, b) => b.revenue - a.revenue).map((town, idx) => (
-                <tr key={idx} className="border-b border-gray-200 hover:bg-blue-50 transition">
-                  <td className="px-6 py-4"><span className="inline-block w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-full flex items-center justify-center text-sm font-black shadow-md">#{idx + 1}</span></td>
+                <tr key={idx} className="border-b border-gray-200 hover:bg-stone-100 transition">
+                  <td className="px-6 py-4"><span className="inline-block w-10 h-10 bg-gradient-to-br from-stone-700 to-stone-800 text-white rounded-full flex items-center justify-center text-sm font-black shadow-md">#{idx + 1}</span></td>
                   <td className="px-6 py-4"><span className="capitalize font-bold text-gray-900 text-lg">{town.name}</span></td>
                   <td className="text-right px-6 py-4"><span className="font-black text-gray-900 text-lg">{formatCurrency(town.revenue)}</span></td>
-                  <td className="text-right px-6 py-4"><span className="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg font-bold">{town.orders}</span></td>
+                  <td className="text-right px-6 py-4"><span className="bg-stone-100 text-amber-700 px-4 py-2 rounded-lg font-bold">{town.orders}</span></td>
                   <td className="text-right px-6 py-4"><span className="font-black text-gray-900 text-lg">{town.percentage.toFixed(1)}%</span></td>
                 </tr>
               ))}

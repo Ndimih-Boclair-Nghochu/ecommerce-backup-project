@@ -54,7 +54,7 @@ export default function AdminDashboard() {
   const [platformStats, setPlatformStats] = useState({ totalInStock: 0, averageRating: 0, deliveryTime: 'Manual confirmation' })
   const [statsForm, setStatsForm] = useState({ totalInStock: 0, averageRating: 0, deliveryTime: 'Manual confirmation' })
   const [locationForm, setLocationForm] = useState({
-    name: '', city: '', address: '', phone: '', email: '', 
+    name: '', city: '', address: '', phone: '', email: '',
     lat: '', lng: '', hours: '', description: '', isMainStore: false
   })
   const [paymentAccounts, setPaymentAccounts] = useState({
@@ -112,7 +112,7 @@ export default function AdminDashboard() {
   })()
 
   const [productForm, setProductForm] = useState({
-    name: '', price: '', description: '', stock: '', 
+    name: '', price: '', description: '', stock: '',
     category: 'Electronics', image: '', mostOrdered: false, isNew: false,
     availableRegions: ['ALL'],
     images: [{ color: 'default', url: '' }], sku: '', weight: '', dimensions: '',
@@ -343,8 +343,8 @@ export default function AdminDashboard() {
     }
     try {
       for (const orderId of selectedOrders) {
-        await axios.put(`/api/admin/orders/${orderId}`, 
-          { status: bulkOrderStatus }, 
+        await axios.put(`/api/admin/orders/${orderId}`,
+          { status: bulkOrderStatus },
           { headers: { Authorization: `Bearer ${token}` } }
         )
       }
@@ -361,8 +361,8 @@ export default function AdminDashboard() {
 
   const handleStatusChange = async (order, newStatus) => {
     try {
-      await axios.put(`/api/admin/orders/${order.id}`, 
-        { status: newStatus }, 
+      await axios.put(`/api/admin/orders/${order.id}`,
+        { status: newStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       )
       setOrders(orders.map(o => o.id === order.id ? {...o, status: newStatus} : o))
@@ -375,35 +375,35 @@ export default function AdminDashboard() {
 
   const handleAgencySelect = async (agencyIndex) => {
     if (!agencyModalOrder) return
-    
+
     try {
       const selectedAgency = agencyModalOrder.buyer.agencies[agencyIndex]
-      
+
       // Update order with selected agency and new status
-      await axios.put(`/api/admin/orders/${agencyModalOrder.id}`, 
-        { 
+      await axios.put(`/api/admin/orders/${agencyModalOrder.id}`,
+        {
           status: pendingStatusChange,
           selectedDeliveryAgency: selectedAgency,
           deliveryAgencyIndex: agencyIndex
-        }, 
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       )
-      
+
       // Update local state
-      setOrders(orders.map(o => 
-        o.id === agencyModalOrder.id 
+      setOrders(orders.map(o =>
+        o.id === agencyModalOrder.id
           ? {
-              ...o, 
+              ...o,
               status: pendingStatusChange,
               selectedDeliveryAgency: selectedAgency,
               deliveryAgencyIndex: agencyIndex
-            } 
+            }
           : o
       ))
-      
-      setMessage({ 
-        type: 'success', 
-        text: `✅ Order marked as delivered. Agency: ${selectedAgency.name}` 
+
+      setMessage({
+        type: 'success',
+        text: `✅ Order marked as delivered. Agency: ${selectedAgency.name}`
       })
       setShowAgencyModal(false)
       setAgencyModalOrder(null)
@@ -469,14 +469,14 @@ export default function AdminDashboard() {
 
   const handleProductSubmit = async (e) => {
     e.preventDefault()
-    
+
     // Validate that an image has been provided
     if (!productForm.image) {
       setMessage({ type: 'error', text: 'Please upload or provide an image URL' })
       setTimeout(() => setMessage({ type: '', text: '' }), 3000)
       return
     }
-    
+
     setLoading(true)
     try {
       if (editingProductId) {
@@ -507,7 +507,7 @@ export default function AdminDashboard() {
     setLoading(true)
     try {
       if (editingSubAdminId) {
-        await axios.put(`/api/admin/sub-admins/${editingSubAdminId}`, 
+        await axios.put(`/api/admin/sub-admins/${editingSubAdminId}`,
           { name: subAdminForm.name, permissions: subAdminForm.permissions },
           { headers: { Authorization: `Bearer ${token}` } }
         )
@@ -593,9 +593,9 @@ export default function AdminDashboard() {
     e.preventDefault()
     setLoading(true)
     try {
-      await axios.put('/api/admin/settings', 
-        { 
-          email: settingsForm.email || undefined, 
+      await axios.put('/api/admin/settings',
+        {
+          email: settingsForm.email || undefined,
           password: settingsForm.newPassword || undefined,
           platformName: settingsForm.platformName || undefined
         },
@@ -832,15 +832,15 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-700 to-blue-600 text-white shadow-lg">
+      <div className="bg-gradient-to-r from-stone-900 to-stone-800 text-white shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-6">
           <div>
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">Admin Dashboard</h1>
-            <p className="text-blue-100 text-xs sm:text-sm mt-1">Manage your e-commerce platform</p>
+            <p className="text-stone-300 text-xs sm:text-sm mt-1">Manage your e-commerce platform</p>
           </div>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-6">
             <div className="text-right">
-              <p className="text-xs sm:text-sm text-blue-100">Logged in as</p>
+              <p className="text-xs sm:text-sm text-stone-300">Logged in as</p>
               <p className="font-semibold text-sm sm:text-base truncate">{adminEmail}</p>
             </div>
             <button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg font-semibold text-sm sm:text-base transition shadow-md">
@@ -859,8 +859,8 @@ export default function AdminDashboard() {
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
                 className={`py-3 sm:py-4 px-2 sm:px-3 font-semibold border-b-2 transition text-xs sm:text-sm md:text-base whitespace-nowrap ${
-                  activeTab === tab.key 
-                    ? 'border-blue-600 text-blue-600' 
+                  activeTab === tab.key
+                    ? 'border-amber-700 text-amber-700'
                     : 'border-transparent text-gray-600 hover:text-gray-900'
                 }`}
               >
@@ -881,7 +881,7 @@ export default function AdminDashboard() {
                 setActiveTab(tab.key)
                 setMobileMoreOpen(false)
               }}
-              className={`py-2 text-xs font-semibold flex flex-col items-center gap-1 ${activeTab === tab.key ? 'text-blue-700' : 'text-gray-600'}`}
+              className={`py-2 text-xs font-semibold flex flex-col items-center gap-1 ${activeTab === tab.key ? 'text-amber-700' : 'text-gray-600'}`}
             >
               <span className="text-xl">{tab.icon}</span>
               <span>{tab.label}</span>
@@ -919,7 +919,7 @@ export default function AdminDashboard() {
                   setActiveTab(tab.key)
                   setMobileMoreOpen(false)
                 }}
-                className={`rounded-lg border p-4 text-left font-semibold ${activeTab === tab.key ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-700'}`}
+                className={`rounded-lg border p-4 text-left font-semibold ${activeTab === tab.key ? 'border-amber-700 bg-stone-100 text-amber-700' : 'border-gray-200 text-gray-700'}`}
               >
                 <span className="mr-2">{tab.icon}</span>{tab.label}
               </button>
@@ -931,8 +931,8 @@ export default function AdminDashboard() {
       {/* Message Alert */}
       {message.text && (
         <div className={`mx-4 sm:mx-6 mt-3 sm:mt-4 p-3 sm:p-4 rounded-lg font-semibold text-sm sm:text-base border-2 ${
-          message.type === 'success' 
-            ? 'bg-green-50 text-green-800 border-green-300' 
+          message.type === 'success'
+            ? 'bg-green-50 text-green-800 border-green-300'
             : 'bg-red-50 text-red-800 border-red-300'
         }`}>
           {message.text}
@@ -941,11 +941,11 @@ export default function AdminDashboard() {
 
       {/* Platform Reset Banner */}
       {resetStatus?.isReset && (
-        <div className="mx-4 sm:mx-6 mt-3 sm:mt-4 p-4 sm:p-6 rounded-lg border-2 border-orange-400 bg-gradient-to-r from-orange-50 to-yellow-50 shadow-md">
+        <div className="mx-4 sm:mx-6 mt-3 sm:mt-4 p-4 sm:p-6 rounded-lg border-2 border-amber-700 bg-gradient-to-r from-amber-50 to-yellow-50 shadow-md">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <p className="text-lg sm:text-xl font-bold text-orange-900">🔄 Platform in Reset Mode</p>
-              <p className="text-sm text-orange-800 mt-1">All data has been temporarily deleted. You have <span className={`font-bold ${resetStatus.isExpired ? 'text-red-600' : 'text-green-600'}`}>{resetStatus.isExpired ? '0 hours' : `${resetStatus.hoursRemaining} hours`}</span> to restore your data.</p>
+              <p className="text-lg sm:text-xl font-bold text-amber-900">🔄 Platform in Reset Mode</p>
+              <p className="text-sm text-amber-900 mt-1">All data has been temporarily deleted. You have <span className={`font-bold ${resetStatus.isExpired ? 'text-red-600' : 'text-green-600'}`}>{resetStatus.isExpired ? '0 hours' : `${resetStatus.hoursRemaining} hours`}</span> to restore your data.</p>
             </div>
             {!resetStatus.isExpired && (
               <button
@@ -963,7 +963,7 @@ export default function AdminDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 pb-24 md:pb-8">
         {/* OVERVIEW TAB */}
         {activeTab === 'overview' && (
-          <DashboardOverview 
+          <DashboardOverview
             token={token}
             products={products}
             orders={orders}
@@ -989,8 +989,8 @@ export default function AdminDashboard() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-6 mb-4 sm:mb-6">
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Product Management</h2>
               {!showProductForm && (
-                <button onClick={() => { setShowProductForm(true); setEditingProductId(null); setProductForm({ name: '', price: '', description: '', stock: '', category: 'Electronics', image: '', mostOrdered: false, isNew: false, availableRegions: ['ALL'], images: [{ color: 'default', url: '' }], sku: '', weight: '', dimensions: '', storeAvailability: {}, specifications: [], warranty: '', barcode: '', tax: 0 }); }} 
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold text-sm sm:text-base transition shadow-md">
+                <button onClick={() => { setShowProductForm(true); setEditingProductId(null); setProductForm({ name: '', price: '', description: '', stock: '', category: 'Electronics', image: '', mostOrdered: false, isNew: false, availableRegions: ['ALL'], images: [{ color: 'default', url: '' }], sku: '', weight: '', dimensions: '', storeAvailability: {}, specifications: [], warranty: '', barcode: '', tax: 0 }); }}
+                  className="bg-stone-900 hover:bg-stone-900 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold text-sm sm:text-base transition shadow-md">
                   ➕ Add Product
                 </button>
               )}
@@ -1007,24 +1007,24 @@ export default function AdminDashboard() {
 
                 <form onSubmit={handleProductSubmit} className="space-y-6 sm:space-y-8">
                   {/* SECTION 1: Basic Information */}
-                  <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg p-4 sm:p-6 border border-blue-200">
-                    <h4 className="text-base font-bold text-blue-900 mb-4 flex items-center gap-2">📝 Basic Information</h4>
+                  <div className="bg-gradient-to-r from-stone-100 to-stone-50 rounded-lg p-4 sm:p-6 border border-stone-300">
+                    <h4 className="text-base font-bold text-stone-900 mb-4 flex items-center gap-2">📝 Basic Information</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                       <div>
                         <label className="block text-xs font-semibold text-gray-700 mb-1">Product Name *</label>
-                        <input type="text" placeholder="e.g., Samsung Galaxy S24" value={productForm.name} onChange={(e) => setProductForm({...productForm, name: e.target.value})} required className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm transition" />
+                        <input type="text" placeholder="e.g., Samsung Galaxy S24" value={productForm.name} onChange={(e) => setProductForm({...productForm, name: e.target.value})} required className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 focus:border-transparent text-sm transition" />
                         <p className="text-xs text-gray-500 mt-1">Enter a descriptive product name</p>
                       </div>
                       <div>
                         <label className="block text-xs font-semibold text-gray-700 mb-1">Category *</label>
                         <div className="flex gap-2">
-                          <select value={productForm.category} onChange={(e) => setProductForm({...productForm, category: e.target.value})} className="flex-1 px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm transition">
+                          <select value={productForm.category} onChange={(e) => setProductForm({...productForm, category: e.target.value})} className="flex-1 px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 focus:border-transparent text-sm transition">
                             <option value="">Select Category</option>
                             {categories.map(cat => (
                               <option key={cat} value={cat}>{cat}</option>
                             ))}
                           </select>
-                          <button type="button" onClick={() => setShowCategoryForm(!showCategoryForm)} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg font-semibold text-sm transition">
+                          <button type="button" onClick={() => setShowCategoryForm(!showCategoryForm)} className="bg-stone-900 hover:bg-stone-900 text-white px-3 py-2 rounded-lg font-semibold text-sm transition">
                             ➕
                           </button>
                         </div>
@@ -1045,13 +1045,13 @@ export default function AdminDashboard() {
                       </div>
                       <div>
                         <label className="block text-xs font-semibold text-gray-700 mb-1">SKU</label>
-                        <input type="text" placeholder="e.g., PROD-001" value={productForm.sku} onChange={(e) => setProductForm({...productForm, sku: e.target.value})} className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm transition" />
+                        <input type="text" placeholder="e.g., PROD-001" value={productForm.sku} onChange={(e) => setProductForm({...productForm, sku: e.target.value})} className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 focus:border-transparent text-sm transition" />
                         <p className="text-xs text-gray-500 mt-1">Unique product identifier for inventory</p>
                       </div>
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 mb-2 mt-4">Description *</label>
-                      <textarea placeholder="Enter detailed product description, features, and specifications..." value={productForm.description} onChange={(e) => setProductForm({...productForm, description: e.target.value})} required rows="4" className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm transition"></textarea>
+                      <textarea placeholder="Enter detailed product description, features, and specifications..." value={productForm.description} onChange={(e) => setProductForm({...productForm, description: e.target.value})} required rows="4" className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 focus:border-transparent text-sm transition"></textarea>
                       <p className="text-xs text-gray-500 mt-1">Help customers understand your product</p>
                     </div>
                   </div>
@@ -1063,41 +1063,41 @@ export default function AdminDashboard() {
                       <div>
                         <label className="block text-xs font-semibold text-gray-700 mb-1">Price (XAF) *</label>
                         <div className="flex items-center gap-2">
-                          <input type="number" placeholder="0" value={productForm.price} onChange={(e) => setProductForm({...productForm, price: e.target.value})} required className="flex-1 px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm transition" />
+                          <input type="number" placeholder="0" value={productForm.price} onChange={(e) => setProductForm({...productForm, price: e.target.value})} required className="flex-1 px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 focus:border-transparent text-sm transition" />
                           <span className="font-bold text-gray-700">XAF</span>
                         </div>
                         <p className="text-xs text-gray-500 mt-1">Selling price in CFA francs</p>
                       </div>
                       <div>
                         <label className="block text-xs font-semibold text-gray-700 mb-1">Stock Quantity *</label>
-                        <input type="number" placeholder="0" value={productForm.stock} onChange={(e) => setProductForm({...productForm, stock: e.target.value})} required className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm transition" />
+                        <input type="number" placeholder="0" value={productForm.stock} onChange={(e) => setProductForm({...productForm, stock: e.target.value})} required className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 focus:border-transparent text-sm transition" />
                         <p className="text-xs text-gray-500 mt-1">Available units (warns if ≤10)</p>
                       </div>
                       <div>
                         <label className="block text-xs font-semibold text-gray-700 mb-1">Weight</label>
-                        <input type="text" placeholder="e.g., 500g, 1.2kg" value={productForm.weight} onChange={(e) => setProductForm({...productForm, weight: e.target.value})} className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm transition" />
+                        <input type="text" placeholder="e.g., 500g, 1.2kg" value={productForm.weight} onChange={(e) => setProductForm({...productForm, weight: e.target.value})} className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 focus:border-transparent text-sm transition" />
                         <p className="text-xs text-gray-500 mt-1">For shipping calculations</p>
                       </div>
                       <div>
                         <label className="block text-xs font-semibold text-gray-700 mb-1">Dimensions</label>
-                        <input type="text" placeholder="e.g., 10x20x30cm" value={productForm.dimensions} onChange={(e) => setProductForm({...productForm, dimensions: e.target.value})} className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm transition" />
+                        <input type="text" placeholder="e.g., 10x20x30cm" value={productForm.dimensions} onChange={(e) => setProductForm({...productForm, dimensions: e.target.value})} className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 focus:border-transparent text-sm transition" />
                         <p className="text-xs text-gray-500 mt-1">Length × Width × Height</p>
                       </div>
                     </div>
                   </div>
 
                   {/* SECTION 3: Visibility & Features */}
-                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 sm:p-6 border border-purple-200">
-                    <h4 className="text-base font-bold text-purple-900 mb-4 flex items-center gap-2">👁️ Visibility & Features</h4>
+                  <div className="bg-gradient-to-r from-amber-50 to-yellow-50 rounded-lg p-4 sm:p-6 border border-yellow-200">
+                    <h4 className="text-base font-bold text-yellow-900 mb-4 flex items-center gap-2">👁️ Visibility & Features</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <label className="flex items-center gap-3 cursor-pointer p-3 bg-white rounded-lg border-2 border-purple-200 hover:border-purple-400 transition">
+                      <label className="flex items-center gap-3 cursor-pointer p-3 bg-white rounded-lg border-2 border-yellow-200 hover:border-yellow-200 transition">
                         <input type="checkbox" checked={productForm.mostOrdered} onChange={(e) => setProductForm({...productForm, mostOrdered: e.target.checked})} className="w-6 h-6 cursor-pointer" />
                         <div>
                           <div className="font-semibold text-gray-900">🔥 Most Ordered</div>
                           <div className="text-xs text-gray-600">Highlight as popular item</div>
                         </div>
                       </label>
-                      <label className="flex items-center gap-3 cursor-pointer p-3 bg-white rounded-lg border-2 border-purple-200 hover:border-purple-400 transition">
+                      <label className="flex items-center gap-3 cursor-pointer p-3 bg-white rounded-lg border-2 border-yellow-200 hover:border-yellow-200 transition">
                         <input type="checkbox" checked={productForm.isNew} onChange={(e) => setProductForm({...productForm, isNew: e.target.checked})} className="w-6 h-6 cursor-pointer" />
                         <div>
                           <div className="font-semibold text-gray-900">🆕 New Product</div>
@@ -1108,10 +1108,10 @@ export default function AdminDashboard() {
                   </div>
 
                   {/* SECTION 4: Regional Availability */}
-                  <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-lg p-4 sm:p-6 border border-orange-200">
-                    <h4 className="text-base font-bold text-orange-900 mb-4 flex items-center gap-2">🌍 Regional Availability</h4>
-                    <div className="bg-white p-4 rounded-lg border border-orange-200">
-                      <label className="flex items-center gap-3 cursor-pointer p-3 mb-3 bg-orange-50 rounded-lg border-2 border-orange-300">
+                  <div className="bg-gradient-to-r from-stone-100 to-stone-50 rounded-lg p-4 sm:p-6 border border-amber-200">
+                    <h4 className="text-base font-bold text-amber-900 mb-4 flex items-center gap-2">🌍 Regional Availability</h4>
+                    <div className="bg-white p-4 rounded-lg border border-amber-200">
+                      <label className="flex items-center gap-3 cursor-pointer p-3 mb-3 bg-amber-50 rounded-lg border-2 border-amber-700">
                         <input
                           type="checkbox"
                           checked={productForm.availableRegions.includes('ALL')}
@@ -1136,7 +1136,7 @@ export default function AdminDashboard() {
                       ) : (
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                           {shippingKeys.map(region => (
-                            <label key={region} className="flex items-center gap-2 cursor-pointer p-2 bg-gray-50 rounded border border-gray-200 hover:bg-blue-50 transition">
+                            <label key={region} className="flex items-center gap-2 cursor-pointer p-2 bg-gray-50 rounded border border-gray-200 hover:bg-stone-100 transition">
                               <input
                                 type="checkbox"
                                 checked={productForm.availableRegions.includes(region)}
@@ -1157,25 +1157,25 @@ export default function AdminDashboard() {
                   </div>
 
                   {/* SECTION 5: Product Images */}
-                  <div className="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-lg p-4 sm:p-6 border border-indigo-200">
-                    <h4 className="text-base font-bold text-indigo-900 mb-4 flex items-center gap-2">🖼️ Product Images</h4>
-                    
+                  <div className="bg-gradient-to-r from-amber-50 to-stone-50 rounded-lg p-4 sm:p-6 border border-amber-300">
+                    <h4 className="text-base font-bold text-amber-900 mb-4 flex items-center gap-2">🖼️ Product Images</h4>
+
                     {/* Main Product Image */}
-                    <div className="mb-6 p-4 bg-white rounded-lg border-2 border-indigo-300">
+                    <div className="mb-6 p-4 bg-white rounded-lg border-2 border-amber-300">
                       <label className="block text-xs font-semibold text-gray-700 mb-3">Main Product Image *</label>
                       <div className="flex flex-col gap-3">
                         <div className="flex flex-col sm:flex-row gap-4">
                           <div className="flex-1">
                             <label className="block text-xs text-gray-600 mb-2">📥 Upload or paste URL:</label>
-                            <input type="text" placeholder="https://example.com/product.jpg or /uploads/product.jpg" value={productForm.image} onChange={(e) => setProductForm({...productForm, image: e.target.value})} required={!productForm.image} className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm transition" />
+                            <input type="text" placeholder="https://example.com/product.jpg or /uploads/product.jpg" value={productForm.image} onChange={(e) => setProductForm({...productForm, image: e.target.value})} required={!productForm.image} className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 focus:border-transparent text-sm transition" />
                             <p className="text-xs text-gray-500 mt-1">High-quality image for product listing</p>
                           </div>
                           {productForm.image && (
-                            <img src={resolveAssetUrl(productForm.image)} alt="Preview" className="w-24 h-24 object-cover rounded-lg border-2 border-indigo-300" onError={() => {}} />
+                            <img src={resolveAssetUrl(productForm.image)} alt="Preview" className="w-24 h-24 object-cover rounded-lg border-2 border-amber-300" onError={() => {}} />
                           )}
                         </div>
                         <div className="border-t border-gray-200 pt-3">
-                          <label className="block bg-indigo-50 px-4 py-3 rounded-lg font-semibold cursor-pointer border-2 border-dashed border-indigo-300 hover:bg-indigo-100 transition text-center">
+                          <label className="block bg-amber-50 px-4 py-3 rounded-lg font-semibold cursor-pointer border-2 border-dashed border-amber-300 hover:bg-amber-100 transition text-center">
                             📤 Choose File to Upload
                             <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
                               const file = e.target.files?.[0]
@@ -1205,28 +1205,28 @@ export default function AdminDashboard() {
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <label className="block text-xs font-semibold text-gray-700">Color Variants (Optional)</label>
-                        <button type="button" onClick={() => setProductForm({ ...productForm, images: [...productForm.images, { color: '', url: '' }] })} className="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-lg font-semibold transition">
+                        <button type="button" onClick={() => setProductForm({ ...productForm, images: [...productForm.images, { color: '', url: '' }] })} className="text-xs bg-amber-800 hover:bg-amber-800 text-white px-3 py-1 rounded-lg font-semibold transition">
                           + Add Variant
                         </button>
                       </div>
-                      
+
                       {productForm.images.map((img, idx) => (
-                        <div key={idx} className="bg-white p-4 rounded-lg border border-indigo-200">
+                        <div key={idx} className="bg-white p-4 rounded-lg border border-amber-300">
                           <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 items-end">
                             <div>
                               <label className="block text-xs font-semibold text-gray-700 mb-1">Color Name</label>
                               <input type="text" placeholder="e.g., Black, Silver" value={img.color} onChange={(e) => {
                                 const arr = [...productForm.images]; arr[idx] = { ...arr[idx], color: e.target.value }; setProductForm({ ...productForm, images: arr })
-                              }} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 text-sm" />
+                              }} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 text-sm" />
                             </div>
                             <div className="sm:col-span-3">
                               <label className="block text-xs font-semibold text-gray-700 mb-1">Image URL or File</label>
                               <input type="text" placeholder="https://example.com/image.jpg or choose file" value={img.url} onChange={(e) => {
                                 const arr = [...productForm.images]; arr[idx] = { ...arr[idx], url: e.target.value }; setProductForm({ ...productForm, images: arr })
-                              }} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 text-sm" />
+                              }} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 text-sm" />
                             </div>
                             <div className="flex gap-2">
-                              <label className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg font-semibold cursor-pointer text-sm transition">
+                              <label className="bg-stone-900 hover:bg-stone-900 text-white px-3 py-2 rounded-lg font-semibold cursor-pointer text-sm transition">
                                 📤
                                 <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
                                   const file = e.target.files?.[0]
@@ -1254,7 +1254,7 @@ export default function AdminDashboard() {
                           </div>
                           {img.url && (
                             <div className="mt-2">
-                              <img src={resolveAssetUrl(img.url)} alt={img.color || 'variant'} className="h-16 object-cover rounded border border-indigo-200" onError={() => {}} />
+                              <img src={resolveAssetUrl(img.url)} alt={img.color || 'variant'} className="h-16 object-cover rounded border border-amber-300" onError={() => {}} />
                             </div>
                           )}
                         </div>
@@ -1263,35 +1263,35 @@ export default function AdminDashboard() {
                   </div>
 
                   {/* SECTION 6: Advanced Product Details */}
-                  <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-lg p-4 sm:p-6 border border-cyan-200">
-                    <h4 className="text-base font-bold text-cyan-900 mb-4 flex items-center gap-2">🔧 Advanced Details</h4>
+                  <div className="bg-gradient-to-r from-stone-100 to-stone-100 rounded-lg p-4 sm:p-6 border border-stone-300">
+                    <h4 className="text-base font-bold text-stone-900 mb-4 flex items-center gap-2">🔧 Advanced Details</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                       <div>
                         <label className="block text-xs font-semibold text-gray-700 mb-1">Barcode/EAN</label>
-                        <input type="text" placeholder="e.g., 5901234123457" value={productForm.barcode} onChange={(e) => setProductForm({...productForm, barcode: e.target.value})} className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:border-transparent text-sm transition" />
+                        <input type="text" placeholder="e.g., 5901234123457" value={productForm.barcode} onChange={(e) => setProductForm({...productForm, barcode: e.target.value})} className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 focus:border-transparent text-sm transition" />
                         <p className="text-xs text-gray-500 mt-1">For inventory tracking</p>
                       </div>
                       <div>
                         <label className="block text-xs font-semibold text-gray-700 mb-1">Warranty</label>
-                        <input type="text" placeholder="e.g., 2 Years, 12 Months" value={productForm.warranty} onChange={(e) => setProductForm({...productForm, warranty: e.target.value})} className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:border-transparent text-sm transition" />
+                        <input type="text" placeholder="e.g., 2 Years, 12 Months" value={productForm.warranty} onChange={(e) => setProductForm({...productForm, warranty: e.target.value})} className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 focus:border-transparent text-sm transition" />
                         <p className="text-xs text-gray-500 mt-1">Product warranty period</p>
                       </div>
                       <div>
                         <label className="block text-xs font-semibold text-gray-700 mb-1">Tax Rate (%)</label>
-                        <input type="number" placeholder="0" min="0" max="100" step="0.1" value={productForm.tax} onChange={(e) => setProductForm({...productForm, tax: e.target.value})} className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:border-transparent text-sm transition" />
+                        <input type="number" placeholder="0" min="0" max="100" step="0.1" value={productForm.tax} onChange={(e) => setProductForm({...productForm, tax: e.target.value})} className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 focus:border-transparent text-sm transition" />
                         <p className="text-xs text-gray-500 mt-1">VAT/Tax percentage</p>
                       </div>
                     </div>
                   </div>
 
                   {/* SECTION 7: Product Specifications */}
-                  <div className="bg-gradient-to-r from-rose-50 to-pink-50 rounded-lg p-4 sm:p-6 border border-rose-200">
-                    <h4 className="text-base font-bold text-rose-900 mb-4 flex items-center gap-2">📋 Specifications</h4>
+                  <div className="bg-gradient-to-r from-amber-50 to-yellow-50 rounded-lg p-4 sm:p-6 border border-amber-200">
+                    <h4 className="text-base font-bold text-amber-900 mb-4 flex items-center gap-2">📋 Specifications</h4>
                     <div className="space-y-3">
                       {productForm.specifications && productForm.specifications.length > 0 && (
                         <div className="space-y-2">
                           {productForm.specifications.map((spec, idx) => (
-                            <div key={idx} className="flex gap-2 items-center bg-white p-3 rounded-lg border border-rose-200">
+                            <div key={idx} className="flex gap-2 items-center bg-white p-3 rounded-lg border border-amber-200">
                               <div className="flex-1 grid grid-cols-2 gap-2">
                                 <input type="text" placeholder="e.g., Color" value={spec.key} onChange={(e) => {
                                   const arr = [...productForm.specifications]; arr[idx].key = e.target.value; setProductForm({...productForm, specifications: arr})
@@ -1309,7 +1309,7 @@ export default function AdminDashboard() {
                       )}
                       <button type="button" onClick={() => {
                         setProductForm({...productForm, specifications: [...(productForm.specifications || []), { key: '', value: '' }]})
-                      }} className="w-full bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg font-semibold text-sm transition">
+                      }} className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold text-sm transition">
                         + Add Specification
                       </button>
                       <p className="text-xs text-gray-600">Examples: Color, Material, Processor, RAM, Storage, etc.</p>
@@ -1318,7 +1318,7 @@ export default function AdminDashboard() {
 
                   {/* SECTION 8: Store Availability */}
                   {locations && locations.length > 0 && (
-                    <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-4 sm:p-6 border border-yellow-200">
+                    <div className="bg-gradient-to-r from-yellow-50 to-amber-50 rounded-lg p-4 sm:p-6 border border-yellow-200">
                       <h4 className="text-base font-bold text-yellow-900 mb-4 flex items-center gap-2">🏪 Store Availability</h4>
                       <p className="text-xs text-gray-600 mb-3">Set product quantity available at each store (customers can pick up from their preferred location)</p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1354,20 +1354,20 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Search</label>
-                    <input 
-                      type="text" 
-                      placeholder="Search by name or SKU..." 
-                      value={productSearch} 
+                    <input
+                      type="text"
+                      placeholder="Search by name or SKU..."
+                      value={productSearch}
                       onChange={(e) => setProductSearch(e.target.value)}
-                      className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-sm"
+                      className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 text-sm"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Sort By</label>
-                    <select 
-                      value={productSortBy} 
+                    <select
+                      value={productSortBy}
                       onChange={(e) => setProductSortBy(e.target.value)}
-                      className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-sm"
+                      className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 text-sm"
                     >
                       <option value="name">Name (A-Z)</option>
                       <option value="price-low">Price (Low to High)</option>
@@ -1379,9 +1379,9 @@ export default function AdminDashboard() {
                   </div>
                   <div className="flex items-end">
                     <label className="flex items-center gap-2 cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        checked={showLowStockOnly} 
+                      <input
+                        type="checkbox"
+                        checked={showLowStockOnly}
                         onChange={(e) => setShowLowStockOnly(e.target.checked)}
                         className="w-5 h-5"
                       />
@@ -1389,7 +1389,7 @@ export default function AdminDashboard() {
                     </label>
                   </div>
                   <div className="text-sm font-semibold text-gray-700 flex items-end">
-                    Total: <span className="text-blue-600 ml-2">{products.length} products</span>
+                    Total: <span className="text-amber-700 ml-2">{products.length} products</span>
                   </div>
                 </div>
               </div>
@@ -1399,15 +1399,15 @@ export default function AdminDashboard() {
             {!showProductForm && (
               <div>
                 {resetStatus?.isReset && (
-                  <div className="bg-orange-100 border-l-4 border-orange-600 p-4 rounded-lg mb-6">
-                    <p className="font-bold text-orange-900">🔄 Platform Reset Active</p>
-                    <p className="text-sm text-orange-800 mt-1">All products are temporarily hidden. Restore your data to display them again.</p>
+                  <div className="bg-amber-100 border-l-4 border-amber-700 p-4 rounded-lg mb-6">
+                    <p className="font-bold text-amber-900">🔄 Platform Reset Active</p>
+                    <p className="text-sm text-amber-900 mt-1">All products are temporarily hidden. Restore your data to display them again.</p>
                   </div>
                 )}
                 <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${products.length === 0 && resetStatus?.isReset ? 'opacity-50' : ''}`}>
                   {(() => {
                     let filtered = products
-                  
+
                   // Apply search filter
                   if (productSearch) {
                     filtered = filtered.filter(p =>
@@ -1438,15 +1438,15 @@ export default function AdminDashboard() {
                   }
 
                   return filtered.map(product => (
-                    <div key={product.id} className={`bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition ${parseInt(product.stock) <= 10 ? 'border-2 border-orange-300' : ''}`}>
+                    <div key={product.id} className={`bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition ${parseInt(product.stock) <= 10 ? 'border-2 border-amber-700' : ''}`}>
                       <div className="relative">
                         <img src={getProductImage(product)} alt={product.name} className="w-full h-48 object-cover" />
-                        <div className="absolute top-3 right-3 bg-white rounded-full px-3 py-1 text-sm font-bold text-yellow-500">⭐ {product.rating || 4.5}</div>
+                        <div className="absolute top-3 right-3 bg-white rounded-full px-3 py-1 text-sm font-bold text-amber-700">⭐ {product.rating || 4.5}</div>
                       </div>
                       <div className="p-4">
                         <div className="flex gap-2 mb-2 flex-wrap">
-                          {product.mostOrdered && <span className="bg-orange-100 text-orange-800 text-xs font-bold px-2 py-1 rounded">🔥 Popular</span>}
-                          {product.isNew && <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded">🆕 New</span>}
+                          {product.mostOrdered && <span className="bg-amber-100 text-amber-900 text-xs font-bold px-2 py-1 rounded">🔥 Popular</span>}
+                          {product.isNew && <span className="bg-stone-100 text-stone-900 text-xs font-bold px-2 py-1 rounded">🆕 New</span>}
                           {parseInt(product.stock) <= 10 && <span className="bg-red-100 text-red-800 text-xs font-bold px-2 py-1 rounded">⚠️ Low</span>}
                           {product.warranty && <span className="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded">✅ {product.warranty}</span>}
                         </div>
@@ -1454,8 +1454,8 @@ export default function AdminDashboard() {
                         {product.sku && <p className="text-xs text-gray-500">SKU: {product.sku}</p>}
                         {product.barcode && <p className="text-xs text-gray-500">📦 {product.barcode}</p>}
                         <p className="text-xs text-gray-600 truncate">{product.description}</p>
-                        <p className="text-lg font-bold text-blue-600 mt-2">XAF {(product.price || 0).toLocaleString()}</p>
-                        
+                        <p className="text-lg font-bold text-amber-700 mt-2">XAF {(product.price || 0).toLocaleString()}</p>
+
                         {/* Specs Preview */}
                         {product.specifications && product.specifications.length > 0 && (
                           <div className="text-xs text-gray-600 mt-2 py-2 border-t">
@@ -1480,7 +1480,7 @@ export default function AdminDashboard() {
                           {product.dimensions && <div>📏 {product.dimensions}</div>}
                         </div>
                         <div className="flex gap-2 mt-4">
-                          <button onClick={() => handleEditProduct(product)} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-semibold transition">
+                          <button onClick={() => handleEditProduct(product)} className="flex-1 bg-stone-900 hover:bg-stone-900 text-white py-2 rounded-lg text-sm font-semibold transition">
                             ✏️ Edit
                           </button>
                           <button onClick={() => handleDeleteProduct(product.id)} className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg text-sm font-semibold transition">
@@ -1519,22 +1519,22 @@ export default function AdminDashboard() {
                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">🚚 Shipping Management</h2>
                 <p className="text-sm text-gray-600 mt-1">Manage shipping fees by region/town across Cameroon</p>
               </div>
-              <button onClick={fetchShippingFees} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-semibold text-sm sm:text-base transition shadow-md">
+              <button onClick={fetchShippingFees} className="bg-stone-900 hover:bg-stone-900 text-white px-6 py-2.5 rounded-lg font-semibold text-sm sm:text-base transition shadow-md">
                 🔄 Refresh Rates
               </button>
             </div>
 
             <div className="space-y-6">
               {/* SECTION 1: Main Shop Location */}
-              <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl shadow-md p-4 sm:p-6 lg:p-8 border-2 border-purple-200">
-                <h3 className="text-lg sm:text-xl font-bold text-purple-900 mb-4 flex items-center gap-2">🏪 Main Shop Location</h3>
+              <div className="bg-gradient-to-r from-amber-50 to-stone-100 rounded-xl shadow-md p-4 sm:p-6 lg:p-8 border-2 border-yellow-200">
+                <h3 className="text-lg sm:text-xl font-bold text-yellow-900 mb-4 flex items-center gap-2">🏪 Main Shop Location</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 mb-2">Select Main Town</label>
-                    <select 
-                      value={mainShopTown} 
+                    <select
+                      value={mainShopTown}
                       onChange={(e) => saveMainShopTown(e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 bg-white font-semibold text-gray-800"
+                      className="w-full px-4 py-3 border-2 border-yellow-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 bg-white font-semibold text-gray-800"
                     >
                       {shippingKeys.length === 0 ? (
                         <option>No towns available</option>
@@ -1544,15 +1544,15 @@ export default function AdminDashboard() {
                         ))
                       )}
                     </select>
-                    <div className="mt-3 p-3 bg-purple-100 rounded-lg border-l-4 border-purple-600">
-                      <p className="text-xs text-purple-900 font-semibold">💡 About Main Location:</p>
-                      <p className="text-xs text-purple-800 mt-1">This is where your primary warehouse is located. Offers free/discounted shipping for bulk orders (50,000+ XAF)</p>
+                    <div className="mt-3 p-3 bg-yellow-100 rounded-lg border-l-4 border-yellow-900">
+                      <p className="text-xs text-yellow-900 font-semibold">💡 About Main Location:</p>
+                      <p className="text-xs text-yellow-900 mt-1">This is where your primary warehouse is located. Offers free/discounted shipping for bulk orders (50,000+ XAF)</p>
                     </div>
                   </div>
                   <div className="flex flex-col justify-center">
-                    <div className="bg-white p-6 rounded-xl border-3 border-purple-300 text-center shadow-lg">
+                    <div className="bg-white p-6 rounded-xl border-3 border-yellow-200 text-center shadow-lg">
                       <p className="text-xs uppercase tracking-wider text-gray-600 font-bold mb-2">📍 Current Main Location</p>
-                      <p className="text-3xl font-bold text-purple-600">{mainShopTown}</p>
+                      <p className="text-3xl font-bold text-yellow-900">{mainShopTown}</p>
                       <p className="text-xs text-gray-500 mt-3">Base fulfillment location</p>
                     </div>
                   </div>
@@ -1560,8 +1560,8 @@ export default function AdminDashboard() {
               </div>
 
               {/* SECTION 2: Regional Shipping Rates */}
-              <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl shadow-md p-4 sm:p-6 lg:p-8 border-2 border-blue-200">
-                <h3 className="text-lg sm:text-xl font-bold text-blue-900 mb-4 flex items-center gap-2">💰 Shipping Rates by Region</h3>
+              <div className="bg-gradient-to-r from-stone-100 to-stone-50 rounded-xl shadow-md p-4 sm:p-6 lg:p-8 border-2 border-stone-300">
+                <h3 className="text-lg sm:text-xl font-bold text-stone-900 mb-4 flex items-center gap-2">💰 Shipping Rates by Region</h3>
                 <p className="text-xs text-gray-600 mb-4">Set delivery fees for each region. These are applied automatically to customer orders.</p>
 
                 <form onSubmit={async (e) => {
@@ -1585,7 +1585,7 @@ export default function AdminDashboard() {
                 }}>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                     {shippingKeys.map(region => (
-                      <div key={region} className="bg-white p-4 rounded-lg border-2 border-blue-200 hover:border-blue-400 transition">
+                      <div key={region} className="bg-white p-4 rounded-lg border-2 border-stone-300 hover:border-stone-400 transition">
                         <div className="flex items-center justify-between mb-3">
                           <label className="block font-bold text-gray-900">{region}</label>
                           <button
@@ -1613,11 +1613,11 @@ export default function AdminDashboard() {
                           </button>
                         </div>
                         <div className="flex items-center gap-2">
-                          <input type="number" min="0" value={shippingForm[region] ?? 0} onChange={(e) => setShippingForm({ ...shippingForm, [region]: e.target.value })} className="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 font-bold text-lg" />
+                          <input type="number" min="0" value={shippingForm[region] ?? 0} onChange={(e) => setShippingForm({ ...shippingForm, [region]: e.target.value })} className="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 font-bold text-lg" />
                           <span className="text-sm font-bold text-gray-600">XAF</span>
                         </div>
                         {region === mainShopTown && (
-                          <div className="mt-2 text-xs text-purple-600 font-semibold">⭐ Main Location</div>
+                          <div className="mt-2 text-xs text-yellow-900 font-semibold">⭐ Main Location</div>
                         )}
                       </div>
                     ))}
@@ -1636,19 +1636,19 @@ export default function AdminDashboard() {
               </div>
 
               {/* SECTION 3: Add New Region */}
-              <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl shadow-md p-4 sm:p-6 lg:p-8 border-2 border-orange-200">
-                <h3 className="text-lg sm:text-xl font-bold text-orange-900 mb-4 flex items-center gap-2">➕ Add New Region/Town</h3>
+              <div className="bg-gradient-to-r from-amber-50 to-amber-50 rounded-xl shadow-md p-4 sm:p-6 lg:p-8 border-2 border-amber-200">
+                <h3 className="text-lg sm:text-xl font-bold text-amber-900 mb-4 flex items-center gap-2">➕ Add New Region/Town</h3>
                 <p className="text-xs text-gray-600 mb-4">Expand your shipping network by adding new delivery regions</p>
-                
-                <div className="bg-white p-4 rounded-lg border-2 border-orange-200">
+
+                <div className="bg-white p-4 rounded-lg border-2 border-amber-200">
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 mb-2">Region/Town Name</label>
-                      <input type="text" placeholder="e.g., Douala, Yaoundé" value={newTown} onChange={(e) => setNewTown(e.target.value)} className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-600 text-sm" />
+                      <input type="text" placeholder="e.g., Douala, Yaoundé" value={newTown} onChange={(e) => setNewTown(e.target.value)} className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 text-sm" />
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 mb-2">Shipping Fee (XAF)</label>
-                      <input type="number" min="0" placeholder="0" value={newTownFee} onChange={(e) => setNewTownFee(e.target.value)} className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-600 text-sm" />
+                      <input type="number" min="0" placeholder="0" value={newTownFee} onChange={(e) => setNewTownFee(e.target.value)} className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 text-sm" />
                     </div>
                     <button type="button" onClick={async () => {
                       if (!newTown || !newTownFee) {
@@ -1667,7 +1667,7 @@ export default function AdminDashboard() {
                       } finally {
                         setTimeout(() => setMessage({ type: '', text: '' }), 3000)
                       }
-                    }} className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white px-6 py-2 rounded-lg font-bold transition shadow-md">
+                    }} className="bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white px-6 py-2 rounded-lg font-bold transition shadow-md">
                       ➕ Add Region
                     </button>
                   </div>
@@ -1677,20 +1677,20 @@ export default function AdminDashboard() {
 
               {/* SECTION 4: Shipping Summary */}
               {shippingKeys.length > 0 && (
-                <div className="bg-gradient-to-r from-teal-50 to-cyan-50 rounded-xl shadow-md p-4 sm:p-6 border-2 border-teal-200">
-                  <h3 className="text-lg font-bold text-teal-900 mb-4 flex items-center gap-2">📊 Shipping Summary</h3>
+                <div className="bg-gradient-to-r from-stone-100 to-stone-50 rounded-xl shadow-md p-4 sm:p-6 border-2 border-stone-300">
+                  <h3 className="text-lg font-bold text-stone-900 mb-4 flex items-center gap-2">📊 Shipping Summary</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="bg-white p-4 rounded-lg">
                       <p className="text-xs text-gray-600 font-semibold mb-1">Total Regions</p>
-                      <p className="text-3xl font-bold text-teal-600">{shippingKeys.length}</p>
+                      <p className="text-3xl font-bold text-stone-800">{shippingKeys.length}</p>
                     </div>
                     <div className="bg-white p-4 rounded-lg">
                       <p className="text-xs text-gray-600 font-semibold mb-1">Avg Shipping Fee</p>
-                      <p className="text-3xl font-bold text-teal-600">XAF {Math.round(Object.values(shippingForm).reduce((a, b) => (Number(a || 0) + Number(b || 0)), 0) / shippingKeys.length).toLocaleString()}</p>
+                      <p className="text-3xl font-bold text-stone-800">XAF {Math.round(Object.values(shippingForm).reduce((a, b) => (Number(a || 0) + Number(b || 0)), 0) / shippingKeys.length).toLocaleString()}</p>
                     </div>
                     <div className="bg-white p-4 rounded-lg">
                       <p className="text-xs text-gray-600 font-semibold mb-1">Free Shipping At</p>
-                      <p className="text-3xl font-bold text-teal-600">XAF {freeShippingThreshold.toLocaleString()}</p>
+                      <p className="text-3xl font-bold text-stone-800">XAF {freeShippingThreshold.toLocaleString()}</p>
                       <p className="text-xs text-gray-500 mt-1">in {mainShopTown}</p>
                     </div>
                   </div>
@@ -1698,12 +1698,12 @@ export default function AdminDashboard() {
               )}
 
               {/* SECTION 5: Free Shipping Settings */}
-              <div className="bg-gradient-to-r from-rose-50 to-pink-50 rounded-xl shadow-md p-4 sm:p-6 border-2 border-rose-200">
+              <div className="bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl shadow-md p-4 sm:p-6 border-2 border-amber-200">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-bold text-rose-900 flex items-center gap-2">🎁 Free Shipping Settings</h3>
-                  <button 
+                  <h3 className="text-lg font-bold text-amber-900 flex items-center gap-2">🎁 Free Shipping Settings</h3>
+                  <button
                     onClick={() => setShowFreeShippingForm(!showFreeShippingForm)}
-                    className="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
+                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
                   >
                     {showFreeShippingForm ? '✕ Cancel' : '+ Configure'}
                   </button>
@@ -1712,47 +1712,47 @@ export default function AdminDashboard() {
                 {showFreeShippingForm ? (
                   <div className="space-y-6">
                     {/* Platform-wide Free Shipping */}
-                    <div className="bg-white rounded-lg p-4 border-2 border-rose-200">
+                    <div className="bg-white rounded-lg p-4 border-2 border-amber-200">
                       <h4 className="font-bold text-gray-800 mb-4 text-center">🌍 Platform-Wide Free Shipping Threshold</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
                         <div>
                           <label className="block text-xs font-semibold text-gray-700 mb-2">Minimum Order Amount (XAF)</label>
-                          <input 
-                            type="number" 
+                          <input
+                            type="number"
                             value={freeShippingThreshold}
                             onChange={(e) => setFreeShippingThreshold(Number(e.target.value))}
-                            className="w-full px-4 py-3 border-2 border-rose-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-600 font-semibold"
+                            className="w-full px-4 py-3 border-2 border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 font-semibold"
                             placeholder="50000"
                             min="0"
                           />
-                          <p className="text-xs text-rose-700 mt-2 font-semibold">💡 Orders exceeding this amount get free shipping to {mainShopTown}</p>
+                          <p className="text-xs text-amber-800 mt-2 font-semibold">💡 Orders exceeding this amount get free shipping to {mainShopTown}</p>
                         </div>
-                        <div className="bg-rose-100 p-4 rounded-lg text-center">
+                        <div className="bg-amber-100 p-4 rounded-lg text-center">
                           <p className="text-xs text-gray-600 mb-1">Preview</p>
-                          <p className="text-2xl font-bold text-rose-600">XAF {freeShippingThreshold.toLocaleString()}</p>
+                          <p className="text-2xl font-bold text-red-600">XAF {freeShippingThreshold.toLocaleString()}</p>
                         </div>
                       </div>
                     </div>
 
                     {/* Region-Specific Free Shipping */}
                     {shippingKeys.length > 0 && (
-                      <div className="bg-white rounded-lg p-4 border-2 border-pink-200">
+                      <div className="bg-white rounded-lg p-4 border-2 border-yellow-200">
                         <h4 className="font-bold text-gray-800 mb-4 text-center">🏙️ Region-Specific Free Shipping Thresholds</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {shippingKeys.map(region => (
-                            <div key={region} className="p-3 bg-gray-50 rounded-lg border border-pink-200">
+                            <div key={region} className="p-3 bg-gray-50 rounded-lg border border-yellow-200">
                               <div className="flex justify-between items-center mb-2">
                                 <label className="text-xs font-semibold text-gray-700">{region}</label>
-                                <span className="text-xs bg-pink-200 text-pink-800 px-2 py-1 rounded-full font-semibold">Shipping: XAF {shippingForm[region] || 0}</span>
+                                <span className="text-xs bg-amber-100 text-amber-900 px-2 py-1 rounded-full font-semibold">Shipping: XAF {shippingForm[region] || 0}</span>
                               </div>
-                              <input 
-                                type="number" 
+                              <input
+                                type="number"
                                 value={regionFreeShipping[region] || ''}
                                 onChange={(e) => setRegionFreeShipping({
                                   ...regionFreeShipping,
                                   [region]: e.target.value ? Number(e.target.value) : undefined
                                 })}
-                                className="w-full px-3 py-2 border border-pink-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-600 text-sm font-semibold"
+                                className="w-full px-3 py-2 border border-yellow-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 text-sm font-semibold"
                                 placeholder="Leave empty to use platform default"
                               />
                               <p className="text-xs text-gray-500 mt-1">Min. for free shipping (empty = use platform threshold)</p>
@@ -1764,13 +1764,13 @@ export default function AdminDashboard() {
 
                     {/* Action Buttons */}
                     <div className="flex gap-3 justify-center pt-4">
-                      <button 
+                      <button
                         onClick={saveFreeShippingSettings}
-                        className="bg-rose-600 hover:bg-rose-700 text-white px-8 py-3 rounded-lg font-bold transition shadow-md flex items-center gap-2"
+                        className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-lg font-bold transition shadow-md flex items-center gap-2"
                       >
                         ✓ Save Settings
                       </button>
-                      <button 
+                      <button
                         onClick={() => setShowFreeShippingForm(false)}
                         className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-8 py-3 rounded-lg font-bold transition"
                       >
@@ -1781,13 +1781,13 @@ export default function AdminDashboard() {
                 ) : (
                   <div className="space-y-3">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="bg-white p-4 rounded-lg border-2 border-rose-200 text-center">
+                      <div className="bg-white p-4 rounded-lg border-2 border-amber-200 text-center">
                         <p className="text-xs text-gray-600 mb-1">🌍 Platform Threshold</p>
-                        <p className="text-2xl font-bold text-rose-600">XAF {freeShippingThreshold.toLocaleString()}</p>
+                        <p className="text-2xl font-bold text-red-600">XAF {freeShippingThreshold.toLocaleString()}</p>
                       </div>
-                      <div className="bg-white p-4 rounded-lg border-2 border-pink-200 text-center">
+                      <div className="bg-white p-4 rounded-lg border-2 border-yellow-200 text-center">
                         <p className="text-xs text-gray-600 mb-1">🏙️ Region Overrides</p>
-                        <p className="text-2xl font-bold text-pink-600">{Object.keys(regionFreeShipping).filter(r => regionFreeShipping[r] !== undefined).length}</p>
+                        <p className="text-2xl font-bold text-amber-700">{Object.keys(regionFreeShipping).filter(r => regionFreeShipping[r] !== undefined).length}</p>
                       </div>
                     </div>
                   </div>
@@ -1799,7 +1799,7 @@ export default function AdminDashboard() {
 
         {/* ORDERS TAB */}
         {activeTab === 'orders' && (
-          <OrderManagement 
+          <OrderManagement
             orders={orders}
             token={localStorage.getItem('adminToken')}
             resetStatus={resetStatus}
@@ -1820,8 +1820,8 @@ export default function AdminDashboard() {
 
         {/* Receipt Modal */}
         {receiptOrder && (
-          <Receipt 
-            order={receiptOrder} 
+          <Receipt
+            order={receiptOrder}
             onClose={() => setReceiptOrder(null)}
           />
         )}
@@ -1900,7 +1900,7 @@ export default function AdminDashboard() {
                   setEditingLocationId(null)
                   setLocationForm({ name: '', city: '', address: '', phone: '', email: '', lat: '', lng: '', hours: '', description: '', isMainStore: false })
                 }}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition"
+                className="bg-stone-900 hover:bg-stone-900 text-white px-6 py-2 rounded-lg font-semibold transition"
               >
                 + Add Location
               </button>
@@ -1912,39 +1912,39 @@ export default function AdminDashboard() {
                 <form onSubmit={handleLocationSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block font-semibold text-gray-700 mb-2">Location Name *</label>
-                    <input type="text" placeholder="e.g., Main Store - Douala" value={locationForm.name} onChange={(e) => setLocationForm({...locationForm, name: e.target.value})} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" />
+                    <input type="text" placeholder="e.g., Main Store - Douala" value={locationForm.name} onChange={(e) => setLocationForm({...locationForm, name: e.target.value})} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700" />
                   </div>
                   <div>
                     <label className="block font-semibold text-gray-700 mb-2">City *</label>
-                    <input type="text" placeholder="e.g., Douala" value={locationForm.city} onChange={(e) => setLocationForm({...locationForm, city: e.target.value})} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" />
+                    <input type="text" placeholder="e.g., Douala" value={locationForm.city} onChange={(e) => setLocationForm({...locationForm, city: e.target.value})} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700" />
                   </div>
                   <div className="md:col-span-2">
                     <label className="block font-semibold text-gray-700 mb-2">Address *</label>
-                    <input type="text" placeholder="Full address" value={locationForm.address} onChange={(e) => setLocationForm({...locationForm, address: e.target.value})} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" />
+                    <input type="text" placeholder="Full address" value={locationForm.address} onChange={(e) => setLocationForm({...locationForm, address: e.target.value})} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700" />
                   </div>
                   <div>
                     <label className="block font-semibold text-gray-700 mb-2">Phone</label>
-                    <input type="tel" placeholder="+237 6 XX XXX XXX" value={locationForm.phone} onChange={(e) => setLocationForm({...locationForm, phone: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" />
+                    <input type="tel" placeholder="+237 6 XX XXX XXX" value={locationForm.phone} onChange={(e) => setLocationForm({...locationForm, phone: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700" />
                   </div>
                   <div>
                     <label className="block font-semibold text-gray-700 mb-2">Email</label>
-                    <input type="email" placeholder="store@email.com" value={locationForm.email} onChange={(e) => setLocationForm({...locationForm, email: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" />
+                    <input type="email" placeholder="store@email.com" value={locationForm.email} onChange={(e) => setLocationForm({...locationForm, email: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700" />
                   </div>
                   <div>
                     <label className="block font-semibold text-gray-700 mb-2">Hours</label>
-                    <input type="text" placeholder="Mon-Sun: 8AM-8PM" value={locationForm.hours} onChange={(e) => setLocationForm({...locationForm, hours: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" />
+                    <input type="text" placeholder="Mon-Sun: 8AM-8PM" value={locationForm.hours} onChange={(e) => setLocationForm({...locationForm, hours: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700" />
                   </div>
                   <div>
                     <label className="block font-semibold text-gray-700 mb-2">Latitude</label>
-                    <input type="number" step="0.0001" placeholder="4.0511" value={locationForm.lat} onChange={(e) => setLocationForm({...locationForm, lat: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" />
+                    <input type="number" step="0.0001" placeholder="4.0511" value={locationForm.lat} onChange={(e) => setLocationForm({...locationForm, lat: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700" />
                   </div>
                   <div>
                     <label className="block font-semibold text-gray-700 mb-2">Longitude</label>
-                    <input type="number" step="0.0001" placeholder="9.7679" value={locationForm.lng} onChange={(e) => setLocationForm({...locationForm, lng: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" />
+                    <input type="number" step="0.0001" placeholder="9.7679" value={locationForm.lng} onChange={(e) => setLocationForm({...locationForm, lng: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700" />
                   </div>
                   <div className="md:col-span-2">
                     <label className="block font-semibold text-gray-700 mb-2">Description</label>
-                    <textarea placeholder="Brief description about this location" value={locationForm.description} onChange={(e) => setLocationForm({...locationForm, description: e.target.value})} rows="3" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"></textarea>
+                    <textarea placeholder="Brief description about this location" value={locationForm.description} onChange={(e) => setLocationForm({...locationForm, description: e.target.value})} rows="3" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700"></textarea>
                   </div>
                   <div className="md:col-span-2">
                     <label className="flex items-center gap-2">
@@ -1953,7 +1953,7 @@ export default function AdminDashboard() {
                     </label>
                   </div>
                   <div className="md:col-span-2 flex gap-3">
-                    <button type="submit" disabled={loading} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition disabled:opacity-50">
+                    <button type="submit" disabled={loading} className="flex-1 bg-stone-900 hover:bg-stone-900 text-white py-3 rounded-lg font-semibold transition disabled:opacity-50">
                       {editingLocationId ? 'Update Location' : 'Add Location'}
                     </button>
                     <button type="button" onClick={() => {setShowLocationForm(false); setEditingLocationId(null)}} className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 py-3 rounded-lg font-semibold transition">
@@ -1968,13 +1968,13 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {locations.map(location => (
                 <div key={location.id} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition">
-                  <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 text-white">
+                  <div className="bg-gradient-to-r from-stone-900 to-stone-800 p-4 text-white">
                     <div className="flex justify-between items-start">
                       <div>
                         <h4 className="font-bold text-lg">{location.name}</h4>
-                        <p className="text-blue-100 text-sm">{location.city}</p>
+                        <p className="text-stone-300 text-sm">{location.city}</p>
                       </div>
-                      {location.isMainStore && <span className="bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-xs font-bold">Main Store</span>}
+                      {location.isMainStore && <span className="bg-amber-700 text-yellow-900 px-3 py-1 rounded-full text-xs font-bold">Main Store</span>}
                     </div>
                   </div>
                   <div className="p-4 space-y-2 text-sm text-gray-700">
@@ -1985,7 +1985,7 @@ export default function AdminDashboard() {
                     {location.description && <p className="italic text-gray-600">{location.description}</p>}
                   </div>
                   <div className="bg-gray-50 px-4 py-3 flex gap-2">
-                    <button onClick={() => handleEditLocation(location)} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-semibold transition">
+                    <button onClick={() => handleEditLocation(location)} className="flex-1 bg-stone-900 hover:bg-stone-900 text-white py-2 rounded-lg text-sm font-semibold transition">
                       Edit
                     </button>
                     <button onClick={() => handleDeleteLocation(location.id)} className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg text-sm font-semibold transition">
@@ -1999,7 +1999,7 @@ export default function AdminDashboard() {
             {locations.length === 0 && !showLocationForm && (
               <div className="text-center py-12 bg-white rounded-xl">
                 <p className="text-gray-500 text-lg mb-4">No locations added yet</p>
-                <button onClick={() => setShowLocationForm(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition">
+                <button onClick={() => setShowLocationForm(true)} className="bg-stone-900 hover:bg-stone-900 text-white px-6 py-2 rounded-lg font-semibold transition">
                   Add First Location
                 </button>
               </div>
@@ -2015,10 +2015,10 @@ export default function AdminDashboard() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* CARD PAYMENT CONFIG */}
-              <div className="bg-white rounded-xl shadow-md overflow-hidden border-2 border-blue-200">
-                <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-white">
+              <div className="bg-white rounded-xl shadow-md overflow-hidden border-2 border-stone-300">
+                <div className="bg-gradient-to-r from-stone-900 to-stone-800 p-6 text-white">
                   <h3 className="text-xl font-bold flex items-center gap-3">💳 Card Payment</h3>
-                  <p className="text-blue-100 text-sm mt-2">Visa & Mastercard</p>
+                  <p className="text-stone-300 text-sm mt-2">Visa & Mastercard</p>
                 </div>
                 <div className="p-6">
                   {editingPaymentType === 'card' ? (
@@ -2034,22 +2034,22 @@ export default function AdminDashboard() {
                     }} className="space-y-4">
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">Account Holder Name</label>
-                        <input type="text" id="cardHolder" placeholder="Business Name" defaultValue={paymentAccounts.card.accountHolder} required className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" />
+                        <input type="text" id="cardHolder" placeholder="Business Name" defaultValue={paymentAccounts.card.accountHolder} required className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700" />
                       </div>
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">Bank Account Number</label>
-                        <input type="text" id="cardNumber" placeholder="0123456789" defaultValue={paymentAccounts.card.accountNumber} required className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" />
+                        <input type="text" id="cardNumber" placeholder="0123456789" defaultValue={paymentAccounts.card.accountNumber} required className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700" />
                       </div>
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">Bank Name</label>
-                        <input type="text" id="bankName" placeholder="e.g., SGBC, UBA" defaultValue={paymentAccounts.card.bankName} required className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" />
+                        <input type="text" id="bankName" placeholder="e.g., SGBC, UBA" defaultValue={paymentAccounts.card.bankName} required className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700" />
                       </div>
                       <div className="flex items-center gap-3">
                         <input type="checkbox" id="cardActive" defaultChecked={paymentAccounts.card.isActive} className="w-5 h-5 rounded" />
                         <label htmlFor="cardActive" className="text-sm font-semibold text-gray-700">Active (Customers can pay with card)</label>
                       </div>
                       <div className="flex gap-3 pt-2">
-                        <button type="submit" disabled={loading} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition disabled:opacity-50">Save</button>
+                        <button type="submit" disabled={loading} className="flex-1 bg-stone-900 hover:bg-stone-900 text-white py-2 rounded-lg font-semibold transition disabled:opacity-50">Save</button>
                         <button type="button" onClick={() => setEditingPaymentType(null)} className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 py-2 rounded-lg font-semibold">Cancel</button>
                       </div>
                     </form>
@@ -2072,15 +2072,15 @@ export default function AdminDashboard() {
                           {paymentAccounts.card.isActive ? '✓ Active' : '✗ Inactive'}
                         </span>
                       </div>
-                      <button onClick={() => setEditingPaymentType('card')} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition">Edit</button>
+                      <button onClick={() => setEditingPaymentType('card')} className="w-full bg-stone-900 hover:bg-stone-900 text-white py-2 rounded-lg font-semibold transition">Edit</button>
                     </div>
                   )}
                 </div>
               </div>
 
               {/* MTN MOBILE MONEY CONFIG */}
-              <div className="bg-white rounded-xl shadow-md overflow-hidden border-2 border-yellow-300">
-                <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 p-6 text-white">
+              <div className="bg-white rounded-xl shadow-md overflow-hidden border-2 border-yellow-200">
+                <div className="bg-gradient-to-r from-yellow-800 to-yellow-900 p-6 text-white">
                   <h3 className="text-xl font-bold flex items-center gap-3">🟡 MTN Mobile Money</h3>
                   <p className="text-yellow-100 text-sm mt-2">MTN Payment Account</p>
                 </div>
@@ -2097,11 +2097,11 @@ export default function AdminDashboard() {
                     }} className="space-y-4">
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">Account Holder Name</label>
-                        <input type="text" id="mtnHolder" placeholder="Business Name" defaultValue={paymentAccounts.momo.mtn.accountHolder} required className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-600" />
+                        <input type="text" id="mtnHolder" placeholder="Business Name" defaultValue={paymentAccounts.momo.mtn.accountHolder} required className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700" />
                       </div>
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">MTN Phone Number (Cameroon)</label>
-                        <input type="tel" id="mtnPhone" placeholder="697123456 or 670123456" defaultValue={paymentAccounts.momo.mtn.phoneNumber} required className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-600" />
+                        <input type="tel" id="mtnPhone" placeholder="697123456 or 670123456" defaultValue={paymentAccounts.momo.mtn.phoneNumber} required className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700" />
                         <p className="text-xs text-gray-500 mt-1">9-digit Cameroon MTN number (670-676, 680, 683-689)</p>
                       </div>
                       <div className="flex items-center gap-3">
@@ -2109,7 +2109,7 @@ export default function AdminDashboard() {
                         <label htmlFor="mtnActive" className="text-sm font-semibold text-gray-700">Active (Customers can pay with MTN)</label>
                       </div>
                       <div className="flex gap-3 pt-2">
-                        <button type="submit" disabled={loading} className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white py-2 rounded-lg font-semibold transition disabled:opacity-50">Save</button>
+                        <button type="submit" disabled={loading} className="flex-1 bg-amber-700 hover:bg-amber-800 text-white py-2 rounded-lg font-semibold transition disabled:opacity-50">Save</button>
                         <button type="button" onClick={() => setEditingPaymentType(null)} className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 py-2 rounded-lg font-semibold">Cancel</button>
                       </div>
                     </form>
@@ -2128,17 +2128,17 @@ export default function AdminDashboard() {
                           {paymentAccounts.momo.mtn.isActive ? '✓ Active' : '✗ Inactive'}
                         </span>
                       </div>
-                      <button onClick={() => setEditingPaymentType('mtn')} className="w-full bg-yellow-600 hover:bg-yellow-700 text-white py-2 rounded-lg font-semibold transition">Edit</button>
+                      <button onClick={() => setEditingPaymentType('mtn')} className="w-full bg-amber-700 hover:bg-amber-800 text-white py-2 rounded-lg font-semibold transition">Edit</button>
                     </div>
                   )}
                 </div>
               </div>
 
               {/* ORANGE MONEY CONFIG */}
-              <div className="bg-white rounded-xl shadow-md overflow-hidden border-2 border-orange-300">
-                <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6 text-white">
+              <div className="bg-white rounded-xl shadow-md overflow-hidden border-2 border-amber-700">
+                <div className="bg-gradient-to-r from-amber-700 to-amber-800 p-6 text-white">
                   <h3 className="text-xl font-bold flex items-center gap-3">🟠 Orange Money</h3>
-                  <p className="text-orange-100 text-sm mt-2">Orange Payment Account</p>
+                  <p className="text-amber-100 text-sm mt-2">Orange Payment Account</p>
                 </div>
                 <div className="p-6">
                   {editingPaymentType === 'orange' ? (
@@ -2153,11 +2153,11 @@ export default function AdminDashboard() {
                     }} className="space-y-4">
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">Account Holder Name</label>
-                        <input type="text" id="orangeHolder" placeholder="Business Name" defaultValue={paymentAccounts.momo.orange.accountHolder} required className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-600" />
+                        <input type="text" id="orangeHolder" placeholder="Business Name" defaultValue={paymentAccounts.momo.orange.accountHolder} required className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700" />
                       </div>
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">Orange Phone Number (Cameroon)</label>
-                        <input type="tel" id="orangePhone" placeholder="699123456 or 690123456" defaultValue={paymentAccounts.momo.orange.phoneNumber} required className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-600" />
+                        <input type="tel" id="orangePhone" placeholder="699123456 or 690123456" defaultValue={paymentAccounts.momo.orange.phoneNumber} required className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700" />
                         <p className="text-xs text-gray-500 mt-1">9-digit Cameroon Orange number (690, 691, 696, 699)</p>
                       </div>
                       <div className="flex items-center gap-3">
@@ -2165,7 +2165,7 @@ export default function AdminDashboard() {
                         <label htmlFor="orangeActive" className="text-sm font-semibold text-gray-700">Active (Customers can pay with Orange)</label>
                       </div>
                       <div className="flex gap-3 pt-2">
-                        <button type="submit" disabled={loading} className="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-2 rounded-lg font-semibold transition disabled:opacity-50">Save</button>
+                        <button type="submit" disabled={loading} className="flex-1 bg-amber-800 hover:bg-amber-800 text-white py-2 rounded-lg font-semibold transition disabled:opacity-50">Save</button>
                         <button type="button" onClick={() => setEditingPaymentType(null)} className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 py-2 rounded-lg font-semibold">Cancel</button>
                       </div>
                     </form>
@@ -2184,7 +2184,7 @@ export default function AdminDashboard() {
                           {paymentAccounts.momo.orange.isActive ? '✓ Active' : '✗ Inactive'}
                         </span>
                       </div>
-                      <button onClick={() => setEditingPaymentType('orange')} className="w-full bg-orange-600 hover:bg-orange-700 text-white py-2 rounded-lg font-semibold transition">Edit</button>
+                      <button onClick={() => setEditingPaymentType('orange')} className="w-full bg-amber-800 hover:bg-amber-800 text-white py-2 rounded-lg font-semibold transition">Edit</button>
                     </div>
                   )}
                 </div>
@@ -2211,9 +2211,9 @@ export default function AdminDashboard() {
             </div>
 
             {/* Payment Account Instructions */}
-            <div className="mt-8 bg-blue-50 border-l-4 border-blue-600 p-6 rounded-lg">
-              <h3 className="font-bold text-blue-900 mb-3">📋 How Payment Accounts Work</h3>
-              <ul className="space-y-2 text-sm text-blue-800">
+            <div className="mt-8 bg-stone-100 border-l-4 border-amber-700 p-6 rounded-lg">
+              <h3 className="font-bold text-stone-900 mb-3">📋 How Payment Accounts Work</h3>
+              <ul className="space-y-2 text-sm text-stone-900">
                 <li>✓ Configure your payment receiving accounts for each payment method</li>
                 <li>✓ Only active payment methods will be available to customers during checkout</li>
                 <li>✓ All customer payments will be directed to these accounts</li>
@@ -2229,7 +2229,7 @@ export default function AdminDashboard() {
         {activeTab === 'statistics' && (
           <div>
             <h2 className="text-3xl font-bold text-gray-900 mb-8">Real-Time Analytics Dashboard</h2>
-            
+
             {/* Statistics Sub-tabs */}
             <div className="mb-6 border-b border-gray-300">
               <div className="flex gap-2 flex-wrap">
@@ -2237,7 +2237,7 @@ export default function AdminDashboard() {
                   onClick={() => setStatisticsTab('platform')}
                   className={`px-4 py-2 font-bold transition ${
                     statisticsTab === 'platform'
-                      ? 'border-b-2 border-blue-600 text-blue-600'
+                      ? 'border-b-2 border-amber-700 text-amber-700'
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
@@ -2247,7 +2247,7 @@ export default function AdminDashboard() {
                   onClick={() => setStatisticsTab('pos')}
                   className={`px-4 py-2 font-bold transition ${
                     statisticsTab === 'pos'
-                      ? 'border-b-2 border-blue-600 text-blue-600'
+                      ? 'border-b-2 border-amber-700 text-amber-700'
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
@@ -2273,11 +2273,11 @@ export default function AdminDashboard() {
         {activeTab === 'settings' && (
           <div>
             <h2 className="text-3xl font-bold text-gray-900 mb-8">Admin Settings & Configuration</h2>
-            
+
             <div className="space-y-8">
               {/* SECTION 1: Account Credentials */}
-              <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl shadow-md p-6 lg:p-8 border-2 border-blue-200">
-                <h3 className="text-xl font-bold text-blue-900 mb-6 flex items-center gap-2">🔐 Account Credentials</h3>
+              <div className="bg-gradient-to-r from-stone-100 to-stone-50 rounded-xl shadow-md p-6 lg:p-8 border-2 border-stone-300">
+                <h3 className="text-xl font-bold text-stone-900 mb-6 flex items-center gap-2">🔐 Account Credentials</h3>
                 <form onSubmit={handleUpdateSettings} className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Current Email</label>
@@ -2286,57 +2286,57 @@ export default function AdminDashboard() {
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">New Email (Optional)</label>
-                    <input type="email" placeholder="Leave empty to keep current email" value={settingsForm.email} onChange={(e) => setSettingsForm({...settingsForm, email: e.target.value})} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm" />
+                    <input type="email" placeholder="Leave empty to keep current email" value={settingsForm.email} onChange={(e) => setSettingsForm({...settingsForm, email: e.target.value})} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 focus:border-transparent text-sm" />
                     <p className="text-xs text-gray-600 mt-1">Enter to change your login email</p>
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-sm font-semibold text-gray-700 mb-2">New Password (Optional)</label>
-                    <input type="password" placeholder="Leave empty to keep current password" value={settingsForm.newPassword} onChange={(e) => setSettingsForm({...settingsForm, newPassword: e.target.value})} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm" />
+                    <input type="password" placeholder="Leave empty to keep current password" value={settingsForm.newPassword} onChange={(e) => setSettingsForm({...settingsForm, newPassword: e.target.value})} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 focus:border-transparent text-sm" />
                     <p className="text-xs text-gray-600 mt-1">Must be at least 6 characters long</p>
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Platform Name</label>
-                    <input type="text" placeholder="e.g., MyShop, TechStore, etc." value={settingsForm.platformName} onChange={(e) => setSettingsForm({...settingsForm, platformName: e.target.value})} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm" />
+                    <input type="text" placeholder="e.g., MyShop, TechStore, etc." value={settingsForm.platformName} onChange={(e) => setSettingsForm({...settingsForm, platformName: e.target.value})} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 focus:border-transparent text-sm" />
                     <p className="text-xs text-gray-600 mt-1">Change your store's name (appears in header, receipts, and emails)</p>
                   </div>
-                  <button type="submit" disabled={loading} className="md:col-span-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white py-3 rounded-lg font-semibold transition disabled:opacity-50 shadow-md">
+                  <button type="submit" disabled={loading} className="md:col-span-2 bg-gradient-to-r from-stone-900 to-stone-700 hover:from-stone-950 hover:to-stone-800 text-white py-3 rounded-lg font-semibold transition disabled:opacity-50 shadow-md">
                     ✓ Update Credentials
                   </button>
                 </form>
               </div>
 
               {/* SECTION 1.5: Hero Section Editor */}
-              <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl shadow-md p-6 lg:p-8 border-2 border-amber-200">
+              <div className="bg-gradient-to-r from-amber-50 to-amber-50 rounded-xl shadow-md p-6 lg:p-8 border-2 border-amber-200">
                 <h3 className="text-xl font-bold text-amber-900 mb-6 flex items-center gap-2">🎨 Hero Section Content</h3>
                 <form onSubmit={handleHeroSectionUpdate} className="space-y-6">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Badge Text</label>
-                    <input type="text" placeholder="e.g., ✨ Special Offers This Season" value={heroForm.badge} onChange={(e) => setHeroForm({...heroForm, badge: e.target.value})} className="w-full px-4 py-3 border-2 border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600 focus:border-transparent text-sm" />
+                    <input type="text" placeholder="e.g., ✨ Special Offers This Season" value={heroForm.badge} onChange={(e) => setHeroForm({...heroForm, badge: e.target.value})} className="w-full px-4 py-3 border-2 border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 focus:border-transparent text-sm" />
                     <p className="text-xs text-gray-600 mt-1">Small badge/tagline above the main title</p>
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Main Title</label>
-                    <input type="text" placeholder="e.g., Shop the Best Products Online" value={heroForm.title} onChange={(e) => setHeroForm({...heroForm, title: e.target.value})} className="w-full px-4 py-3 border-2 border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600 focus:border-transparent text-sm" />
+                    <input type="text" placeholder="e.g., Shop the Best Products Online" value={heroForm.title} onChange={(e) => setHeroForm({...heroForm, title: e.target.value})} className="w-full px-4 py-3 border-2 border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 focus:border-transparent text-sm" />
                     <p className="text-xs text-gray-600 mt-1">Main headline of your hero section</p>
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
-                    <textarea placeholder="Describe your offer, e.g., Discover thousands of quality products..." value={heroForm.description} onChange={(e) => setHeroForm({...heroForm, description: e.target.value})} className="w-full px-4 py-3 border-2 border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600 focus:border-transparent text-sm" rows="3" />
+                    <textarea placeholder="Describe your offer, e.g., Discover thousands of quality products..." value={heroForm.description} onChange={(e) => setHeroForm({...heroForm, description: e.target.value})} className="w-full px-4 py-3 border-2 border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 focus:border-transparent text-sm" rows="3" />
                     <p className="text-xs text-gray-600 mt-1">Detailed description text</p>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">Primary Button Text</label>
-                      <input type="text" placeholder="e.g., Shop Now →" value={heroForm.primaryButtonText} onChange={(e) => setHeroForm({...heroForm, primaryButtonText: e.target.value})} className="w-full px-4 py-3 border-2 border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600 focus:border-transparent text-sm" />
+                      <input type="text" placeholder="e.g., Shop Now →" value={heroForm.primaryButtonText} onChange={(e) => setHeroForm({...heroForm, primaryButtonText: e.target.value})} className="w-full px-4 py-3 border-2 border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 focus:border-transparent text-sm" />
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">Secondary Button Text</label>
-                      <input type="text" placeholder="e.g., Learn More" value={heroForm.secondaryButtonText} onChange={(e) => setHeroForm({...heroForm, secondaryButtonText: e.target.value})} className="w-full px-4 py-3 border-2 border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600 focus:border-transparent text-sm" />
+                      <input type="text" placeholder="e.g., Learn More" value={heroForm.secondaryButtonText} onChange={(e) => setHeroForm({...heroForm, secondaryButtonText: e.target.value})} className="w-full px-4 py-3 border-2 border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 focus:border-transparent text-sm" />
                     </div>
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Background Image URL</label>
-                    <input type="url" placeholder="https://images.unsplash.com/..." value={heroForm.backgroundImage} onChange={(e) => setHeroForm({...heroForm, backgroundImage: e.target.value})} className="w-full px-4 py-3 border-2 border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600 focus:border-transparent text-sm" />
+                    <input type="url" placeholder="https://images.unsplash.com/..." value={heroForm.backgroundImage} onChange={(e) => setHeroForm({...heroForm, backgroundImage: e.target.value})} className="w-full px-4 py-3 border-2 border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 focus:border-transparent text-sm" />
                     <p className="text-xs text-gray-600 mt-1">Background image for hero section</p>
                     {heroForm.backgroundImage && (
                       <div className="mt-3 rounded-lg overflow-hidden border-2 border-amber-300">
@@ -2344,17 +2344,17 @@ export default function AdminDashboard() {
                       </div>
                     )}
                   </div>
-                  <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white py-3 rounded-lg font-semibold transition disabled:opacity-50 shadow-md">
+                  <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white py-3 rounded-lg font-semibold transition disabled:opacity-50 shadow-md">
                     ✓ Save Hero Section Changes
                   </button>
                 </form>
               </div>
 
               {/* SECTION 2: Security & Access Control */}
-              <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl shadow-md p-6 lg:p-8 border-2 border-purple-200">
-                <h3 className="text-xl font-bold text-purple-900 mb-6 flex items-center gap-2">🔒 Security & Access Control</h3>
+              <div className="bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl shadow-md p-6 lg:p-8 border-2 border-yellow-200">
+                <h3 className="text-xl font-bold text-yellow-900 mb-6 flex items-center gap-2">🔒 Security & Access Control</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-white rounded-lg p-4 border-2 border-purple-200">
+                  <div className="bg-white rounded-lg p-4 border-2 border-yellow-200">
                     <p className="text-sm font-bold text-gray-800 mb-3">👤 Your Account Status</p>
                     <div className="space-y-2 text-sm">
                       <div className="flex items-center gap-2">
@@ -2369,8 +2369,8 @@ export default function AdminDashboard() {
                         <span className="text-lg">🔓</span>
                         <span className="text-gray-700"><span className="font-semibold">Access Level:</span> Full</span>
                       </div>
-                      <div className="mt-3 p-3 bg-blue-50 rounded border-l-4 border-blue-600">
-                        <p className="text-xs font-semibold text-blue-900">💡 As Super Admin, you have unrestricted access to all platform features including financial data, settings, and team management.</p>
+                      <div className="mt-3 p-3 bg-stone-100 rounded border-l-4 border-amber-700">
+                        <p className="text-xs font-semibold text-stone-900">💡 As Super Admin, you have unrestricted access to all platform features including financial data, settings, and team management.</p>
                       </div>
                     </div>
                   </div>
@@ -2398,7 +2398,7 @@ export default function AdminDashboard() {
                         <span className="text-green-600 font-bold">✓</span>
                         <span>Can manage products and inventory</span>
                       </div>
-                      <div className="mt-3 p-2 bg-yellow-50 rounded border-l-4 border-yellow-600">
+                      <div className="mt-3 p-2 bg-yellow-50 rounded border-l-4 border-yellow-900">
                         <p className="text-xs font-semibold text-yellow-900">Sub-admins have limited access for operational management only.</p>
                       </div>
                     </div>
@@ -2432,10 +2432,10 @@ export default function AdminDashboard() {
               </div>
 
               {/* SECTION 4: Platform Features Status */}
-              <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl shadow-md p-6 lg:p-8 border-2 border-orange-200">
-                <h3 className="text-xl font-bold text-orange-900 mb-6 flex items-center gap-2">✨ Active Platform Features</h3>
+              <div className="bg-gradient-to-r from-amber-50 to-amber-50 rounded-xl shadow-md p-6 lg:p-8 border-2 border-amber-200">
+                <h3 className="text-xl font-bold text-amber-900 mb-6 flex items-center gap-2">✨ Active Platform Features</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div className="bg-white rounded-lg p-4 border-2 border-orange-200 flex items-start gap-3">
+                  <div className="bg-white rounded-lg p-4 border-2 border-amber-200 flex items-start gap-3">
                     <span className="text-2xl">📊</span>
                     <div>
                       <p className="font-bold text-gray-800">Real-Time Analytics</p>
@@ -2443,7 +2443,7 @@ export default function AdminDashboard() {
                       <p className="text-xs text-green-600 font-bold mt-1">✓ Active</p>
                     </div>
                   </div>
-                  <div className="bg-white rounded-lg p-4 border-2 border-orange-200 flex items-start gap-3">
+                  <div className="bg-white rounded-lg p-4 border-2 border-amber-200 flex items-start gap-3">
                     <span className="text-2xl">💬</span>
                     <div>
                       <p className="font-bold text-gray-800">Chat Management</p>
@@ -2451,7 +2451,7 @@ export default function AdminDashboard() {
                       <p className="text-xs text-green-600 font-bold mt-1">✓ Active</p>
                     </div>
                   </div>
-                  <div className="bg-white rounded-lg p-4 border-2 border-orange-200 flex items-start gap-3">
+                  <div className="bg-white rounded-lg p-4 border-2 border-amber-200 flex items-start gap-3">
                     <span className="text-2xl">📦</span>
                     <div>
                       <p className="font-bold text-gray-800">Order Management</p>
@@ -2459,7 +2459,7 @@ export default function AdminDashboard() {
                       <p className="text-xs text-green-600 font-bold mt-1">✓ Active</p>
                     </div>
                   </div>
-                  <div className="bg-white rounded-lg p-4 border-2 border-orange-200 flex items-start gap-3">
+                  <div className="bg-white rounded-lg p-4 border-2 border-amber-200 flex items-start gap-3">
                     <span className="text-2xl">🚚</span>
                     <div>
                       <p className="font-bold text-gray-800">Shipping Management</p>
@@ -2467,7 +2467,7 @@ export default function AdminDashboard() {
                       <p className="text-xs text-green-600 font-bold mt-1">✓ Active</p>
                     </div>
                   </div>
-                  <div className="bg-white rounded-lg p-4 border-2 border-orange-200 flex items-start gap-3">
+                  <div className="bg-white rounded-lg p-4 border-2 border-amber-200 flex items-start gap-3">
                     <span className="text-2xl">🏪</span>
                     <div>
                       <p className="font-bold text-gray-800">Multi-Location Support</p>
@@ -2475,7 +2475,7 @@ export default function AdminDashboard() {
                       <p className="text-xs text-green-600 font-bold mt-1">✓ Active</p>
                     </div>
                   </div>
-                  <div className="bg-white rounded-lg p-4 border-2 border-orange-200 flex items-start gap-3">
+                  <div className="bg-white rounded-lg p-4 border-2 border-amber-200 flex items-start gap-3">
                     <span className="text-2xl">👥</span>
                     <div>
                       <p className="font-bold text-gray-800">Team Management</p>
@@ -2507,16 +2507,16 @@ export default function AdminDashboard() {
                     <p className="text-lg font-bold text-gray-900">Today</p>
                   </div>
                 </div>
-                <div className="mt-4 p-4 bg-blue-50 border-l-4 border-blue-600 rounded">
-                  <p className="text-sm font-semibold text-blue-900">💡 Need Help?</p>
-                  <p className="text-xs text-blue-800 mt-2">For technical support or to report issues, contact the development team. All platform features are designed for optimal performance and security.</p>
+                <div className="mt-4 p-4 bg-stone-100 border-l-4 border-amber-700 rounded">
+                  <p className="text-sm font-semibold text-stone-900">💡 Need Help?</p>
+                  <p className="text-xs text-stone-900 mt-2">For technical support or to report issues, contact the development team. All platform features are designed for optimal performance and security.</p>
                 </div>
               </div>
 
               {/* SECTION 5.5: Platform Reset & Recovery */}
-              <div className="bg-gradient-to-r from-red-50 to-rose-50 rounded-xl shadow-md p-6 lg:p-8 border-2 border-red-200">
+              <div className="bg-gradient-to-r from-red-50 to-red-50 rounded-xl shadow-md p-6 lg:p-8 border-2 border-red-200">
                 <h3 className="text-xl font-bold text-red-900 mb-6 flex items-center gap-2">🔄 Reset Platform & Data Recovery</h3>
-                
+
                 {!resetStatus?.isReset ? (
                   <div>
                     <p className="text-gray-700 mb-4">Reset your entire platform to start fresh. Perfect when changing business direction or reselling the platform.</p>
@@ -2530,7 +2530,7 @@ export default function AdminDashboard() {
                         <li>✓ All activity is logged for security</li>
                       </ul>
                     </div>
-                    
+
                     <button
                       onClick={() => setShowResetConfirm(true)}
                       disabled={resetLoading}
@@ -2563,13 +2563,13 @@ export default function AdminDashboard() {
                   </div>
                 ) : (
                   <div>
-                    <div className="bg-orange-100 border-l-4 border-orange-600 p-4 rounded mb-4">
-                      <p className="font-bold text-orange-900">🔄 Platform Reset Active - Recovery Window Open</p>
-                      <p className="text-sm text-orange-800 mt-2">Your data is backed up and can be restored within the recovery window below.</p>
+                    <div className="bg-amber-100 border-l-4 border-amber-700 p-4 rounded mb-4">
+                      <p className="font-bold text-amber-900">🔄 Platform Reset Active - Recovery Window Open</p>
+                      <p className="text-sm text-amber-900 mt-2">Your data is backed up and can be restored within the recovery window below.</p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div className="bg-white p-4 rounded border-2 border-orange-300">
+                      <div className="bg-white p-4 rounded border-2 border-amber-700">
                         <p className="text-xs text-gray-600 font-bold mb-1">Reset Time</p>
                         <p className="text-lg font-bold text-gray-900">
                           {new Date(resetStatus.resetTime).toLocaleString()}
@@ -2583,7 +2583,7 @@ export default function AdminDashboard() {
                       </div>
                     </div>
 
-                    <div className="bg-white p-4 rounded border-2 border-orange-300 mb-4">
+                    <div className="bg-white p-4 rounded border-2 border-amber-700 mb-4">
                       <p className="text-sm font-bold text-gray-800 mb-3">📦 Data Available in Backup:</p>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
                         <div className="text-center">
@@ -2619,7 +2619,7 @@ export default function AdminDashboard() {
                         </button>
                         <button
                           onClick={handleExtendRecoveryWindow}
-                          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold transition"
+                          className="flex-1 bg-stone-900 hover:bg-stone-900 text-white py-3 rounded-lg font-bold transition"
                         >
                           ⏱️ Extend 48 Hours
                         </button>
@@ -2634,7 +2634,7 @@ export default function AdminDashboard() {
                         </div>
                         <button
                           onClick={handleExtendRecoveryWindow}
-                          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold transition mb-2"
+                          className="w-full bg-stone-900 hover:bg-stone-900 text-white py-3 rounded-lg font-bold transition mb-2"
                         >
                           ⏱️ Extend Recovery Window (+48 Hours)
                         </button>
@@ -2653,25 +2653,25 @@ export default function AdminDashboard() {
               </div>
 
               {/* SECTION 6: Quick Actions */}
-              <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl shadow-md p-6 lg:p-8 border-2 border-indigo-200">
-                <h3 className="text-xl font-bold text-indigo-900 mb-6 flex items-center gap-2">⚡ Quick Actions</h3>
+              <div className="bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl shadow-md p-6 lg:p-8 border-2 border-amber-300">
+                <h3 className="text-xl font-bold text-amber-900 mb-6 flex items-center gap-2">⚡ Quick Actions</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <button onClick={() => setActiveTab('products')} className="bg-white hover:bg-blue-50 border-2 border-indigo-300 rounded-lg p-4 text-left transition font-semibold text-gray-900">
+                  <button onClick={() => setActiveTab('products')} className="bg-white hover:bg-stone-100 border-2 border-amber-300 rounded-lg p-4 text-left transition font-semibold text-gray-900">
                     📦 Manage Products
                   </button>
-                  <button onClick={() => setActiveTab('orders')} className="bg-white hover:bg-blue-50 border-2 border-indigo-300 rounded-lg p-4 text-left transition font-semibold text-gray-900">
+                  <button onClick={() => setActiveTab('orders')} className="bg-white hover:bg-stone-100 border-2 border-amber-300 rounded-lg p-4 text-left transition font-semibold text-gray-900">
                     🧾 View Orders
                   </button>
-                  <button onClick={() => setActiveTab('chat')} className="bg-white hover:bg-blue-50 border-2 border-indigo-300 rounded-lg p-4 text-left transition font-semibold text-gray-900">
+                  <button onClick={() => setActiveTab('chat')} className="bg-white hover:bg-stone-100 border-2 border-amber-300 rounded-lg p-4 text-left transition font-semibold text-gray-900">
                     💬 Customer Messages
                   </button>
-                  <button onClick={() => setActiveTab('statistics')} className="bg-white hover:bg-blue-50 border-2 border-indigo-300 rounded-lg p-4 text-left transition font-semibold text-gray-900">
+                  <button onClick={() => setActiveTab('statistics')} className="bg-white hover:bg-stone-100 border-2 border-amber-300 rounded-lg p-4 text-left transition font-semibold text-gray-900">
                     📊 Analytics Dashboard
                   </button>
-                  <button onClick={() => setActiveTab('shipping')} className="bg-white hover:bg-blue-50 border-2 border-indigo-300 rounded-lg p-4 text-left transition font-semibold text-gray-900">
+                  <button onClick={() => setActiveTab('shipping')} className="bg-white hover:bg-stone-100 border-2 border-amber-300 rounded-lg p-4 text-left transition font-semibold text-gray-900">
                     🚚 Shipping Settings
                   </button>
-                  <button onClick={() => setActiveTab('locations')} className="bg-white hover:bg-blue-50 border-2 border-indigo-300 rounded-lg p-4 text-left transition font-semibold text-gray-900">
+                  <button onClick={() => setActiveTab('locations')} className="bg-white hover:bg-stone-100 border-2 border-amber-300 rounded-lg p-4 text-left transition font-semibold text-gray-900">
                     🏪 Store Locations
                   </button>
                 </div>
@@ -2686,10 +2686,10 @@ export default function AdminDashboard() {
 
 function StatCard({ icon, label, value, color }) {
   const colors = {
-    blue: 'bg-blue-50 border-blue-200',
+    blue: 'bg-stone-100 border-stone-300',
     green: 'bg-green-50 border-green-200',
-    purple: 'bg-blue-50 border-blue-200',
-    orange: 'bg-orange-50 border-orange-200',
+    purple: 'bg-stone-100 border-stone-300',
+    orange: 'bg-amber-50 border-amber-200',
     red: 'bg-red-50 border-red-200'
   }
   return (

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react'import toast from 'react-hot-toast'
+import React, { useState, useEffect } from 'react'
+import toast from 'react-hot-toast'
 
 import axios from 'axios'
 
@@ -16,7 +17,7 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
     fetchDashboardStats()
     fetchDeletedItems()
     fetchDataMgmtStats()
-    
+
     // Real-time polling - 5 seconds on dashboard
     const interval = setInterval(() => {
       if (isRealTimeActive) {
@@ -26,7 +27,7 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
         setLastUpdate(new Date())
       }
     }, 5000)
-    
+
     return () => clearInterval(interval)
   }, [isRealTimeActive])
 
@@ -202,14 +203,14 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
 
   const MetricCard = ({ icon, label, value, subtext, color = 'blue', trend = null }) => {
     const colorClasses = {
-      blue: 'from-blue-500 to-blue-600 shadow-blue-200',
+      blue: 'from-stone-700 to-stone-800 shadow-stone-300',
       green: 'from-green-500 to-green-600 shadow-green-200',
-      purple: 'from-purple-500 to-purple-600 shadow-purple-200',
-      orange: 'from-orange-500 to-orange-600 shadow-orange-200',
+      purple: 'from-amber-700 to-amber-800 shadow-amber-200',
+      orange: 'from-amber-700 to-amber-800 shadow-amber-200',
       red: 'from-red-500 to-red-600 shadow-red-200',
-      indigo: 'from-indigo-500 to-indigo-600 shadow-indigo-200',
-      cyan: 'from-cyan-500 to-cyan-600 shadow-cyan-200',
-      pink: 'from-pink-500 to-pink-600 shadow-pink-200',
+      indigo: 'from-stone-600 to-stone-700 shadow-stone-300',
+      cyan: 'from-stone-950 to-stone-700 shadow-stone-300',
+      pink: 'from-yellow-800 to-yellow-900 shadow-amber-200',
     }
 
     const trendColor = trend > 0 ? 'text-green-500' : trend < 0 ? 'text-red-500' : 'text-gray-400'
@@ -233,14 +234,14 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
 
   const ActivityItem = ({ icon, title, value, time, color }) => {
     const colorClasses = {
-      blue: 'bg-blue-100 text-blue-700',
+      blue: 'bg-stone-100 text-amber-700',
       green: 'bg-green-100 text-green-700',
-      orange: 'bg-orange-100 text-orange-700',
-      purple: 'bg-purple-100 text-purple-700',
+      orange: 'bg-amber-100 text-amber-700',
+      purple: 'bg-yellow-100 text-yellow-900',
     }
 
     return (
-      <div className="flex items-center justify-between p-3 sm:p-4 hover:bg-gray-50 rounded-lg transition border-l-4" style={{ borderColor: { blue: '#3B82F6', green: '#10B981', orange: '#F59E0B', purple: '#A855F7' }[color] }}>
+      <div className="flex items-center justify-between p-3 sm:p-4 hover:bg-gray-50 rounded-lg transition border-l-4" style={{ borderColor: { blue: '#1c1917', green: '#10B981', orange: '#b45309', purple: '#713f12' }[color] }}>
         <div className="flex items-center gap-3 flex-1">
           <div className={`${colorClasses[color]} p-2 rounded-lg text-lg`}>{icon}</div>
           <div className="flex-1">
@@ -256,7 +257,7 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
   if (loading) {
     return (
       <div className="flex justify-center items-center h-96">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-600 border-opacity-80"></div>
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-amber-700 border-opacity-80"></div>
       </div>
     )
   }
@@ -286,18 +287,18 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
     <div className="space-y-6 sm:space-y-8">
       {/* Platform Reset Notice */}
       {resetStatus?.isReset && (
-        <div className="bg-orange-100 border-l-4 border-orange-600 p-4 rounded-lg">
-          <p className="font-bold text-orange-900">🔄 Platform Reset Active</p>
-          <p className="text-sm text-orange-800 mt-1">All data is temporarily hidden. Statistics, products, and orders will reappear when you restore the platform data.</p>
+        <div className="bg-amber-100 border-l-4 border-amber-700 p-4 rounded-lg">
+          <p className="font-bold text-amber-900">🔄 Platform Reset Active</p>
+          <p className="text-sm text-amber-900 mt-1">All data is temporarily hidden. Statistics, products, and orders will reappear when you restore the platform data.</p>
         </div>
       )}
 
       {/* Welcome Banner */}
-      <div className="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 rounded-2xl shadow-lg p-6 sm:p-8 text-white">
+      <div className="bg-gradient-to-r from-stone-900 via-stone-800 to-stone-700 rounded-2xl shadow-lg p-6 sm:p-8 text-white">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h2 className="text-2xl sm:text-3xl font-bold mb-2">Welcome to Your Dashboard 👋</h2>
-            <p className="text-blue-100">Real-time insights into your e-commerce platform performance</p>
+            <p className="text-stone-300">Real-time insights into your e-commerce platform performance</p>
           </div>
           <div className="text-5xl">📊</div>
         </div>
@@ -328,9 +329,9 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
       <div>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg sm:text-xl font-bold text-gray-900">Key Performance Indicators</h3>
-          <div className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2">
+          <div className="bg-stone-100 text-amber-700 px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2">
             <span>📅 THIS MONTH</span>
-            <span className="text-xs text-blue-600">({new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })})</span>
+            <span className="text-xs text-amber-700">({new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })})</span>
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -371,7 +372,7 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
       <div>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg sm:text-xl font-bold text-gray-900">Customer Analytics</h3>
-          <div className="bg-pink-100 text-pink-700 px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2">
+          <div className="bg-yellow-100 text-yellow-900 px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2">
             <span>👥 REGISTERED USERS</span>
           </div>
         </div>
@@ -476,7 +477,7 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
                 </div>
                 <div className="mt-4 w-full bg-gray-200 rounded-full h-2">
                   <div
-                    className={`h-2 rounded-full transition-all duration-300 ${colors[idx] === 'blue' ? 'bg-blue-600' : 'bg-purple-600'}`}
+                    className={`h-2 rounded-full transition-all duration-300 ${colors[idx] === 'blue' ? 'bg-stone-900' : 'bg-yellow-900'}`}
                     style={{ width: `${(categoryProducts.length / products.length) * 100}%` }}
                   ></div>
                 </div>
@@ -492,16 +493,16 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
         <div>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg sm:text-xl font-bold text-gray-900">Active Installment Plans</h3>
-            <div className="bg-purple-100 text-purple-700 px-4 py-2 rounded-full font-bold text-sm">
+            <div className="bg-yellow-100 text-yellow-900 px-4 py-2 rounded-full font-bold text-sm">
               💳 {installmentStats?.activeInstallments || 0} Active Plans
             </div>
           </div>
-          
+
           <div className="bg-white rounded-xl shadow-md overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="bg-gradient-to-r from-purple-50 to-pink-50 border-b-2 border-purple-200">
+                  <tr className="bg-gradient-to-r from-amber-50 to-yellow-50 border-b-2 border-yellow-200">
                     <th className="px-6 py-4 text-left text-sm font-bold text-gray-900">Customer</th>
                     <th className="px-6 py-4 text-left text-sm font-bold text-gray-900">Duration</th>
                     <th className="px-6 py-4 text-left text-sm font-bold text-gray-900">Total Amount</th>
@@ -522,7 +523,7 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
                           return (
                             <tr
                               key={`${customer.id}-${plan.id}-${idx}`}
-                              className="border-b hover:bg-purple-50 transition"
+                              className="border-b hover:bg-yellow-50 transition"
                             >
                               <td className="px-6 py-4">
                                 <div>
@@ -531,7 +532,7 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
                                 </div>
                               </td>
                               <td className="px-6 py-4">
-                                <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-semibold">
+                                <span className="bg-yellow-100 text-yellow-900 px-3 py-1 rounded-full text-sm font-semibold">
                                   {plan.duration} months
                                 </span>
                               </td>
@@ -547,7 +548,7 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
                               <td className="px-6 py-4">
                                 <div className="w-full bg-gray-200 rounded-full h-2">
                                   <div
-                                    className="h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-300"
+                                    className="h-2 rounded-full bg-gradient-to-r from-amber-700 to-yellow-900 transition-all duration-300"
                                     style={{ width: `${progress}%` }}
                                   ></div>
                                 </div>
@@ -558,7 +559,7 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
                                   progress === 100
                                     ? 'bg-green-100 text-green-700'
                                     : progress > 50
-                                    ? 'bg-blue-100 text-blue-700'
+                                    ? 'bg-stone-100 text-amber-700'
                                     : 'bg-yellow-100 text-yellow-700'
                                 }`}>
                                   {progress === 100 ? '✅ Complete' : progress > 50 ? '📊 Mid-way' : '⏳ Started'}
@@ -571,7 +572,7 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
                 </tbody>
               </table>
             </div>
-            
+
             {customers.filter(c => c.activeInstallments > 0).length === 0 && (
               <div className="p-8 text-center">
                 <div className="text-4xl mb-2">💳</div>
@@ -605,8 +606,8 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">Server Load</span>
-              <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
-                <span className="w-2 h-2 bg-blue-600 rounded-full"></span> Normal
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-stone-100 text-stone-900 rounded-full text-xs font-semibold">
+                <span className="w-2 h-2 bg-stone-900 rounded-full"></span> Normal
               </span>
             </div>
             <div className="pt-3 border-t border-gray-200">
@@ -687,7 +688,7 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
           </h3>
           <button
             onClick={() => setShowDataMgmt(!showDataMgmt)}
-            className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold hover:bg-blue-200 transition"
+            className="px-4 py-2 bg-stone-100 text-amber-700 rounded-lg text-sm font-semibold hover:bg-stone-200 transition"
           >
             {showDataMgmt ? '▼ Hide' : '▶ Show'}
           </button>
@@ -703,12 +704,12 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
               <p className="text-xs text-green-600 mb-1">Recoverable (48h)</p>
               <p className="text-2xl font-bold text-green-700">{dataMgmtStats.deletedInLast48h}</p>
             </div>
-            <div className="bg-orange-50 rounded-lg p-4">
-              <p className="text-xs text-orange-600 mb-1">Permanent Delete Ready</p>
-              <p className="text-2xl font-bold text-orange-700">{dataMgmtStats.deletedOlderThan48h}</p>
+            <div className="bg-amber-50 rounded-lg p-4">
+              <p className="text-xs text-amber-700 mb-1">Permanent Delete Ready</p>
+              <p className="text-2xl font-bold text-amber-700">{dataMgmtStats.deletedOlderThan48h}</p>
             </div>
-            <div className="bg-blue-50 rounded-lg p-4">
-              <p className="text-xs text-blue-600 mb-1">Breakdown</p>
+            <div className="bg-stone-100 rounded-lg p-4">
+              <p className="text-xs text-amber-700 mb-1">Breakdown</p>
               <p className="text-sm text-gray-600">P:{dataMgmtStats.breakdown.products} O:{dataMgmtStats.breakdown.orders} L:{dataMgmtStats.breakdown.locations}</p>
             </div>
           </div>
@@ -755,11 +756,11 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
                   <h4 className="font-semibold text-gray-900">♻️ Recover Deleted Items (48h Window)</h4>
                   <div className="text-sm text-gray-600">
                     {selectedRestoreItems.size > 0 && (
-                      <span className="font-semibold text-blue-600">{selectedRestoreItems.size} selected</span>
+                      <span className="font-semibold text-amber-700">{selectedRestoreItems.size} selected</span>
                     )}
                   </div>
                 </div>
-                
+
                 {selectedRestoreItems.size > 0 && (
                   <div className="mb-4 flex gap-2 justify-end">
                     <button
@@ -803,7 +804,7 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
                     const isSelected = selectedRestoreItems.has(item.id);
 
                     return (
-                      <div key={idx} className={`rounded-lg p-3 flex items-center gap-3 ${isSelected ? 'bg-blue-50 border-2 border-blue-300' : 'bg-gray-50'}`}>
+                      <div key={idx} className={`rounded-lg p-3 flex items-center gap-3 ${isSelected ? 'bg-stone-100 border-2 border-stone-300' : 'bg-gray-50'}`}>
                         <input
                           type="checkbox"
                           checked={isSelected}
@@ -853,15 +854,15 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
         <div>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg sm:text-xl font-bold text-gray-900">💳 Active Installment Plans</h3>
-            <div className="bg-purple-100 text-purple-700 px-4 py-2 rounded-full font-bold text-sm">
+            <div className="bg-yellow-100 text-yellow-900 px-4 py-2 rounded-full font-bold text-sm">
               {installmentStats?.activeInstallments || 0} Active Plans
             </div>
           </div>
-          
+
           <div className="bg-white rounded-xl shadow-md overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gradient-to-r from-purple-50 to-pink-50 border-b-2 border-purple-200">
+                <thead className="bg-gradient-to-r from-amber-50 to-yellow-50 border-b-2 border-yellow-200">
                   <tr>
                     <th className="px-4 sm:px-6 py-3 text-left text-sm font-bold text-gray-900">Customer</th>
                     <th className="px-4 sm:px-6 py-3 text-left text-sm font-bold text-gray-900">Duration</th>
@@ -873,14 +874,14 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
                 <tbody className="divide-y divide-gray-200">
                   {customers && customers.slice(0, 10).map((customer, idx) => {
                     if (!customer.activeInstallments || customer.activeInstallments === 0) return null;
-                    
+
                     return customer.installmentPlans
                       .filter(plan => plan.status === 'active')
                       .slice(0, 3)
                       .map((plan, planIdx) => {
                         const progress = plan.totalAmount > 0 ? (plan.paid / plan.totalAmount) * 100 : 0;
-                        const progressColor = progress < 33 ? 'bg-orange-500' : progress < 66 ? 'bg-yellow-500' : 'bg-green-500';
-                        
+                        const progressColor = progress < 33 ? 'bg-amber-700' : progress < 66 ? 'bg-yellow-900' : 'bg-green-500';
+
                         return (
                           <tr key={`${idx}-${planIdx}`} className="hover:bg-gray-50 transition">
                             <td className="px-4 sm:px-6 py-3">
@@ -900,7 +901,7 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
                             </td>
                             <td className="px-4 sm:px-6 py-3">
                               <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                                <div 
+                                <div
                                   className={`h-full ${progressColor} transition-all duration-300`}
                                   style={{ width: `${progress}%` }}
                                 ></div>
@@ -919,7 +920,7 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
                 </tbody>
               </table>
             </div>
-            
+
             {(!customers || customers.every(c => !c.activeInstallments || c.activeInstallments === 0)) && (
               <div className="p-6 text-center text-gray-500">
                 No active installment plans at the moment
@@ -933,24 +934,24 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
       <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl shadow-md p-6 sm:p-8">
         <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">Quick Actions</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <button 
+          <button
             onClick={onAddProduct}
-            className="bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-semibold transition shadow-md hover:shadow-lg transform hover:scale-105">
+            className="bg-stone-900 hover:bg-stone-900 text-white py-3 px-4 rounded-lg font-semibold transition shadow-md hover:shadow-lg transform hover:scale-105">
             ➕ Add Product
           </button>
-          <button 
+          <button
             onClick={onViewAnalytics}
             className="bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-semibold transition shadow-md hover:shadow-lg transform hover:scale-105">
             📊 View Analytics
           </button>
-          <button 
+          <button
             onClick={onManageTeam}
-            className="bg-purple-600 hover:bg-purple-700 text-white py-3 px-4 rounded-lg font-semibold transition shadow-md hover:shadow-lg transform hover:scale-105">
+            className="bg-yellow-900 hover:bg-yellow-900 text-white py-3 px-4 rounded-lg font-semibold transition shadow-md hover:shadow-lg transform hover:scale-105">
             👥 Manage Team
           </button>
-          <button 
+          <button
             onClick={onSettings}
-            className="bg-orange-600 hover:bg-orange-700 text-white py-3 px-4 rounded-lg font-semibold transition shadow-md hover:shadow-lg transform hover:scale-105">
+            className="bg-amber-800 hover:bg-amber-800 text-white py-3 px-4 rounded-lg font-semibold transition shadow-md hover:shadow-lg transform hover:scale-105">
             ⚙️ Settings
           </button>
         </div>

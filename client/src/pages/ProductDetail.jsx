@@ -74,7 +74,7 @@ export default function ProductDetail({ addToCart, toggleWishlist, isInWishlist,
       <main className="min-h-[70vh] flex items-center justify-center bg-gray-50 px-4">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-950">{t('productNotFound')}</h1>
-          <Link to="/products" className="mt-5 inline-flex rounded-md bg-blue-700 px-5 py-3 font-bold text-white">{t('backProducts')}</Link>
+          <Link to="/products" className="mt-5 inline-flex rounded-md bg-stone-900 px-5 py-3 font-bold text-white">{t('backProducts')}</Link>
         </div>
       </main>
     )
@@ -111,7 +111,7 @@ export default function ProductDetail({ addToCart, toggleWishlist, isInWishlist,
   return (
     <main className="bg-gray-50 min-h-screen">
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        <Link to="/products" className="text-sm font-semibold text-blue-700 hover:text-blue-900">{t('backProducts')}</Link>
+        <Link to="/products" className="text-sm font-semibold text-amber-700 hover:text-stone-900">{t('backProducts')}</Link>
 
         <div className="mt-6 grid gap-8 lg:grid-cols-2">
           <div>
@@ -122,7 +122,7 @@ export default function ProductDetail({ addToCart, toggleWishlist, isInWishlist,
             {variants.length > 1 && (
               <div className="mt-4 grid grid-cols-4 sm:grid-cols-6 gap-3">
                 {variants.map((variant) => (
-                  <button key={`${variant.color}-${variant.url}`} type="button" onClick={() => { setSelectedVariant(variant); setSelectedImage(variant.url) }} className={`aspect-square overflow-hidden rounded-xl border-2 ${selectedVariant?.url === variant.url ? 'border-blue-700' : 'border-gray-200'}`} aria-label={`Select ${variant.color || 'variant'}`}>
+                  <button key={`${variant.color}-${variant.url}`} type="button" onClick={() => { setSelectedVariant(variant); setSelectedImage(variant.url) }} className={`aspect-square overflow-hidden rounded-xl border-2 ${selectedVariant?.url === variant.url ? 'border-amber-700' : 'border-gray-200'}`} aria-label={`Select ${variant.color || 'variant'}`}>
                     <img src={resolveAssetUrl(variant.url)} alt={variant.color || displayProduct.displayName} className="h-full w-full object-cover" />
                   </button>
                 ))}
@@ -132,9 +132,9 @@ export default function ProductDetail({ addToCart, toggleWishlist, isInWishlist,
 
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="flex flex-wrap gap-2 mb-4">
-              {displayProduct.displayCategory && <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-800">{displayProduct.displayCategory}</span>}
-              {product.isNew && <span className="rounded-full bg-amber-400 px-3 py-1 text-xs font-bold text-gray-900">{t('new')}</span>}
-              {product.mostOrdered && <span className="rounded-full bg-blue-700 px-3 py-1 text-xs font-bold text-white">{t('popular')}</span>}
+              {displayProduct.displayCategory && <span className="rounded-full bg-stone-100 px-3 py-1 text-xs font-bold text-stone-900">{displayProduct.displayCategory}</span>}
+              {product.isNew && <span className="rounded-full bg-amber-700 px-3 py-1 text-xs font-bold text-gray-900">{t('new')}</span>}
+              {product.mostOrdered && <span className="rounded-full bg-stone-900 px-3 py-1 text-xs font-bold text-white">{t('popular')}</span>}
             </div>
 
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-950">{displayProduct.displayName}</h1>
@@ -146,7 +146,7 @@ export default function ProductDetail({ addToCart, toggleWishlist, isInWishlist,
                 {reviewSummary.reviewCount} customer review{reviewSummary.reviewCount === 1 ? '' : 's'}
               </span>
             </div>
-            <p className="mt-4 text-3xl font-bold text-blue-800">{formatXAF(product.price)}</p>
+            <p className="mt-4 text-3xl font-bold text-stone-900">{formatXAF(product.price)}</p>
 
             <div className={`mt-4 rounded-md px-4 py-3 text-sm font-semibold ${outOfStock ? 'bg-red-50 text-red-800' : 'bg-green-50 text-green-800'}`}>
               {outOfStock ? t('outOfStock') : t('inStockCount', { count: product.stock })}
@@ -168,7 +168,7 @@ export default function ProductDetail({ addToCart, toggleWishlist, isInWishlist,
                 <h2 className="font-bold text-gray-950 mb-3">{t('variant')}</h2>
                 <div className="flex flex-wrap gap-2">
                   {variants.map((variant) => (
-                    <button key={`${variant.color}-button`} type="button" onClick={() => { setSelectedVariant(variant); setSelectedImage(variant.url) }} className={`rounded-md border px-4 py-2 text-sm font-semibold ${selectedVariant?.url === variant.url ? 'border-blue-700 bg-blue-50 text-blue-800' : 'border-gray-300 text-gray-700'}`}>
+                    <button key={`${variant.color}-button`} type="button" onClick={() => { setSelectedVariant(variant); setSelectedImage(variant.url) }} className={`rounded-md border px-4 py-2 text-sm font-semibold ${selectedVariant?.url === variant.url ? 'border-amber-700 bg-stone-100 text-stone-900' : 'border-gray-300 text-gray-700'}`}>
                       {variant.color || t('option')}
                     </button>
                   ))}
@@ -183,7 +183,7 @@ export default function ProductDetail({ addToCart, toggleWishlist, isInWishlist,
             </div>
 
             <div className="mt-6 grid grid-cols-[1fr_56px] gap-3">
-              <button type="button" disabled={outOfStock} onClick={() => addToCart(product, quantity, selectedVariant)} className="rounded-md bg-blue-700 px-5 py-3 font-bold text-white hover:bg-blue-800 disabled:bg-gray-300 disabled:text-gray-500">
+              <button type="button" disabled={outOfStock} onClick={() => addToCart(product, quantity, selectedVariant)} className="rounded-md bg-stone-900 px-5 py-3 font-bold text-white hover:bg-stone-950 disabled:bg-gray-300 disabled:text-gray-500">
                 {t('addToCart')}
               </button>
               <button type="button" onClick={() => toggleWishlist(product)} className={`rounded-md border text-2xl ${isInWishlist(product.id) ? 'border-red-500 bg-red-500 text-white' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`} aria-label={isInWishlist(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}>
@@ -197,7 +197,7 @@ export default function ProductDetail({ addToCart, toggleWishlist, isInWishlist,
       <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-12">
         <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
           <form onSubmit={handleReviewSubmit} className="h-fit rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <p className="text-xs font-black uppercase tracking-[0.22em] text-blue-700">Customer feedback</p>
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-amber-700">Customer feedback</p>
             <h2 className="mt-2 text-2xl font-black text-gray-950">Rate this product</h2>
             <p className="mt-2 text-sm leading-relaxed text-gray-600">Share your experience so other customers can choose with confidence.</p>
 
@@ -207,7 +207,7 @@ export default function ProductDetail({ addToCart, toggleWishlist, isInWishlist,
                 value={reviewForm.customerName}
                 onChange={(event) => setReviewForm((current) => ({ ...current, customerName: event.target.value }))}
                 placeholder="Customer"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-blue-700 focus:ring-4 focus:ring-blue-100"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-amber-700 focus:ring-4 focus:ring-amber-100"
               />
             </div>
 
@@ -220,7 +220,7 @@ export default function ProductDetail({ addToCart, toggleWishlist, isInWishlist,
                     type="button"
                     onClick={() => setReviewForm((current) => ({ ...current, rating }))}
                     className={`h-10 w-10 rounded-full border text-lg font-black transition ${
-                      reviewForm.rating >= rating ? 'border-amber-400 bg-amber-100 text-amber-700' : 'border-gray-300 text-gray-400 hover:bg-gray-50'
+                      reviewForm.rating >= rating ? 'border-amber-700 bg-amber-100 text-amber-700' : 'border-gray-300 text-gray-400 hover:bg-gray-50'
                     }`}
                     aria-label={`${rating} star rating`}
                   >
@@ -237,11 +237,11 @@ export default function ProductDetail({ addToCart, toggleWishlist, isInWishlist,
                 onChange={(event) => setReviewForm((current) => ({ ...current, comment: event.target.value }))}
                 rows="4"
                 placeholder="Tell us what you liked, how it arrived, or who it is best for."
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-blue-700 focus:ring-4 focus:ring-blue-100"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-amber-700 focus:ring-4 focus:ring-amber-100"
               />
             </div>
 
-            <button type="submit" disabled={submittingReview} className="mt-5 w-full rounded-md bg-blue-700 px-5 py-3 font-black text-white transition hover:bg-blue-800 disabled:bg-gray-300">
+            <button type="submit" disabled={submittingReview} className="mt-5 w-full rounded-md bg-stone-900 px-5 py-3 font-black text-white transition hover:bg-stone-950 disabled:bg-gray-300">
               {submittingReview ? 'Saving...' : 'Submit review'}
             </button>
           </form>
@@ -249,7 +249,7 @@ export default function ProductDetail({ addToCart, toggleWishlist, isInWishlist,
           <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
             <div className="flex flex-col gap-2 border-b border-gray-100 pb-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.22em] text-blue-700">Reviews</p>
+                <p className="text-xs font-black uppercase tracking-[0.22em] text-amber-700">Reviews</p>
                 <h2 className="mt-2 text-2xl font-black text-gray-950">What customers are saying</h2>
               </div>
               <div className="text-sm font-bold text-gray-600">

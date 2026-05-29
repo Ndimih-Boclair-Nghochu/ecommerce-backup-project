@@ -13,12 +13,12 @@ function Filters({ categories, filters, setFilters, activeFilterCount, clearFilt
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-lg font-bold text-gray-950">{t('filters')}</h2>
-        {activeFilterCount > 0 && <button type="button" onClick={clearFilters} className="text-sm font-semibold text-blue-700">{t('clearAll')}</button>}
+        {activeFilterCount > 0 && <button type="button" onClick={clearFilters} className="text-sm font-semibold text-amber-700">{t('clearAll')}</button>}
       </div>
 
       <div>
         <label className="block text-sm font-bold text-gray-800 mb-2">{t('category')}</label>
-        <select value={filters.category} onChange={(event) => update({ category: event.target.value })} className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none">
+        <select value={filters.category} onChange={(event) => update({ category: event.target.value })} className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-amber-700 focus:outline-none">
           {categories.map((category) => <option key={category} value={category}>{category}</option>)}
         </select>
       </div>
@@ -26,8 +26,8 @@ function Filters({ categories, filters, setFilters, activeFilterCount, clearFilt
       <div>
         <label className="block text-sm font-bold text-gray-800 mb-2">{t('priceRange')}</label>
         <div className="grid grid-cols-2 gap-3">
-          <input type="number" min="0" placeholder={t('minXaf')} value={filters.minPrice} onChange={(event) => update({ minPrice: event.target.value })} className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none" />
-          <input type="number" min="0" placeholder={t('maxXaf')} value={filters.maxPrice} onChange={(event) => update({ maxPrice: event.target.value })} className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none" />
+          <input type="number" min="0" placeholder={t('minXaf')} value={filters.minPrice} onChange={(event) => update({ minPrice: event.target.value })} className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-amber-700 focus:outline-none" />
+          <input type="number" min="0" placeholder={t('maxXaf')} value={filters.maxPrice} onChange={(event) => update({ maxPrice: event.target.value })} className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-amber-700 focus:outline-none" />
         </div>
       </div>
 
@@ -92,15 +92,15 @@ export default function AllProducts({ addToCart, toggleWishlist, isInWishlist })
     <main className="min-h-screen bg-gray-50">
       <section className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-          <Link to="/" className="text-sm font-semibold text-blue-700 hover:text-blue-900">{t('backHome')}</Link>
+          <Link to="/" className="text-sm font-semibold text-amber-700 hover:text-stone-900">{t('backHome')}</Link>
           <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <h1 className="text-3xl sm:text-4xl font-bold text-gray-950">{t('products')}</h1>
               <p className="mt-2 text-gray-600">{t('showingProducts', { shown: filteredProducts.length, total: products.length })}</p>
             </div>
             <div className="flex flex-col sm:flex-row gap-3">
-              <input type="search" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder={t('searchProducts')} className="rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none" />
-              <select value={sortBy} onChange={(event) => setSortBy(event.target.value)} className="rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none">
+              <input type="search" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder={t('searchProducts')} className="rounded-md border border-gray-300 px-3 py-2 focus:border-amber-700 focus:outline-none" />
+              <select value={sortBy} onChange={(event) => setSortBy(event.target.value)} className="rounded-md border border-gray-300 px-3 py-2 focus:border-amber-700 focus:outline-none">
                 <option value="newest">{t('newest')}</option>
                 <option value="price-low">{t('priceLow')}</option>
                 <option value="price-high">{t('priceHigh')}</option>
@@ -108,7 +108,7 @@ export default function AllProducts({ addToCart, toggleWishlist, isInWishlist })
                 <option value="in-stock">{t('inStockFirst')}</option>
               </select>
               <button type="button" onClick={() => setFiltersOpen(true)} className="md:hidden rounded-md border border-gray-300 px-4 py-2 font-semibold">
-                {t('filters')} {activeFilterCount > 0 && <span className="ml-1 rounded-full bg-blue-700 px-2 py-0.5 text-xs text-white">{activeFilterCount}</span>}
+                {t('filters')} {activeFilterCount > 0 && <span className="ml-1 rounded-full bg-stone-900 px-2 py-0.5 text-xs text-white">{activeFilterCount}</span>}
               </button>
             </div>
           </div>
@@ -123,9 +123,9 @@ export default function AllProducts({ addToCart, toggleWishlist, isInWishlist })
 
           <div>
             {activeFilterCount > 0 && (
-              <div className="mb-4 flex items-center justify-between rounded-lg border border-blue-100 bg-blue-50 px-4 py-3">
-                <p className="text-sm font-semibold text-blue-900">{t('activeFilters', { count: activeFilterCount, plural: activeFilterCount === 1 ? '' : 's' })}</p>
-                <button type="button" onClick={clearFilters} className="text-sm font-bold text-blue-800">{t('clearAll')}</button>
+              <div className="mb-4 flex items-center justify-between rounded-lg border border-stone-200 bg-stone-100 px-4 py-3">
+                <p className="text-sm font-semibold text-stone-900">{t('activeFilters', { count: activeFilterCount, plural: activeFilterCount === 1 ? '' : 's' })}</p>
+                <button type="button" onClick={clearFilters} className="text-sm font-bold text-stone-900">{t('clearAll')}</button>
               </div>
             )}
 
@@ -141,7 +141,7 @@ export default function AllProducts({ addToCart, toggleWishlist, isInWishlist })
               <div className="rounded-lg border border-dashed border-gray-300 bg-white p-10 text-center">
                 <h2 className="text-xl font-bold text-gray-950">{t('noProductsFound')}</h2>
                 <p className="mt-2 text-gray-600">{t('changeFilters')}</p>
-                <button type="button" onClick={clearFilters} className="mt-5 rounded-md bg-blue-700 px-5 py-3 font-bold text-white hover:bg-blue-800">{t('clearFilters')}</button>
+                <button type="button" onClick={clearFilters} className="mt-5 rounded-md bg-stone-900 px-5 py-3 font-bold text-white hover:bg-stone-950">{t('clearFilters')}</button>
               </div>
             )}
           </div>
@@ -156,7 +156,7 @@ export default function AllProducts({ addToCart, toggleWishlist, isInWishlist })
             <button type="button" onClick={() => setFiltersOpen(false)} className="rounded-md border border-gray-300 px-3 py-2 text-xl leading-none">x</button>
           </div>
           <Filters categories={categories} filters={filters} setFilters={setFilters} activeFilterCount={activeFilterCount} clearFilters={clearFilters} />
-          <button type="button" onClick={() => setFiltersOpen(false)} className="mt-6 w-full rounded-md bg-blue-700 px-5 py-3 font-bold text-white">{t('showResults')}</button>
+          <button type="button" onClick={() => setFiltersOpen(false)} className="mt-6 w-full rounded-md bg-stone-900 px-5 py-3 font-bold text-white">{t('showResults')}</button>
         </div>
       </div>
     </main>

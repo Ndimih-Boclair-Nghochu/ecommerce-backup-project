@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react'import toast from 'react-hot-toast'
+import React, { useState, useEffect, useRef } from 'react'
+import toast from 'react-hot-toast'
 
 import axios from 'axios'
 import { resolveAssetUrl } from '../utils/format'
@@ -81,8 +82,8 @@ export default function AdminMessaging({ token }) {
 
     setLoading(true)
     try {
-      await axios.post('/api/admin/chats/' + selectedConversation + '/reply', 
-        { message: inputValue, imageUrl }, 
+      await axios.post('/api/admin/chats/' + selectedConversation + '/reply',
+        { message: inputValue, imageUrl },
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -233,7 +234,7 @@ export default function AdminMessaging({ token }) {
           imageUrl: msg.imageUrl
         }))
       }
-      
+
       const dataStr = JSON.stringify(chatData, null, 2)
       const dataBlob = new Blob([dataStr], { type: 'application/json' })
       const url = URL.createObjectURL(dataBlob)
@@ -250,33 +251,33 @@ export default function AdminMessaging({ token }) {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-screen max-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-screen max-h-screen bg-gradient-to-br from-gray-50 via-white to-stone-100">
       {/* Conversations List - Enhanced Design */}
       <div className="lg:col-span-1 bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col border border-gray-200">
         {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 text-white p-6 shadow-md">
+        <div className="bg-gradient-to-r from-stone-900 via-stone-800 to-stone-700 text-white p-6 shadow-md">
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <span>💬</span> Conversations
           </h2>
-          <p className="text-purple-100 text-sm mt-2 flex items-center gap-1">
+          <p className="text-stone-300 text-sm mt-2 flex items-center gap-1">
             <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
             {conversations.length} active chat(s)
           </p>
         </div>
 
         {/* Search Bar */}
-        <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 border-b-2 border-purple-200">
+        <div className="p-4 bg-gradient-to-r from-amber-50 to-stone-100 border-b-2 border-yellow-200">
           <input
             type="text"
             placeholder="🔍 Search by name, ID, or message..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-2.5 border-2 border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm transition"
+            className="w-full px-4 py-2.5 border-2 border-yellow-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 focus:border-transparent text-sm transition"
           />
         </div>
 
         {/* Conversations List */}
-        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-purple-400 scrollbar-track-purple-100">
+        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-stone-500 scrollbar-track-stone-200">
           {filteredConversations.length === 0 ? (
             <div className="p-6 text-center text-gray-500">
               <p className="text-5xl mb-2 animate-bounce">💭</p>
@@ -291,12 +292,12 @@ export default function AdminMessaging({ token }) {
                   onClick={() => loadConversation(conv.deviceId)}
                   className={`w-full p-4 text-left transition-all duration-200 ${
                     selectedConversation === conv.deviceId
-                      ? 'bg-gradient-to-r from-purple-100 to-blue-100 border-l-4 border-purple-600 shadow-md'
-                      : 'hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 border-l-4 border-transparent'
+                      ? 'bg-gradient-to-r from-yellow-100 to-stone-200 border-l-4 border-yellow-900 shadow-md'
+                      : 'hover:bg-gradient-to-r hover:from-amber-50 hover:to-stone-100 border-l-4 border-transparent'
                   }`}
                 >
                   <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-sm">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-amber-700 to-stone-950 flex items-center justify-center text-white font-bold text-sm">
                       {conv.userName?.[0]?.toUpperCase() || 'G'}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -319,7 +320,7 @@ export default function AdminMessaging({ token }) {
         {selectedConversation ? (
           <>
             {/* Chat Header */}
-            <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 text-white p-6 shadow-md">
+            <div className="bg-gradient-to-r from-stone-900 via-stone-800 to-stone-700 text-white p-6 shadow-md">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <h3 className="text-xl font-bold flex items-center gap-2">
@@ -328,17 +329,17 @@ export default function AdminMessaging({ token }) {
                     </div>
                     Chat with {conversations.find(c => c.deviceId === selectedConversation)?.userName || 'Customer'}
                   </h3>
-                  <p className="text-purple-100 text-sm mt-1 font-mono">📱 {selectedConversation.substring(0, 20)}...</p>
+                  <p className="text-stone-300 text-sm mt-1 font-mono">📱 {selectedConversation.substring(0, 20)}...</p>
                 </div>
                 <div className="flex gap-2 relative">
                   <button
                     onClick={() => setAnimationsEnabled(!animationsEnabled)}
-                    className={`p-3 rounded-lg transition-all ${animationsEnabled ? 'bg-blue-500 hover:bg-blue-400' : 'bg-gray-600 hover:bg-gray-500'}`}
+                    className={`p-3 rounded-lg transition-all ${animationsEnabled ? 'bg-stone-700 hover:bg-stone-600' : 'bg-gray-600 hover:bg-gray-500'}`}
                     title="Toggle animations"
                   >
                     {animationsEnabled ? '✨' : '⏸'}
                   </button>
-                  
+
                   {/* Action Menu */}
                   <div className="relative">
                     <button
@@ -348,9 +349,9 @@ export default function AdminMessaging({ token }) {
                     >
                       ⋮
                     </button>
-                    
+
                     {showActionMenu && (
-                      <div className="absolute right-0 top-full mt-2 bg-white text-gray-900 rounded-lg shadow-2xl border-2 border-purple-200 z-50 min-w-max">
+                      <div className="absolute right-0 top-full mt-2 bg-white text-gray-900 rounded-lg shadow-2xl border-2 border-yellow-200 z-50 min-w-max">
                         <button
                           onClick={muteChat}
                           className="w-full text-left px-4 py-3 hover:bg-gray-100 transition border-b border-gray-200 flex items-center gap-2 font-semibold text-sm"
@@ -365,13 +366,13 @@ export default function AdminMessaging({ token }) {
                         </button>
                         <button
                           onClick={clearChat}
-                          className="w-full text-left px-4 py-3 hover:bg-yellow-50 transition border-b border-gray-200 flex items-center gap-2 font-semibold text-sm text-orange-600"
+                          className="w-full text-left px-4 py-3 hover:bg-yellow-50 transition border-b border-gray-200 flex items-center gap-2 font-semibold text-sm text-amber-700"
                         >
                           🗑️ Clear Chat
                         </button>
                         <button
                           onClick={exportChat}
-                          className="w-full text-left px-4 py-3 hover:bg-blue-50 transition border-b border-gray-200 flex items-center gap-2 font-semibold text-sm text-blue-600"
+                          className="w-full text-left px-4 py-3 hover:bg-stone-100 transition border-b border-gray-200 flex items-center gap-2 font-semibold text-sm text-amber-700"
                         >
                           📥 Export Chat
                         </button>
@@ -389,7 +390,7 @@ export default function AdminMessaging({ token }) {
             </div>
 
             {/* Filter and Sort Controls */}
-            <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-b-2 border-purple-200 p-4 flex gap-3 items-center flex-wrap">
+            <div className="bg-gradient-to-r from-amber-50 to-stone-100 border-b-2 border-yellow-200 p-4 flex gap-3 items-center flex-wrap">
               <div className="flex gap-2 items-center">
                 <span className="text-sm font-semibold text-gray-700">📊 Filter:</span>
                 {['all', 'admin', 'customer'].map(opt => (
@@ -398,8 +399,8 @@ export default function AdminMessaging({ token }) {
                     onClick={() => setFilterBy(opt)}
                     className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                       filterBy === opt
-                        ? 'bg-purple-600 text-white shadow-md'
-                        : 'bg-white border-2 border-purple-300 text-gray-700 hover:border-purple-500'
+                        ? 'bg-yellow-900 text-white shadow-md'
+                        : 'bg-white border-2 border-yellow-200 text-gray-700 hover:border-yellow-200'
                     }`}
                   >
                     {opt === 'all' ? '📝 All' : opt === 'admin' ? '👨‍💼 Admin' : '👤 Customer'}
@@ -414,8 +415,8 @@ export default function AdminMessaging({ token }) {
                     onClick={() => setSortBy(opt)}
                     className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                       sortBy === opt
-                        ? 'bg-blue-600 text-white shadow-md'
-                        : 'bg-white border-2 border-blue-300 text-gray-700 hover:border-blue-500'
+                        ? 'bg-stone-900 text-white shadow-md'
+                        : 'bg-white border-2 border-stone-300 text-gray-700 hover:border-amber-700'
                     }`}
                   >
                     {opt === 'recent' ? '🔄 Recent' : '🔙 Oldest'}
@@ -425,7 +426,7 @@ export default function AdminMessaging({ token }) {
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-6 bg-gradient-to-b from-white via-gray-50 to-blue-50 space-y-4 scrollbar-thin scrollbar-thumb-purple-400 scrollbar-track-gray-100">
+            <div className="flex-1 overflow-y-auto p-6 bg-gradient-to-b from-white via-gray-50 to-stone-100 space-y-4 scrollbar-thin scrollbar-thumb-stone-500 scrollbar-track-gray-100">
               {filteredMessages.length === 0 ? (
                 <div className="text-center text-gray-500 py-12">
                   <p className="text-5xl mb-3 animate-bounce">👋</p>
@@ -441,16 +442,16 @@ export default function AdminMessaging({ token }) {
                     <div
                       className={`max-w-sm px-5 py-3 rounded-2xl transition-all duration-200 ${
                         msg.sender === 'admin'
-                          ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-br-none shadow-md hover:shadow-lg hover:from-purple-700 hover:to-blue-700'
-                          : 'bg-white border-2 border-gray-300 text-gray-900 rounded-bl-none shadow-sm hover:shadow-md hover:border-purple-300'
-                      } ${selectedMessageId === msg.id ? 'ring-2 ring-purple-400 ring-offset-2' : ''}`}
+                          ? 'bg-gradient-to-r from-stone-900 to-stone-800 text-white rounded-br-none shadow-md hover:shadow-lg hover:from-stone-950 hover:to-stone-900'
+                          : 'bg-white border-2 border-gray-300 text-gray-900 rounded-bl-none shadow-sm hover:shadow-md hover:border-yellow-200'
+                      } ${selectedMessageId === msg.id ? 'ring-2 ring-amber-700 ring-offset-2' : ''}`}
                     >
                       {msg.imageUrl && (
                         <>
                           {msg.imageUrl.toLowerCase().endsWith('.pdf') ? (
-                            <a 
+                            <a
                               href={resolveAssetUrl(msg.imageUrl)}
-                              target="_blank" 
+                              target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-2 bg-red-100 hover:bg-red-200 px-3 py-2 rounded-lg border-2 border-red-500 transition cursor-pointer mb-2 shadow-md"
                               title="Click to open PDF"
@@ -459,14 +460,14 @@ export default function AdminMessaging({ token }) {
                               <span className="text-sm font-semibold text-red-700">PDF Receipt</span>
                             </a>
                           ) : (
-                            <img 
+                            <img
                               src={resolveAssetUrl(msg.imageUrl)}
-                              alt="Message attachment" 
-                              className="w-48 h-48 object-cover rounded-lg mb-2 cursor-pointer hover:opacity-90 transition shadow-md border-2 border-gray-300" 
+                              alt="Message attachment"
+                              className="w-48 h-48 object-cover rounded-lg mb-2 cursor-pointer hover:opacity-90 transition shadow-md border-2 border-gray-300"
                               onClick={(e) => {
                                 e.stopPropagation()
                                 window.open(resolveAssetUrl(msg.imageUrl), '_blank')
-                              }} 
+                              }}
                             />
                           )}
                         </>
@@ -474,7 +475,7 @@ export default function AdminMessaging({ token }) {
                       <p className="text-sm leading-relaxed font-medium">{msg.message}</p>
                       <p className={`text-xs mt-2.5 font-semibold flex items-center gap-1 ${
                         msg.sender === 'admin'
-                          ? 'text-purple-100'
+                          ? 'text-stone-300'
                           : 'text-gray-600'
                       }`}>
                         🕐 {new Date(msg.timestamp).toLocaleTimeString()} {msg.sender === 'admin' && '✓✓'}
@@ -495,9 +496,9 @@ export default function AdminMessaging({ token }) {
                       📄
                     </div>
                   ) : (
-                    <img src={imagePreview} alt="Preview" className="w-24 h-24 object-cover rounded-lg border-2 border-purple-500 shadow-md" />
+                    <img src={imagePreview} alt="Preview" className="w-24 h-24 object-cover rounded-lg border-2 border-yellow-200 shadow-md" />
                   )}
-                  <button 
+                  <button
                     type="button"
                     onClick={() => {
                       setSelectedImage(null)
@@ -516,7 +517,7 @@ export default function AdminMessaging({ token }) {
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                   placeholder="Type your response... (Shift+Enter for new line)"
-                  className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent transition shadow-sm"
+                  className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 focus:border-transparent transition shadow-sm"
                   disabled={loading || uploading}
                 />
                 <input
@@ -531,14 +532,14 @@ export default function AdminMessaging({ token }) {
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploading || loading}
                   title="Attach image or PDF"
-                  className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-4 py-3 rounded-lg transition disabled:opacity-50 shadow-md"
+                  className="bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white px-4 py-3 rounded-lg transition disabled:opacity-50 shadow-md"
                 >
                   📎
                 </button>
                 <button
                   onClick={handleSendMessage}
                   disabled={loading || uploading || (!inputValue.trim() && !selectedImage)}
-                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed font-bold shadow-md hover:shadow-lg"
+                  className="bg-gradient-to-r from-stone-900 to-stone-800 hover:from-stone-950 hover:to-stone-900 text-white px-8 py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed font-bold shadow-md hover:shadow-lg"
                 >
                   {loading || uploading ? '⏳' : '📤 Send'}
                 </button>

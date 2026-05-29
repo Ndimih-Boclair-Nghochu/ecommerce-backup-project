@@ -23,7 +23,7 @@ export default function Wishlist({ wishlist, addToCart, toggleWishlist }) {
         <section className="max-w-md text-center">
           <h1 className="text-3xl font-bold text-gray-950">{t('emptyWishlist')}</h1>
           <p className="mt-3 text-gray-600">{t('saveProducts')}</p>
-          <Link to="/products" className="mt-6 inline-flex rounded-md bg-blue-700 px-5 py-3 font-bold text-white hover:bg-blue-800">
+          <Link to="/products" className="mt-6 inline-flex rounded-md bg-stone-900 px-5 py-3 font-bold text-white hover:bg-stone-950">
             {t('browseProducts')}
           </Link>
         </section>
@@ -36,11 +36,11 @@ export default function Wishlist({ wishlist, addToCart, toggleWishlist }) {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
           <div>
-            <Link to="/products" className="text-sm font-semibold text-blue-700 hover:text-blue-900">{t('backProducts')}</Link>
+            <Link to="/products" className="text-sm font-semibold text-amber-700 hover:text-stone-900">{t('backProducts')}</Link>
             <h1 className="mt-3 text-3xl sm:text-4xl font-bold text-gray-950">{t('wishlist')}</h1>
             <p className="mt-2 text-gray-600">{t('savedItems', { count: wishlist.length, plural: wishlist.length === 1 ? '' : 's' })}</p>
           </div>
-          <button type="button" onClick={addAllToCart} className="rounded-md bg-blue-700 px-5 py-3 font-bold text-white hover:bg-blue-800">
+          <button type="button" onClick={addAllToCart} className="rounded-md bg-stone-900 px-5 py-3 font-bold text-white hover:bg-stone-950">
             {t('addAllStock')}
           </button>
         </div>

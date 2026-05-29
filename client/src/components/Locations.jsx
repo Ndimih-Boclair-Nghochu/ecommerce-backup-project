@@ -35,7 +35,7 @@ export default function Locations() {
     <section className="py-12 sm:py-16 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-8 sm:mb-12">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-blue-700">Store locations</p>
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-amber-700">Store locations</p>
           <h2 className="mt-2 text-3xl font-black text-gray-950 sm:text-4xl">Visit Our Store</h2>
           <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-gray-600 sm:text-base">Find us at convenient locations near you.</p>
         </div>
@@ -47,7 +47,7 @@ export default function Locations() {
           </div>
           <button
             onClick={fetchLocations}
-            className="px-4 py-2 rounded-lg text-sm font-semibold transition bg-blue-100 text-blue-700 hover:bg-blue-200"
+            className="px-4 py-2 rounded-lg text-sm font-semibold transition bg-stone-100 text-amber-700 hover:bg-stone-200"
           >
             Refresh
           </button>
@@ -63,7 +63,7 @@ export default function Locations() {
               <div className="p-4 sm:p-8">
                 <div className="flex flex-col md:flex-row gap-6 sm:gap-8">
                   <div className="flex-1">
-                    <h4 className="text-lg sm:text-xl font-bold text-blue-600 mb-4">{mainStore.name}</h4>
+                    <h4 className="text-lg sm:text-xl font-bold text-amber-700 mb-4">{mainStore.name}</h4>
                     <div className="space-y-3 text-gray-700">
                       <div className="flex gap-3">
                         <span className="text-xl sm:text-2xl">📍</span>
@@ -104,11 +104,11 @@ export default function Locations() {
                         <div className="text-4xl sm:text-5xl mb-2 sm:mb-3">📍</div>
                         <p className="font-semibold text-gray-700">{mainStore.name}</p>
                         <p className="text-sm text-gray-600 mt-2">{mainStore.address}</p>
-                        <a 
+                        <a
                           href={`https://maps.google.com/?q=${encodeURIComponent(mainStore.address)}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
+                          className="mt-4 bg-stone-900 hover:bg-stone-900 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
                         >
                           Open in Google Maps
                         </a>
@@ -134,7 +134,7 @@ export default function Locations() {
                     <div className="flex flex-col md:flex-row gap-6 sm:gap-8">
                       {/* Info */}
                       <div className="flex-1">
-                        <h4 className="text-lg sm:text-xl font-bold text-blue-600 mb-4">{location.name}</h4>
+                        <h4 className="text-lg sm:text-xl font-bold text-amber-700 mb-4">{location.name}</h4>
                         <div className="space-y-3 text-gray-700">
                           <div className="flex gap-3">
                             <span className="text-xl sm:text-2xl">📍</span>
@@ -184,11 +184,11 @@ export default function Locations() {
                             <div className="text-4xl sm:text-5xl mb-2 sm:mb-3">📍</div>
                             <p className="font-semibold text-gray-700">{location.name}</p>
                             <p className="text-sm text-gray-600 mt-2">{location.address}</p>
-                            <a 
+                            <a
                               href={`https://maps.google.com/?q=${encodeURIComponent(location.address)}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
+                              className="mt-4 bg-stone-900 hover:bg-stone-900 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
                             >
                               Open in Google Maps
                             </a>

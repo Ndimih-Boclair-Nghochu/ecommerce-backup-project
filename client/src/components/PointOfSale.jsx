@@ -17,7 +17,7 @@ export default function PointOfSale({ token }) {
   const [generatedReceipt, setGeneratedReceipt] = useState(null)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState({ type: '', text: '' })
-  
+
   // Product catalog states
   const [activeTab, setActiveTab] = useState('manual')
   const [platformProducts, setPlatformProducts] = useState([])
@@ -134,7 +134,7 @@ export default function PointOfSale({ token }) {
       })
 
       setGeneratedReceipt(receiptData)
-      
+
       // Auto-print after a short delay
       setTimeout(() => {
         printReceiptAuto(receiptData)
@@ -267,14 +267,14 @@ export default function PointOfSale({ token }) {
             <p>ID: ${generatedReceipt.id}</p>
             <p>${generatedReceipt.createdAt}</p>
           </div>
-          
+
           <div class="divider"></div>
-          
+
           <p><strong>Customer:</strong> ${generatedReceipt.customer.name}</p>
           ${generatedReceipt.customer.phone ? `<p><strong>Phone:</strong> ${generatedReceipt.customer.phone}</p>` : ''}
-          
+
           <div class="divider"></div>
-          
+
           <div class="items">
             <strong>Items:</strong>
             ${generatedReceipt.items.map(item => `
@@ -291,9 +291,9 @@ export default function PointOfSale({ token }) {
               </div>
             `).join('')}
           </div>
-          
+
           <div class="divider"></div>
-          
+
           <div class="totals">
             <div class="total-row">
               <span>Subtotal:</span>
@@ -310,9 +310,9 @@ export default function PointOfSale({ token }) {
               <span>XAF ${generatedReceipt.totals.total.toLocaleString()}</span>
             </div>
           </div>
-          
+
           <div class="divider"></div>
-          
+
           <div class="footer">
             <p>Thank you for your purchase!</p>
             <p>${new Date().toLocaleDateString()}</p>
@@ -355,14 +355,14 @@ export default function PointOfSale({ token }) {
             <p>ID: ${receipt.id}</p>
             <p>${receipt.createdAt}</p>
           </div>
-          
+
           <div class="divider"></div>
-          
+
           <p><strong>Customer:</strong> ${receipt.customer.name}</p>
           ${receipt.customer.phone ? `<p><strong>Phone:</strong> ${receipt.customer.phone}</p>` : ''}
-          
+
           <div class="divider"></div>
-          
+
           <div class="items">
             <strong>Items:</strong>
             ${receipt.items.map(item => `
@@ -379,9 +379,9 @@ export default function PointOfSale({ token }) {
               </div>
             `).join('')}
           </div>
-          
+
           <div class="divider"></div>
-          
+
           <div class="totals">
             <div class="total-row">
               <span>Subtotal:</span>
@@ -398,9 +398,9 @@ export default function PointOfSale({ token }) {
               <span>XAF ${receipt.totals.total.toLocaleString()}</span>
             </div>
           </div>
-          
+
           <div class="divider"></div>
-          
+
           <div class="footer">
             <p>Thank you for your purchase!</p>
             <p>${new Date().toLocaleDateString()}</p>
@@ -429,7 +429,7 @@ export default function PointOfSale({ token }) {
           </div>
         )}
 
-        <div className="bg-white rounded-xl shadow-md p-6 border-2 border-blue-200 max-w-md mx-auto">
+        <div className="bg-white rounded-xl shadow-md p-6 border-2 border-stone-300 max-w-md mx-auto">
           <div className="bg-gray-50 p-6 rounded-lg font-mono text-sm border border-gray-300 mb-6">
             <div className="text-center mb-4">
               <h2 className="text-lg font-bold">{generatedReceipt.platformName}</h2>
@@ -494,7 +494,7 @@ export default function PointOfSale({ token }) {
           <div className="flex gap-3">
             <button
               onClick={printReceipt}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-bold transition"
+              className="flex-1 bg-stone-900 hover:bg-stone-900 text-white py-2 rounded-lg font-bold transition"
             >
               🖨️ Print Receipt
             </button>
@@ -524,12 +524,12 @@ export default function PointOfSale({ token }) {
       )}
 
       {/* TAB SELECTOR */}
-      <div className="flex gap-2 bg-white rounded-xl shadow-md p-2 border-2 border-purple-200">
+      <div className="flex gap-2 bg-white rounded-xl shadow-md p-2 border-2 border-yellow-200">
         <button
           onClick={() => setActiveTab('manual')}
           className={`flex-1 px-4 py-3 rounded-lg font-bold transition ${
             activeTab === 'manual'
-              ? 'bg-blue-600 text-white shadow-lg'
+              ? 'bg-stone-900 text-white shadow-lg'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
@@ -550,13 +550,13 @@ export default function PointOfSale({ token }) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: Add Items or Select Products */}
         <div className="lg:col-span-2 space-y-6">
-          
+
           {/* MANUAL ENTRY TAB */}
           {activeTab === 'manual' && (
-            <div className="bg-white rounded-xl shadow-md p-6 border-2 border-blue-200">
+            <div className="bg-white rounded-xl shadow-md p-6 border-2 border-stone-300">
               <h3 className="text-lg font-bold text-gray-900 mb-4">✏️ Write Manually</h3>
               <p className="text-xs text-gray-600 mb-4">Enter item details manually for custom receipts</p>
-              
+
               <div className="space-y-3">
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">Item Name</label>
@@ -565,7 +565,7 @@ export default function PointOfSale({ token }) {
                     placeholder="e.g., iPhone 15 Pro"
                     value={itemInput.itemName}
                     onChange={(e) => setItemInput({ ...itemInput, itemName: e.target.value })}
-                    className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-sm"
+                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 text-sm"
                   />
                 </div>
 
@@ -577,7 +577,7 @@ export default function PointOfSale({ token }) {
                       placeholder="0"
                       value={itemInput.price}
                       onChange={(e) => setItemInput({ ...itemInput, price: e.target.value })}
-                      className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-sm"
+                      className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 text-sm"
                     />
                   </div>
                   <div>
@@ -587,7 +587,7 @@ export default function PointOfSale({ token }) {
                       min="1"
                       value={itemInput.quantity}
                       onChange={(e) => setItemInput({ ...itemInput, quantity: parseInt(e.target.value) || 1 })}
-                      className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-sm"
+                      className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 text-sm"
                     />
                   </div>
                 </div>
@@ -595,20 +595,20 @@ export default function PointOfSale({ token }) {
                 <button
                   onClick={addItem}
                   disabled={!itemInput.itemName || !itemInput.price}
-                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white py-2 rounded-lg font-bold transition"
+                  className="w-full bg-stone-900 hover:bg-stone-900 disabled:opacity-50 text-white py-2 rounded-lg font-bold transition"
                 >
                   ➕ Add Item
                 </button>
               </div>
             </div>
           )}
-          
+
           {/* PRODUCT SELECTION TAB */}
           {activeTab === 'products' && (
             <div className="bg-white rounded-xl shadow-md p-6 border-2 border-green-200">
               <h3 className="text-lg font-bold text-gray-900 mb-4">🛍️ Select from Catalog</h3>
               <p className="text-xs text-gray-600 mb-4">Click to add to cart or ⚡ to print immediately</p>
-              
+
               {/* Search */}
               <div className="mb-4">
                 <input
@@ -619,7 +619,7 @@ export default function PointOfSale({ token }) {
                   className="w-full px-3 py-2 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600 text-sm"
                 />
               </div>
-              
+
               {/* Products Grid */}
               {productsLoading ? (
                 <div className="text-center py-8">
@@ -633,7 +633,7 @@ export default function PointOfSale({ token }) {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-96 overflow-y-auto">
                   {platformProducts
-                    .filter(product => 
+                    .filter(product =>
                       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                       (product.category && product.category.toLowerCase().includes(searchQuery.toLowerCase()))
                     )
@@ -651,7 +651,7 @@ export default function PointOfSale({ token }) {
                           </button>
                           <button
                             onClick={() => quickAddAndPrint(product)}
-                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded text-xs font-bold transition"
+                            className="flex-1 bg-stone-900 hover:bg-stone-900 text-white py-1.5 rounded text-xs font-bold transition"
                             title="Add and print immediately"
                           >
                             ⚡ Print
@@ -663,14 +663,14 @@ export default function PointOfSale({ token }) {
               )}
             </div>
           )}
-          
+
           {/* Items in Cart */}
           {items.length > 0 && (
-            <div className="bg-white rounded-xl shadow-md p-6 border-2 border-purple-200">
+            <div className="bg-white rounded-xl shadow-md p-6 border-2 border-yellow-200">
               <h3 className="text-lg font-bold text-gray-900 mb-4">🛒 Cart Items ({items.length})</h3>
               <div className="space-y-2 max-h-40 overflow-y-auto">
                 {items.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between bg-purple-50 p-2 rounded border border-purple-200">
+                  <div key={item.id} className="flex items-center justify-between bg-yellow-50 p-2 rounded border border-yellow-200">
                     <div className="flex-1">
                       <p className="font-bold text-sm text-gray-900">{item.name}</p>
                       <p className="text-xs text-gray-600">{item.quantity}x XAF {item.price.toLocaleString()}</p>
@@ -691,9 +691,9 @@ export default function PointOfSale({ token }) {
         {/* Right: Customer Info & Totals */}
         <div className="space-y-6">
           {/* Customer Info */}
-          <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl shadow-md p-6 border-2 border-purple-200">
-            <h3 className="text-lg font-bold text-purple-900 mb-4">👤 Customer</h3>
-            
+          <div className="bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl shadow-md p-6 border-2 border-yellow-200">
+            <h3 className="text-lg font-bold text-yellow-900 mb-4">👤 Customer</h3>
+
             <div className="space-y-3">
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">Name *</label>
@@ -702,7 +702,7 @@ export default function PointOfSale({ token }) {
                   placeholder="Customer name"
                   value={customerInfo.name}
                   onChange={(e) => setCustomerInfo({ ...customerInfo, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 text-sm"
+                  className="w-full px-3 py-2 border border-yellow-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 text-sm"
                 />
               </div>
 
@@ -713,7 +713,7 @@ export default function PointOfSale({ token }) {
                   placeholder="+237 6 XX XXX XXX"
                   value={customerInfo.phone}
                   onChange={(e) => setCustomerInfo({ ...customerInfo, phone: e.target.value })}
-                  className="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 text-sm"
+                  className="w-full px-3 py-2 border border-yellow-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 text-sm"
                 />
               </div>
             </div>
@@ -722,7 +722,7 @@ export default function PointOfSale({ token }) {
           {/* Discount & Totals */}
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl shadow-md p-6 border-2 border-green-200">
             <h3 className="text-lg font-bold text-green-900 mb-4">💰 Totals</h3>
-            
+
             <div className="space-y-3 mb-4">
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">Discount %</label>
