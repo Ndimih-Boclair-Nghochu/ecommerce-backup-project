@@ -1614,6 +1614,16 @@ function isLocalPostgresConnectionRefused(err) {
   ));
 }
 
+function isDatabaseConnectivityError(err) {
+  const networkCodes = new Set(['ECONNREFUSED', 'ETIMEDOUT', 'ENOTFOUND', 'EAI_AGAIN']);
+  if (networkCodes.has(err?.code)) return true;
+  return Array.isArray(err?.errors) && err.errors.some((item) => networkCodes.has(item?.code));
+}
+
+function isDatabaseConfigurationError(err) {
+  return new Set(['28P01', '28000', '3D000']).has(err?.code);
+}
+
 function logStartupError(err) {
   if (err?.code === 'MISSING_DATABASE_URL' || isLocalPostgresConnectionRefused(err)) {
     console.error('Server failed to start: DATABASE_URL is missing or pointing to local PostgreSQL.');
@@ -1621,6 +1631,23 @@ function logStartupError(err) {
     console.error('Recommended fix: Render Dashboard -> Blueprints -> New Blueprint Instance -> select this repo -> set ADMIN_PASSWORD when prompted.');
     console.error('Existing service fix: create a Render PostgreSQL database, then add DATABASE_URL from its Internal Database URL, JWT_SECRET, ADMIN_EMAIL, and ADMIN_PASSWORD in the Web Service environment variables.');
     console.error('Full checklist: RENDER_DEPLOYMENT.md in the repository root.');
+    if (process.env.DEBUG_STARTUP === 'true') console.error(err);
+    return;
+  }
+
+  if (isDatabaseConfigurationError(err)) {
+    console.error('Server failed to start: PostgreSQL rejected the configured DATABASE_URL.');
+    console.error('Check that DATABASE_URL is copied exactly from Render PostgreSQL, including username, password, host, port, and database name.');
+    console.error('If this is a manual Web Service, use the database Internal Database URL when possible, then redeploy.');
+    if (process.env.DEBUG_STARTUP === 'true') console.error(err);
+    return;
+  }
+
+  if (isDatabaseConnectivityError(err)) {
+    console.error('Server failed to start: PostgreSQL could not be reached with the configured DATABASE_URL.');
+    console.error('On Render, use the PostgreSQL Internal Database URL for DATABASE_URL and keep the web service in the same region as the database.');
+    console.error('If you pasted the External Database URL or a URL with sslmode=require, set DATABASE_SSL=true.');
+    console.error('The database connection attempt timed out quickly so the service does not hang behind a browser timeout.');
     if (process.env.DEBUG_STARTUP === 'true') console.error(err);
     return;
   }

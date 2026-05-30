@@ -41,6 +41,7 @@ If you want to keep the Web Service that already exists:
 ```text
 DATABASE_URL=<paste the Internal Database URL>
 DATABASE_SSL=false
+DATABASE_CONNECTION_TIMEOUT_MS=10000
 JWT_SECRET=<long random string, at least 32 characters>
 ADMIN_EMAIL=ndimihboclair4@gmail.com
 ADMIN_PASSWORD=<first admin password>
@@ -63,6 +64,8 @@ Health Check Path: /api/health
 ## Important Notes
 
 - Do not use `localhost`, `127.0.0.1`, or `::1` for `DATABASE_URL` on Render.
+- Use Render's **Internal Database URL** when the web service and PostgreSQL database are in the same region.
+- If you use the **External Database URL** or a URL containing `sslmode=require`, set `DATABASE_SSL=true`.
 - Do not commit real passwords or database URLs to GitHub.
 - `ADMIN_PASSWORD` is used during migration to create/update the super admin, then the app stores a bcrypt hash in PostgreSQL.
 - After the first successful deploy, you can replace `ADMIN_PASSWORD` with `ADMIN_PASSWORD_HASH` if you prefer.
