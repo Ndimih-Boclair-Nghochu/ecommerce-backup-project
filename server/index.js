@@ -1583,7 +1583,51 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(clientBuildPath, 'index.html'));
 });
 
+function isManagedDeploymentRuntime() {
+  return Boolean(
+    process.env.RENDER ||
+    process.env.RENDER_SERVICE_ID ||
+    process.env.RENDER_EXTERNAL_URL ||
+    process.env.NODE_ENV === 'production'
+  );
+}
+
+function createMissingDatabaseUrlError() {
+  const err = new Error(
+    [
+      'DATABASE_URL is not configured for this deployment.',
+      'Render web services do not include PostgreSQL on localhost, so the app cannot use ::1:5432 or 127.0.0.1:5432.',
+      'Create a Render PostgreSQL database and set DATABASE_URL to its internal connection string, or deploy this repository as a Render Blueprint with render.yaml.'
+    ].join(' ')
+  );
+  err.code = 'MISSING_DATABASE_URL';
+  err.expose = true;
+  return err;
+}
+
+function isLocalPostgresConnectionRefused(err) {
+  if (err?.code !== 'ECONNREFUSED') return false;
+  const errors = Array.isArray(err.errors) ? err.errors : [err];
+  return errors.some((item) => (
+    item?.port === 5432 &&
+    (item?.address === '127.0.0.1' || item?.address === '::1')
+  ));
+}
+
+function logStartupError(err) {
+  if (err?.code === 'MISSING_DATABASE_URL' || isLocalPostgresConnectionRefused(err)) {
+    console.error('Server failed to start: DATABASE_URL is missing or pointing to local PostgreSQL.');
+    console.error('Fix on Render: create/link a Render PostgreSQL database and set DATABASE_URL to its internal connection string.');
+    console.error('This repo now includes render.yaml so a Blueprint deploy can create the web service, database, and JWT_SECRET together.');
+    if (process.env.DEBUG_STARTUP === 'true') console.error(err);
+    return;
+  }
+
+  console.error('Server failed to start:', err);
+}
+
 async function start() {
+  if (!process.env.DATABASE_URL && isManagedDeploymentRuntime()) throw createMissingDatabaseUrlError();
   if (!JWT_SECRET) console.warn('JWT_SECRET is not configured. Admin login will fail until it is set.');
   await migrate({ close: false });
   app.listen(PORT, () => {
@@ -1603,7 +1647,7 @@ process.on('SIGINT', async () => {
 
 if (require.main === module) {
   start().catch((err) => {
-    console.error('Server failed to start:', err);
+    logStartupError(err);
     process.exit(1);
   });
 }
