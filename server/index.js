@@ -1617,8 +1617,10 @@ function isLocalPostgresConnectionRefused(err) {
 function logStartupError(err) {
   if (err?.code === 'MISSING_DATABASE_URL' || isLocalPostgresConnectionRefused(err)) {
     console.error('Server failed to start: DATABASE_URL is missing or pointing to local PostgreSQL.');
-    console.error('Fix on Render: create/link a Render PostgreSQL database and set DATABASE_URL to its internal connection string.');
-    console.error('This repo now includes render.yaml so a Blueprint deploy can create the web service, database, and JWT_SECRET together.');
+    console.error('Render manual Web Services ignore render.yaml envVars. If the build log shows your custom build command, this service was not created from the Blueprint.');
+    console.error('Recommended fix: Render Dashboard -> Blueprints -> New Blueprint Instance -> select this repo -> set ADMIN_PASSWORD when prompted.');
+    console.error('Existing service fix: create a Render PostgreSQL database, then add DATABASE_URL from its Internal Database URL, JWT_SECRET, ADMIN_EMAIL, and ADMIN_PASSWORD in the Web Service environment variables.');
+    console.error('Full checklist: RENDER_DEPLOYMENT.md in the repository root.');
     if (process.env.DEBUG_STARTUP === 'true') console.error(err);
     return;
   }

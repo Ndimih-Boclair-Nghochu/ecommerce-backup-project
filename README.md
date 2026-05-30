@@ -37,6 +37,12 @@ npm run build
 npm start
 ```
 
+## Render Deployment
+
+Use `RENDER_DEPLOYMENT.md` for Render setup. The short version: deploy this repo as a Render Blueprint so `render.yaml` creates the PostgreSQL database, `DATABASE_URL`, and `JWT_SECRET` together.
+
+If you already created a manual Render Web Service, add `DATABASE_URL`, `DATABASE_SSL=false`, `JWT_SECRET`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` in the Web Service environment variables before redeploying.
+
 ## Admin Access
 
 Navigate to `/admin` and log in with the admin email and password configured in `server/.env`.
