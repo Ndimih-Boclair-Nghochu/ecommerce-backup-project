@@ -20,10 +20,10 @@ function StatusStepper({ status }) {
         const active = index <= currentIndex
         return (
           <div key={step} className="text-center">
-            <div className={`mx-auto h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold ${active ? 'bg-stone-900 text-white' : 'bg-gray-200 text-gray-600'}`}>
+            <div className={`mx-auto h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold ${active ? 'bg-blue-700 text-white' : 'bg-gray-200 text-gray-600'}`}>
               {index + 1}
             </div>
-            <p className={`mt-2 text-xs font-semibold capitalize ${active ? 'text-stone-900' : 'text-gray-500'}`}>{step}</p>
+            <p className={`mt-2 text-xs font-semibold capitalize ${active ? 'text-blue-800' : 'text-gray-500'}`}>{step}</p>
           </div>
         )
       })}
@@ -68,7 +68,7 @@ export default function OrderTracking({ settings }) {
 
       <section className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
         <div className="text-center mb-8">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-amber-700">Order tracking</p>
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-blue-700">Order tracking</p>
           <h1 className="mt-2 text-3xl font-black text-gray-950 sm:text-4xl">Track Your Order</h1>
           <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-gray-600">
             Use your order ID for the fastest result, or search with the email or phone number used at checkout.
@@ -78,17 +78,17 @@ export default function OrderTracking({ settings }) {
         <form onSubmit={handleSearch} className="grid gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm md:grid-cols-[1fr_1fr_1fr_auto]">
           <div>
             <label className="block text-sm font-bold text-gray-800 mb-1">Order ID</label>
-            <input value={orderId} onChange={(event) => setOrderId(event.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-amber-700 focus:outline-none focus:ring-4 focus:ring-amber-100" placeholder="Paste your order ID" />
+            <input value={orderId} onChange={(event) => setOrderId(event.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100" placeholder="Paste your order ID" />
           </div>
           <div>
             <label className="block text-sm font-bold text-gray-800 mb-1">Email</label>
-            <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-amber-700 focus:outline-none focus:ring-4 focus:ring-amber-100" />
+            <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100" />
           </div>
           <div>
             <label className="block text-sm font-bold text-gray-800 mb-1">Phone</label>
-            <input type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-amber-700 focus:outline-none focus:ring-4 focus:ring-amber-100" />
+            <input type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100" />
           </div>
-          <button type="submit" disabled={loading} className="md:self-end rounded-md bg-stone-900 px-5 py-2 font-bold text-white hover:bg-stone-950 disabled:bg-gray-300">
+          <button type="submit" disabled={loading} className="md:self-end rounded-md bg-blue-700 px-5 py-2 font-bold text-white hover:bg-blue-800 disabled:bg-gray-300">
             {loading ? 'Searching...' : 'Search'}
           </button>
         </form>
@@ -115,7 +115,7 @@ export default function OrderTracking({ settings }) {
                       </div>
                       <div className="sm:text-right">
                         <p className="text-xs font-semibold uppercase text-gray-500">Total</p>
-                        <p className="text-2xl font-bold text-stone-900">{formatXAF(order.totals?.total || order.total)}</p>
+                        <p className="text-2xl font-bold text-blue-800">{formatXAF(order.totals?.total || order.total)}</p>
                       </div>
                     </div>
                     <div className="p-5 space-y-5">
@@ -126,7 +126,7 @@ export default function OrderTracking({ settings }) {
                         <div><span className="text-gray-500">Fulfillment:</span> <span className="font-semibold">{order.deliveryOption === 'pickup' ? 'Pickup' : 'Delivery'}</span></div>
                       </div>
                       {order.deliveryOption === 'pickup' && (
-                        <div className="rounded-md bg-stone-100 px-4 py-3 text-sm text-stone-950">
+                        <div className="rounded-md bg-blue-50 px-4 py-3 text-sm text-blue-950">
                           <p><span className="font-semibold">Pickup store:</span> {order.pickupLocation || order.buyer?.pickupLocation || 'To be confirmed'}</p>
                           <p><span className="font-semibold">Pickup time:</span> {order.pickupTime || order.buyer?.pickupTime || 'To be confirmed'}</p>
                         </div>
@@ -142,7 +142,7 @@ export default function OrderTracking({ settings }) {
                           </div>
                         ))}
                       </div>
-                      <button type="button" onClick={() => setSelectedOrder(order)} className="rounded-md bg-stone-900 px-5 py-3 font-bold text-white hover:bg-stone-950">
+                      <button type="button" onClick={() => setSelectedOrder(order)} className="rounded-md bg-blue-700 px-5 py-3 font-bold text-white hover:bg-blue-800">
                         View Receipt
                       </button>
                     </div>

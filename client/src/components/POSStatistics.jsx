@@ -44,7 +44,7 @@ export default function POSStatistics({ token }) {
           onClick={() => setActiveTab('overview')}
           className={`px-4 py-3 font-bold transition ${
             activeTab === 'overview'
-              ? 'border-b-2 border-amber-700 text-amber-700'
+              ? 'border-b-2 border-blue-600 text-blue-600'
               : 'text-gray-600 hover:text-gray-900'
           }`}
         >
@@ -54,7 +54,7 @@ export default function POSStatistics({ token }) {
           onClick={() => setActiveTab('items')}
           className={`px-4 py-3 font-bold transition ${
             activeTab === 'items'
-              ? 'border-b-2 border-amber-700 text-amber-700'
+              ? 'border-b-2 border-blue-600 text-blue-600'
               : 'text-gray-600 hover:text-gray-900'
           }`}
         >
@@ -64,7 +64,7 @@ export default function POSStatistics({ token }) {
           onClick={() => setActiveTab('daily')}
           className={`px-4 py-3 font-bold transition ${
             activeTab === 'daily'
-              ? 'border-b-2 border-amber-700 text-amber-700'
+              ? 'border-b-2 border-blue-600 text-blue-600'
               : 'text-gray-600 hover:text-gray-900'
           }`}
         >
@@ -74,7 +74,7 @@ export default function POSStatistics({ token }) {
           onClick={() => setActiveTab('receipts')}
           className={`px-4 py-3 font-bold transition ${
             activeTab === 'receipts'
-              ? 'border-b-2 border-amber-700 text-amber-700'
+              ? 'border-b-2 border-blue-600 text-blue-600'
               : 'text-gray-600 hover:text-gray-900'
           }`}
         >
@@ -95,25 +95,25 @@ export default function POSStatistics({ token }) {
           </div>
 
           {/* Total Transactions */}
-          <div className="bg-gradient-to-br from-stone-100 to-stone-50 rounded-xl shadow-md p-6 border border-stone-300">
+          <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl shadow-md p-6 border border-blue-200">
             <p className="text-gray-600 text-sm font-semibold mb-2">🧾 Transactions</p>
-            <p className="text-3xl font-bold text-amber-700">{stats.totalReceipts}</p>
+            <p className="text-3xl font-bold text-blue-600">{stats.totalReceipts}</p>
             <p className="text-xs text-gray-500 mt-2">Total receipts</p>
           </div>
 
           {/* Average Transaction */}
-          <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl shadow-md p-6 border border-yellow-200">
+          <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl shadow-md p-6 border border-purple-200">
             <p className="text-gray-600 text-sm font-semibold mb-2">📈 Avg Transaction</p>
-            <p className="text-3xl font-bold text-yellow-900">
+            <p className="text-3xl font-bold text-purple-600">
               XAF {stats.averageTransaction.toLocaleString()}
             </p>
             <p className="text-xs text-gray-500 mt-2">Per receipt</p>
           </div>
 
           {/* Total Items Sold */}
-          <div className="bg-gradient-to-br from-stone-100 to-stone-50 rounded-xl shadow-md p-6 border border-amber-200">
+          <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl shadow-md p-6 border border-orange-200">
             <p className="text-gray-600 text-sm font-semibold mb-2">📦 Items Sold</p>
-            <p className="text-3xl font-bold text-amber-700">
+            <p className="text-3xl font-bold text-orange-600">
               {stats.itemsSold.reduce((sum, item) => sum + item.quantity, 0)}
             </p>
             <p className="text-xs text-gray-500 mt-2">Total units</p>
@@ -149,7 +149,7 @@ export default function POSStatistics({ token }) {
                           XAF {item.revenue.toLocaleString()}
                         </td>
                         <td className="px-4 py-3 text-center">
-                          <span className="bg-stone-100 text-stone-900 px-2 py-1 rounded-full text-xs font-bold">
+                          <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-bold">
                             {percentage}%
                           </span>
                         </td>

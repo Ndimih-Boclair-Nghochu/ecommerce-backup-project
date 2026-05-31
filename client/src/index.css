@@ -6,10 +6,10 @@
   @apply px-4 py-2 rounded-lg font-bold transition;
 }
 .btn-primary {
-  @apply bg-gradient-to-r from-stone-900 to-stone-800 text-white hover:shadow-lg;
+  @apply bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:shadow-lg;
 }
 .btn-yellow {
-  @apply bg-amber-700 text-white hover:bg-amber-800;
+  @apply bg-yellow-400 text-purple-900 hover:bg-yellow-300;
 }
 
 @keyframes fadeIn {

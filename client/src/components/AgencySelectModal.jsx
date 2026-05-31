@@ -1,5 +1,4 @@
-import React, { useState } from 'react'
-import toast from 'react-hot-toast'
+import React, { useState } from 'react'import toast from 'react-hot-toast'
 
 
 export default function AgencySelectModal({ isOpen, order, onClose, onSelectAgency }) {
@@ -17,7 +16,7 @@ export default function AgencySelectModal({ isOpen, order, onClose, onSelectAgen
   // Get agencies from order - handle both string and object formats
   let agencies = order.buyer?.agencies || []
   console.debug('📋 Raw agencies:', agencies)
-
+  
   // Convert string agencies to objects if needed
   agencies = agencies.filter(a => {
     if (typeof a === 'string') return a.trim() !== ''
@@ -29,7 +28,7 @@ export default function AgencySelectModal({ isOpen, order, onClose, onSelectAgen
     }
     return a
   })
-
+  
   console.debug('✅ Processed agencies:', agencies)
 
   const handleSelectAgency = async () => {
@@ -77,10 +76,10 @@ export default function AgencySelectModal({ isOpen, order, onClose, onSelectAgen
         <div className="space-y-3 mb-6">
           {agencies.length > 0 ? (
             agencies.map((agency, index) => (
-              <label key={index} className="flex items-center p-3 border-2 rounded-lg cursor-pointer transition hover:bg-stone-100 hover:border-stone-300"
+              <label key={index} className="flex items-center p-3 border-2 rounded-lg cursor-pointer transition hover:bg-blue-50 hover:border-blue-300"
                 style={{
-                  borderColor: selectedAgency === index ? '#b45309' : '#e5e7eb',
-                  backgroundColor: selectedAgency === index ? '#fffbeb' : 'transparent'
+                  borderColor: selectedAgency === index ? '#2563eb' : '#e5e7eb',
+                  backgroundColor: selectedAgency === index ? '#f0f9ff' : 'transparent'
                 }}
               >
                 <input
@@ -89,7 +88,7 @@ export default function AgencySelectModal({ isOpen, order, onClose, onSelectAgen
                   value={index}
                   checked={selectedAgency === index}
                   onChange={() => setSelectedAgency(index)}
-                  className="w-4 h-4 text-amber-700 cursor-pointer"
+                  className="w-4 h-4 text-blue-600 cursor-pointer"
                 />
                 <div className="ml-3 flex-1">
                   <p className="font-semibold text-gray-900 text-sm">{agency.name || `Agency ${index + 1}`}</p>
@@ -104,7 +103,7 @@ export default function AgencySelectModal({ isOpen, order, onClose, onSelectAgen
             ))
           ) : (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
-              <p className="text-sm text-amber-900">No agencies available for this order</p>
+              <p className="text-sm text-yellow-800">No agencies available for this order</p>
             </div>
           )}
         </div>

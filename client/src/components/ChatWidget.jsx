@@ -154,7 +154,7 @@ export default function ChatWidget() {
         type="button"
         onClick={() => setIsOpen((value) => !value)}
         className={`fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full text-sm font-bold text-white shadow-2xl transition hover:scale-105 sm:h-16 sm:w-16 ${
-          isOpen ? 'bg-red-600 hover:bg-red-700' : 'bg-gradient-to-br from-stone-900 to-stone-800 hover:from-stone-950 hover:to-stone-900'
+          isOpen ? 'bg-red-600 hover:bg-red-700' : 'bg-gradient-to-br from-blue-700 to-blue-600 hover:from-blue-800 hover:to-blue-700'
         }`}
         aria-label={isOpen ? 'Close chat' : 'Open chat'}
       >
@@ -172,14 +172,14 @@ export default function ChatWidget() {
           className="fixed inset-x-3 bottom-3 z-50 flex h-[min(620px,calc(100vh-1.5rem))] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl sm:inset-x-auto sm:bottom-24 sm:right-6 sm:w-[430px]"
           aria-label="Customer support chat"
         >
-          <header className="bg-gradient-to-r from-stone-900 to-stone-800 px-4 py-4 text-white">
+          <header className="bg-gradient-to-r from-blue-700 to-blue-600 px-4 py-4 text-white">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="flex items-center gap-2">
                   <span className="h-2.5 w-2.5 rounded-full bg-green-400" />
                   <h2 className="text-base font-bold">Customer Support</h2>
                 </div>
-                <p className="mt-1 text-xs text-stone-300">We usually respond during business hours.</p>
+                <p className="mt-1 text-xs text-blue-100">We usually respond during business hours.</p>
               </div>
               <div className="flex items-center gap-1">
                 <button
@@ -202,18 +202,18 @@ export default function ChatWidget() {
           </header>
 
           {showSearch && (
-            <div className="border-b border-stone-200 bg-stone-100 p-3">
+            <div className="border-b border-blue-100 bg-blue-50 p-3">
               <input
                 type="search"
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 placeholder="Search this conversation"
-                className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm focus:border-amber-700 focus:outline-none"
+                className="w-full rounded-lg border border-blue-200 px-3 py-2 text-sm focus:border-blue-600 focus:outline-none"
               />
             </div>
           )}
 
-          <div className="flex-1 space-y-3 overflow-y-auto bg-gradient-to-b from-white via-gray-50 to-stone-100 p-3 sm:p-4">
+          <div className="flex-1 space-y-3 overflow-y-auto bg-gradient-to-b from-white via-gray-50 to-blue-50 p-3 sm:p-4">
             {visibleMessages.map((message) => {
               const fromCustomer = message.sender === 'customer'
               return (
@@ -221,15 +221,15 @@ export default function ChatWidget() {
                   <div
                     className={`max-w-[82%] rounded-2xl px-3 py-2 text-sm shadow-sm ${
                       fromCustomer
-                        ? 'rounded-br-md bg-stone-900 text-white'
+                        ? 'rounded-br-md bg-blue-700 text-white'
                         : 'rounded-bl-md border border-gray-200 bg-white text-gray-800'
                     }`}
                   >
-                    {!fromCustomer && <p className="mb-1 text-xs font-bold text-amber-700">Support</p>}
+                    {!fromCustomer && <p className="mb-1 text-xs font-bold text-blue-700">Support</p>}
                     {message.imageUrl && (
                       <div className="mb-2">
                         {message.imageUrl.toLowerCase().endsWith('.pdf') ? (
-                          <a href={resolveAssetUrl(message.imageUrl)} target="_blank" rel="noopener noreferrer" className="font-bold text-amber-700 underline">
+                          <a href={resolveAssetUrl(message.imageUrl)} target="_blank" rel="noopener noreferrer" className="font-bold text-blue-700 underline">
                             Open attached PDF
                           </a>
                         ) : (
@@ -239,7 +239,7 @@ export default function ChatWidget() {
                     )}
                     <p className="whitespace-pre-wrap break-words leading-relaxed">{message.message}</p>
                     {message.timestamp && (
-                      <p className={`mt-1 text-[11px] ${fromCustomer ? 'text-stone-300' : 'text-gray-500'}`}>
+                      <p className={`mt-1 text-[11px] ${fromCustomer ? 'text-blue-100' : 'text-gray-500'}`}>
                         {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     )}
@@ -258,20 +258,20 @@ export default function ChatWidget() {
                 onChange={(event) => setUserName(event.target.value)}
                 onBlur={() => userName.trim() && localStorage.setItem('chatUserName', userName.trim())}
                 placeholder="Your name (optional)"
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-amber-700 focus:outline-none"
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-600 focus:outline-none"
               />
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading || sending}
-                className="rounded-lg border border-amber-700 px-3 py-2 text-sm font-bold text-amber-700 hover:bg-amber-50 disabled:opacity-50"
+                className="rounded-lg border border-orange-500 px-3 py-2 text-sm font-bold text-orange-600 hover:bg-orange-50 disabled:opacity-50"
               >
                 Attach
               </button>
             </div>
 
             {filePreview && (
-              <div className="mb-2 flex items-center justify-between gap-3 rounded-lg border border-stone-200 bg-stone-100 p-2">
+              <div className="mb-2 flex items-center justify-between gap-3 rounded-lg border border-blue-100 bg-blue-50 p-2">
                 <div className="flex min-w-0 items-center gap-2">
                   {filePreview === 'pdf' ? (
                     <span className="rounded bg-white px-2 py-1 text-xs font-bold text-red-700">PDF</span>
@@ -300,12 +300,12 @@ export default function ChatWidget() {
                 }}
                 rows="2"
                 placeholder="Type your message..."
-                className="min-h-[44px] flex-1 resize-none rounded-xl border border-gray-300 px-3 py-2 text-sm focus:border-amber-700 focus:outline-none"
+                className="min-h-[44px] flex-1 resize-none rounded-xl border border-gray-300 px-3 py-2 text-sm focus:border-blue-600 focus:outline-none"
               />
               <button
                 type="submit"
                 disabled={(!messageText.trim() && !selectedFile) || sending || uploading}
-                className="rounded-xl bg-amber-700 px-4 py-3 text-sm font-bold text-white hover:bg-amber-800 disabled:bg-gray-300 disabled:text-gray-500"
+                className="rounded-xl bg-orange-500 px-4 py-3 text-sm font-bold text-white hover:bg-orange-600 disabled:bg-gray-300 disabled:text-gray-500"
               >
                 {sending || uploading ? '...' : 'Send'}
               </button>

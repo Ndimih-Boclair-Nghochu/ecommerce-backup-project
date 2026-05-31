@@ -60,7 +60,7 @@ export default function Receipt({ order, onClose }) {
     <div className="fixed inset-0 z-50 bg-gray-950/60 p-4 overflow-y-auto">
       <div className="max-w-3xl mx-auto">
         <div className="mb-3 flex justify-end gap-2">
-          <button type="button" onClick={downloadPdf} className="rounded-md bg-stone-900 px-4 py-2 font-bold text-white hover:bg-stone-950">
+          <button type="button" onClick={downloadPdf} className="rounded-md bg-blue-700 px-4 py-2 font-bold text-white hover:bg-blue-800">
             Download PDF
           </button>
           {onClose && (
@@ -71,17 +71,17 @@ export default function Receipt({ order, onClose }) {
         </div>
 
         <section ref={receiptRef} className="bg-white rounded-lg shadow-xl overflow-hidden text-gray-950">
-          <header className="bg-stone-950 text-white p-6">
+          <header className="bg-blue-800 text-white p-6">
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               <div>
                 <h1 className="text-3xl font-bold">{shopName}</h1>
-                <p className="text-stone-300 mt-1">mile 4, Bamenda, Cameroon</p>
-                <p className="text-stone-300">+237 6 52 882 753</p>
+                <p className="text-blue-100 mt-1">mile 4, Bamenda, Cameroon</p>
+                <p className="text-blue-100">+237 6 52 882 753</p>
               </div>
               <div className="sm:text-right">
-                <p className="text-sm text-stone-300">Receipt</p>
+                <p className="text-sm text-blue-100">Receipt</p>
                 <p className="font-mono font-bold break-all">{order.id}</p>
-                <p className="text-sm text-stone-300 mt-1">{new Date(order.createdAt || Date.now()).toLocaleString()}</p>
+                <p className="text-sm text-blue-100 mt-1">{new Date(order.createdAt || Date.now()).toLocaleString()}</p>
               </div>
             </div>
           </header>
@@ -141,7 +141,7 @@ export default function Receipt({ order, onClose }) {
               </div>
             </div>
 
-            <div className="rounded-lg border border-stone-200 bg-stone-100 p-4 text-sm text-stone-900">
+            <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900">
               Your order has been received. We will contact you shortly to confirm payment and delivery.
             </div>
           </div>

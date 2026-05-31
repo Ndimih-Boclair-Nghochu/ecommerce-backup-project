@@ -256,13 +256,13 @@ export default function App() {
         <header className="sticky top-0 z-40 bg-white shadow-md">
           <div className="max-w-7xl mx-auto px-4 py-3">
             <div className="h-16 flex items-center justify-between gap-3">
-              <Link to="/" className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-amber-700 to-yellow-900 bg-clip-text text-transparent hover:from-stone-950 hover:to-stone-900 transition truncate">
+              <Link to="/" className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-700 to-blue-600 bg-clip-text text-transparent hover:from-blue-800 hover:to-blue-700 transition truncate">
                 {settings.shopName}
               </Link>
 
               <nav className="hidden md:flex items-center gap-6 text-sm font-semibold">
                 {navLinks.map((link) => (
-                  <Link key={link.to} to={link.to} className="text-gray-700 hover:text-amber-700 transition">
+                  <Link key={link.to} to={link.to} className="text-gray-700 hover:text-blue-700 transition">
                     {link.label}
                   </Link>
                 ))}
@@ -275,7 +275,7 @@ export default function App() {
                   <select
                     value={language}
                     onChange={(event) => setLanguage(event.target.value)}
-                    className="max-w-[4.6rem] bg-transparent text-sm font-bold text-amber-700 focus:outline-none sm:max-w-none"
+                    className="max-w-[4.6rem] bg-transparent text-sm font-bold text-blue-700 focus:outline-none sm:max-w-none"
                     aria-label={t('language')}
                   >
                     {languages.map((item) => (
@@ -285,11 +285,11 @@ export default function App() {
                 </label>
                 <Link
                   to="/cart"
-                  className="inline-flex items-center rounded-lg bg-amber-700 px-3 py-2 text-sm font-bold text-white hover:bg-amber-800 transition"
+                  className="inline-flex items-center rounded-lg bg-orange-500 px-3 py-2 text-sm font-bold text-white hover:bg-orange-600 transition"
                 >
                   {t('cart')} ({cartCount}) <span className="hidden sm:inline">&nbsp;- {formatXAF(subtotal)}</span>
                 </Link>
-                <Link to="/admin" className="hidden md:inline-flex text-sm font-semibold text-gray-700 hover:text-amber-700 transition">
+                <Link to="/admin" className="hidden md:inline-flex text-sm font-semibold text-gray-700 hover:text-blue-700 transition">
                   {t('admin')}
                 </Link>
                 <button
@@ -322,7 +322,7 @@ export default function App() {
             }`}
           >
             <div className="h-16 px-5 flex items-center justify-between border-b border-gray-200">
-              <span className="font-bold bg-gradient-to-r from-amber-700 to-yellow-900 bg-clip-text text-transparent">{settings.shopName}</span>
+              <span className="font-bold bg-gradient-to-r from-blue-700 to-blue-600 bg-clip-text text-transparent">{settings.shopName}</span>
               <button type="button" onClick={closeMobileMenu} className="rounded-md border border-gray-300 px-3 py-2 text-xl leading-none" aria-label="Close navigation menu">
                 x
               </button>
@@ -333,7 +333,7 @@ export default function App() {
                 <select
                   value={language}
                   onChange={(event) => setLanguage(event.target.value)}
-                  className="bg-transparent text-sm font-bold text-amber-700 focus:outline-none"
+                  className="bg-transparent text-sm font-bold text-blue-700 focus:outline-none"
                   aria-label={t('language')}
                 >
                   {languages.map((item) => (
@@ -342,11 +342,11 @@ export default function App() {
                 </select>
               </label>
               {navLinks.map((link) => (
-                <Link key={link.to} to={link.to} onClick={closeMobileMenu} className="block rounded-md px-4 py-3 text-lg font-semibold text-gray-800 hover:bg-stone-100">
+                <Link key={link.to} to={link.to} onClick={closeMobileMenu} className="block rounded-md px-4 py-3 text-lg font-semibold text-gray-800 hover:bg-blue-50">
                   {link.label}
                 </Link>
               ))}
-              <Link to="/cart" onClick={closeMobileMenu} className="block rounded-md px-4 py-3 text-lg font-semibold text-gray-800 hover:bg-stone-100">
+              <Link to="/cart" onClick={closeMobileMenu} className="block rounded-md px-4 py-3 text-lg font-semibold text-gray-800 hover:bg-blue-50">
                 {t('cart')} ({cartCount}) - {formatXAF(subtotal)}
               </Link>
               <Link to="/admin" onClick={closeMobileMenu} className="block rounded-md px-4 py-3 text-sm font-semibold text-gray-500 hover:bg-gray-50">
@@ -357,7 +357,7 @@ export default function App() {
         </div>
 
         {loading && (
-          <div className="bg-stone-100 border-b-2 border-amber-700 text-stone-900">
+          <div className="bg-blue-100 border-b-2 border-blue-500 text-blue-800">
             <div className="max-w-7xl mx-auto px-4 py-3 text-sm font-semibold text-center">{t('loadingShop')}</div>
           </div>
         )}
@@ -382,7 +382,7 @@ export default function App() {
         <footer className="bg-white border-t">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 grid gap-6 md:grid-cols-3">
             <div>
-              <p className="text-xl font-bold bg-gradient-to-r from-amber-700 to-yellow-900 bg-clip-text text-transparent">{settings.shopName}</p>
+              <p className="text-xl font-bold bg-gradient-to-r from-blue-700 to-blue-600 bg-clip-text text-transparent">{settings.shopName}</p>
               <p className="mt-2 text-sm text-gray-500">{t('footerTagline')}</p>
             </div>
             <div className="text-sm text-gray-600 space-y-1">
@@ -391,10 +391,10 @@ export default function App() {
               <p>{settings.shopEmail}</p>
             </div>
             <div className="flex flex-wrap md:justify-end gap-4 text-sm font-semibold">
-              <Link to="/" className="text-gray-600 hover:text-amber-700 transition">{t('home')}</Link>
-              <Link to="/products" className="text-gray-600 hover:text-amber-700 transition">{t('products')}</Link>
-              <Link to="/track-order" className="text-gray-600 hover:text-amber-700 transition">{t('track')}</Link>
-              <Link to="/wishlist" className="text-gray-600 hover:text-amber-700 transition">{t('wishlist')}</Link>
+              <Link to="/" className="text-gray-600 hover:text-blue-700 transition">{t('home')}</Link>
+              <Link to="/products" className="text-gray-600 hover:text-blue-700 transition">{t('products')}</Link>
+              <Link to="/track-order" className="text-gray-600 hover:text-blue-700 transition">{t('track')}</Link>
+              <Link to="/wishlist" className="text-gray-600 hover:text-blue-700 transition">{t('wishlist')}</Link>
             </div>
           </div>
           <div className="border-t border-gray-100 py-4 text-center text-xs text-gray-400">

@@ -67,7 +67,7 @@ const SubAdminManagement = ({ token }) => {
 
     // Faster polling when on analytics view (3 seconds), slower otherwise (10 seconds)
     const pollInterval = activeView === 'analytics' ? 3000 : 10000
-
+    
     const intervalId = setInterval(refreshAnalytics, pollInterval)
 
     // Cleanup interval on component unmount
@@ -80,7 +80,7 @@ const SubAdminManagement = ({ token }) => {
         headers: { Authorization: `Bearer ${token}` }
       })
       setSubAdmins(res.data)
-
+      
       // Also fetch admin info from settings or use hardcoded values
       setAdminInfo({
         id: 'admin',
@@ -112,12 +112,12 @@ const SubAdminManagement = ({ token }) => {
     setLoading(true)
 
     try {
-      const url = editingId
+      const url = editingId 
         ? `/api/admin/subadmins/${editingId}`
         : '/api/admin/subadmins'
-
+      
       const method = editingId ? 'put' : 'post'
-
+      
       const response = await axios[method](url, formData, {
         headers: { Authorization: `Bearer ${token}` }
       })
@@ -219,10 +219,10 @@ const SubAdminManagement = ({ token }) => {
 
   const getActivityColor = (action) => {
     if (action.includes('create')) return 'bg-green-100 text-green-800'
-    if (action.includes('update')) return 'bg-stone-100 text-stone-900'
+    if (action.includes('update')) return 'bg-blue-100 text-blue-800'
     if (action.includes('delete')) return 'bg-red-100 text-red-800'
-    if (action.includes('view')) return 'bg-yellow-100 text-yellow-900'
-    if (action.includes('login')) return 'bg-yellow-100 text-amber-900'
+    if (action.includes('view')) return 'bg-purple-100 text-purple-800'
+    if (action.includes('login')) return 'bg-yellow-100 text-yellow-800'
     return 'bg-gray-100 text-gray-800'
   }
 
@@ -239,7 +239,7 @@ const SubAdminManagement = ({ token }) => {
   const getMostActiveSubAdminByPeriod = (days) => {
     const periodActivities = getActivitiesInTimeRange(days)
     const activityCount = {}
-
+    
     periodActivities.forEach(activity => {
       // Normalize null to 'admin' for main admin activities
       const id = activity.subAdminId === null ? 'admin' : activity.subAdminId
@@ -250,10 +250,10 @@ const SubAdminManagement = ({ token }) => {
       .map(([subAdminId, count]) => {
         // Normalize ID
         const normalizedId = subAdminId === 'admin' || subAdminId === null ? 'admin' : subAdminId
-
+        
         // First try to find from subAdmins array
         const subAdmin = subAdmins.find(s => s.id === subAdminId)
-
+        
         // If it's the main admin (ID is 'admin' or null), return admin info
         if (normalizedId === 'admin' || subAdminId === null) {
           return {
@@ -263,13 +263,13 @@ const SubAdminManagement = ({ token }) => {
             activities: count
           }
         }
-
+        
         // For sub-admins, try to extract from activities if not found in array
         const fallbackActivity = periodActivities.find(a => {
           const aId = a.subAdminId === null ? 'admin' : a.subAdminId
           return aId === subAdminId
         })
-
+        
         return {
           subAdminId,
           subAdminName: subAdmin?.name || fallbackActivity?.subAdminName || 'Unknown',
@@ -300,7 +300,7 @@ const SubAdminManagement = ({ token }) => {
         }
         return a.subAdminId === userId
       })
-
+      
       const dayActs = allActs.filter(a => {
         const aDate = new Date(a.timestamp)
         return aDate.toDateString() === new Date().toDateString()
@@ -319,10 +319,10 @@ const SubAdminManagement = ({ token }) => {
       })
 
       // Get latest activity timestamp
-      const latestActivity = allActs.length > 0
-        ? allActs.reduce((latest, current) =>
+      const latestActivity = allActs.length > 0 
+        ? allActs.reduce((latest, current) => 
             new Date(current.timestamp) > new Date(latest.timestamp) ? current : latest
-          ).timestamp
+          ).timestamp 
         : null
 
       return {
@@ -340,10 +340,10 @@ const SubAdminManagement = ({ token }) => {
   }
 
   const filteredActivities = activities.filter(activity => {
-    const matchSearch = searchActivity === '' ||
+    const matchSearch = searchActivity === '' || 
       activity.action.toLowerCase().includes(searchActivity.toLowerCase()) ||
       activity.details.toLowerCase().includes(searchActivity.toLowerCase())
-
+    
     const matchFilter = filterSubAdmin === '' || activity.subAdminId === filterSubAdmin
 
     return matchSearch && matchFilter
@@ -354,8 +354,8 @@ const SubAdminManagement = ({ token }) => {
       {/* Message Alert */}
       {message.text && (
         <div className={`p-4 rounded-lg font-semibold ${
-          message.type === 'success'
-            ? 'bg-green-100 text-green-800'
+          message.type === 'success' 
+            ? 'bg-green-100 text-green-800' 
             : 'bg-red-100 text-red-800'
         }`}>
           {message.text}
@@ -368,7 +368,7 @@ const SubAdminManagement = ({ token }) => {
           onClick={() => setActiveView('analytics')}
           className={`px-6 py-3 font-semibold border-b-2 transition whitespace-nowrap ${
             activeView === 'analytics'
-              ? 'border-yellow-900 text-yellow-900'
+              ? 'border-purple-600 text-purple-600'
               : 'border-transparent text-gray-600 hover:text-gray-900'
           }`}
         >
@@ -378,7 +378,7 @@ const SubAdminManagement = ({ token }) => {
           onClick={() => setActiveView('subadmins')}
           className={`px-6 py-3 font-semibold border-b-2 transition whitespace-nowrap ${
             activeView === 'subadmins'
-              ? 'border-yellow-900 text-yellow-900'
+              ? 'border-purple-600 text-purple-600'
               : 'border-transparent text-gray-600 hover:text-gray-900'
           }`}
         >
@@ -388,7 +388,7 @@ const SubAdminManagement = ({ token }) => {
           onClick={() => setActiveView('activities')}
           className={`px-6 py-3 font-semibold border-b-2 transition whitespace-nowrap ${
             activeView === 'activities'
-              ? 'border-yellow-900 text-yellow-900'
+              ? 'border-purple-600 text-purple-600'
               : 'border-transparent text-gray-600 hover:text-gray-900'
           }`}
         >
@@ -406,8 +406,8 @@ const SubAdminManagement = ({ token }) => {
               <div className="flex items-center gap-3 mt-1">
                 <p className="text-sm text-gray-600">Real-time sub-admin performance tracking</p>
                 <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold ${
-                  isRealTimeActive
-                    ? 'bg-green-100 text-green-800'
+                  isRealTimeActive 
+                    ? 'bg-green-100 text-green-800' 
                     : 'bg-red-100 text-red-800'
                 }`}>
                   <span className={`w-2 h-2 rounded-full ${isRealTimeActive ? 'bg-green-600' : 'bg-red-600'} ${isRealTimeActive ? 'animate-pulse' : ''}`}></span>
@@ -435,7 +435,7 @@ const SubAdminManagement = ({ token }) => {
                   fetchSubAdmins();
                   fetchActivities();
                 }}
-                className="bg-stone-900 hover:bg-stone-900 text-white px-4 py-2 rounded-lg font-semibold transition shadow-md"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition shadow-md"
               >
                 🔄 Refresh Data
               </button>
@@ -444,25 +444,25 @@ const SubAdminManagement = ({ token }) => {
 
           {/* Top Stats */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-gradient-to-br from-stone-700 to-stone-800 rounded-xl shadow-md p-6 text-white">
-              <p className="text-stone-300 text-sm font-semibold">Total Sub-Admins</p>
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-md p-6 text-white">
+              <p className="text-blue-100 text-sm font-semibold">Total Sub-Admins</p>
               <p className="text-4xl font-bold mt-2">{subAdmins.length}</p>
-              <p className="text-stone-300 text-xs mt-2">👥 Team Members</p>
+              <p className="text-blue-100 text-xs mt-2">👥 Team Members</p>
             </div>
-            <div className="bg-gradient-to-br from-amber-700 to-amber-800 rounded-xl shadow-md p-6 text-white">
-              <p className="text-stone-300 text-sm font-semibold">Total Activities</p>
+            <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-md p-6 text-white">
+              <p className="text-purple-100 text-sm font-semibold">Total Activities</p>
               <p className="text-4xl font-bold mt-2">{activities.length}</p>
-              <p className="text-stone-300 text-xs mt-2">📊 All Time</p>
+              <p className="text-purple-100 text-xs mt-2">📊 All Time</p>
             </div>
             <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-md p-6 text-white">
               <p className="text-green-100 text-sm font-semibold">Today's Activities</p>
               <p className="text-4xl font-bold mt-2">{getActivitiesInTimeRange(1).length}</p>
               <p className="text-green-100 text-xs mt-2">📈 Current Day</p>
             </div>
-            <div className="bg-gradient-to-br from-amber-700 to-amber-800 rounded-xl shadow-md p-6 text-white">
-              <p className="text-amber-100 text-sm font-semibold">This Week</p>
+            <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-md p-6 text-white">
+              <p className="text-orange-100 text-sm font-semibold">This Week</p>
               <p className="text-4xl font-bold mt-2">{getActivitiesInTimeRange(7).length}</p>
-              <p className="text-amber-100 text-xs mt-2">📅 7 Days</p>
+              <p className="text-orange-100 text-xs mt-2">📅 7 Days</p>
             </div>
           </div>
 
@@ -473,13 +473,13 @@ const SubAdminManagement = ({ token }) => {
               <h3 className="text-lg font-bold text-gray-900 mb-4">🌅 Most Active Today</h3>
               <div className="space-y-3">
                 {getMostActiveSubAdminByPeriod(1).slice(0, 5).map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-3 bg-gradient-to-r from-stone-100 to-stone-200 rounded-lg border border-stone-300">
+                  <div key={idx} className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200">
                     <div className="flex-1">
                       <p className="font-bold text-gray-900">{idx + 1}. {item.subAdminName}</p>
                       <p className="text-xs text-gray-600">{item.subAdminEmail}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-2xl font-bold text-amber-700">{item.activities}</p>
+                      <p className="text-2xl font-bold text-blue-600">{item.activities}</p>
                       <p className="text-xs text-gray-600">actions</p>
                     </div>
                   </div>
@@ -517,13 +517,13 @@ const SubAdminManagement = ({ token }) => {
               <h3 className="text-lg font-bold text-gray-900 mb-4">📊 Most Active This Month</h3>
               <div className="space-y-3">
                 {getMostActiveSubAdminByPeriod(30).slice(0, 5).map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-3 bg-gradient-to-r from-amber-50 to-yellow-100 rounded-lg border border-yellow-200">
+                  <div key={idx} className="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg border border-purple-200">
                     <div className="flex-1">
                       <p className="font-bold text-gray-900">{idx + 1}. {item.subAdminName}</p>
                       <p className="text-xs text-gray-600">{item.subAdminEmail}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-2xl font-bold text-yellow-900">{item.activities}</p>
+                      <p className="text-2xl font-bold text-purple-600">{item.activities}</p>
                       <p className="text-xs text-gray-600">actions</p>
                     </div>
                   </div>
@@ -545,7 +545,7 @@ const SubAdminManagement = ({ token }) => {
                       <p className="text-xs text-gray-600">{item.subAdminEmail}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-2xl font-bold text-yellow-900">{item.activities}</p>
+                      <p className="text-2xl font-bold text-yellow-600">{item.activities}</p>
                       <p className="text-xs text-gray-600">actions</p>
                     </div>
                   </div>
@@ -590,7 +590,7 @@ const SubAdminManagement = ({ token }) => {
                             <p className="text-sm text-gray-600">{subAdmin.email}</p>
                           </td>
                           <td className="px-6 py-4 text-center">
-                            <span className="inline-flex items-center justify-center w-10 h-10 bg-stone-100 text-amber-700 font-bold rounded-full text-sm">
+                            <span className="inline-flex items-center justify-center w-10 h-10 bg-blue-100 text-blue-700 font-bold rounded-full text-sm">
                               {subAdmin.stats.today}
                             </span>
                           </td>
@@ -600,7 +600,7 @@ const SubAdminManagement = ({ token }) => {
                             </span>
                           </td>
                           <td className="px-6 py-4 text-center">
-                            <span className="inline-flex items-center justify-center w-10 h-10 bg-yellow-100 text-yellow-900 font-bold rounded-full text-sm">
+                            <span className="inline-flex items-center justify-center w-10 h-10 bg-purple-100 text-purple-700 font-bold rounded-full text-sm">
                               {subAdmin.stats.month}
                             </span>
                           </td>
@@ -615,7 +615,7 @@ const SubAdminManagement = ({ token }) => {
                             </span>
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-600">
-                            {subAdmin.stats.lastActivity
+                            {subAdmin.stats.lastActivity 
                               ? new Date(subAdmin.stats.lastActivity).toLocaleString()
                               : 'No activity'
                             }
@@ -642,7 +642,7 @@ const SubAdminManagement = ({ token }) => {
             {!showForm && (
               <button
                 onClick={() => setShowForm(true)}
-                className="bg-yellow-900 hover:bg-yellow-900 text-white px-6 py-3 rounded-lg font-semibold transition shadow-md"
+                className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition shadow-md"
               >
                 ➕ Add Sub-Admin
               </button>
@@ -666,11 +666,11 @@ const SubAdminManagement = ({ token }) => {
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
                       placeholder="Enter full name"
                     />
                   </div>
-
+                  
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
                     <input
@@ -679,7 +679,7 @@ const SubAdminManagement = ({ token }) => {
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       disabled={editingId}
                       required={!editingId}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 disabled:bg-gray-100"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 disabled:bg-gray-100"
                       placeholder="Enter email"
                     />
                   </div>
@@ -694,7 +694,7 @@ const SubAdminManagement = ({ token }) => {
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                       required={!editingId}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
                       placeholder="Enter password"
                     />
                   </div>
@@ -725,7 +725,7 @@ const SubAdminManagement = ({ token }) => {
 
                 {/* Restrictions Note */}
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <p className="text-sm font-semibold text-amber-900">
+                  <p className="text-sm font-semibold text-yellow-800">
                     🔒 Restricted Information (Owner Only)
                   </p>
                   <ul className="text-sm text-yellow-700 mt-2 space-y-1">
@@ -795,7 +795,7 @@ const SubAdminManagement = ({ token }) => {
                             <div className="flex flex-wrap gap-2">
                               {enabledPerms.length > 0 ? (
                                 enabledPerms.map(perm => (
-                                  <span key={perm} className="bg-stone-100 text-stone-900 px-2 py-1 rounded text-xs font-semibold whitespace-nowrap">
+                                  <span key={perm} className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-semibold whitespace-nowrap">
                                     {PERMISSIONS.find(p => p.key === perm)?.label.split(' ')[0]}
                                   </span>
                                 ))
@@ -805,14 +805,14 @@ const SubAdminManagement = ({ token }) => {
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <span className="bg-yellow-100 text-yellow-900 px-3 py-1 rounded-full text-sm font-semibold">
+                            <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-semibold">
                               {subAdminActivities.length} activities
                             </span>
                           </td>
                           <td className="px-6 py-4 flex gap-2">
                             <button
                               onClick={() => handleEdit(subAdmin)}
-                              className="bg-stone-900 hover:bg-stone-900 text-white px-3 py-1 rounded text-sm font-semibold transition"
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm font-semibold transition"
                             >
                               Edit
                             </button>
@@ -844,8 +844,8 @@ const SubAdminManagement = ({ token }) => {
               <div className="flex items-center gap-3 mt-1">
                 <p className="text-sm text-gray-600">Track all sub-admin activities and actions in the system</p>
                 <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold ${
-                  isRealTimeActive
-                    ? 'bg-green-100 text-green-800'
+                  isRealTimeActive 
+                    ? 'bg-green-100 text-green-800' 
                     : 'bg-red-100 text-red-800'
                 }`}>
                   <span className={`w-2 h-2 rounded-full ${isRealTimeActive ? 'bg-green-600' : 'bg-red-600'} ${isRealTimeActive ? 'animate-pulse' : ''}`}></span>
@@ -855,7 +855,7 @@ const SubAdminManagement = ({ token }) => {
             </div>
             <button
               onClick={fetchActivities}
-              className="bg-stone-900 hover:bg-stone-900 text-white px-4 py-2 rounded-lg font-semibold transition shadow-md"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition shadow-md"
             >
               🔄 Refresh
             </button>
@@ -863,21 +863,21 @@ const SubAdminManagement = ({ token }) => {
 
           {/* Quick Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="bg-gradient-to-br from-stone-100 to-stone-200 rounded-lg p-4 border border-stone-300">
-              <p className="text-amber-700 text-xs font-bold">TOTAL ACTIVITIES</p>
-              <p className="text-2xl font-bold text-amber-700 mt-1">{activities.length}</p>
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
+              <p className="text-blue-700 text-xs font-bold">TOTAL ACTIVITIES</p>
+              <p className="text-2xl font-bold text-blue-600 mt-1">{activities.length}</p>
             </div>
             <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
               <p className="text-green-700 text-xs font-bold">TODAY</p>
               <p className="text-2xl font-bold text-green-600 mt-1">{getActivitiesInTimeRange(1).length}</p>
             </div>
-            <div className="bg-gradient-to-br from-amber-50 to-yellow-100 rounded-lg p-4 border border-yellow-200">
-              <p className="text-yellow-900 text-xs font-bold">THIS WEEK</p>
-              <p className="text-2xl font-bold text-yellow-900 mt-1">{getActivitiesInTimeRange(7).length}</p>
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
+              <p className="text-purple-700 text-xs font-bold">THIS WEEK</p>
+              <p className="text-2xl font-bold text-purple-600 mt-1">{getActivitiesInTimeRange(7).length}</p>
             </div>
-            <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg p-4 border border-amber-200">
-              <p className="text-amber-700 text-xs font-bold">THIS MONTH</p>
-              <p className="text-2xl font-bold text-amber-700 mt-1">{getActivitiesInTimeRange(30).length}</p>
+            <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 border border-orange-200">
+              <p className="text-orange-700 text-xs font-bold">THIS MONTH</p>
+              <p className="text-2xl font-bold text-orange-600 mt-1">{getActivitiesInTimeRange(30).length}</p>
             </div>
           </div>
 
@@ -888,12 +888,12 @@ const SubAdminManagement = ({ token }) => {
               placeholder="Search by action or details..."
               value={searchActivity}
               onChange={(e) => setSearchActivity(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
             />
             <select
               value={filterSubAdmin}
               onChange={(e) => setFilterSubAdmin(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
             >
               <option value="">All Users</option>
               {adminInfo && (
