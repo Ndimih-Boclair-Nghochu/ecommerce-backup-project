@@ -257,20 +257,12 @@ export default function App() {
           <div className="max-w-7xl mx-auto px-4 py-2">
             <div className="h-16 flex items-center justify-between gap-3">
               <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition">
-                {/* SCC Logo mark */}
-                <svg width="40" height="40" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="60" cy="38" r="28" stroke="#0057a8" strokeWidth="8" fill="none"/>
-                  <path d="M60 10 L60 66" stroke="#0057a8" strokeWidth="8"/>
-                  <path d="M38 38 L82 38" stroke="#0057a8" strokeWidth="6"/>
-                  <path d="M48 66 L72 66 L60 85 Z" fill="#0057a8"/>
-                  <circle cx="60" cy="91" r="7" fill="#16a34a"/>
-                  <path d="M48 106 L72 106" stroke="#0057a8" strokeWidth="6" strokeLinecap="round"/>
-                </svg>
-                <div className="hidden sm:block">
-                  <div className="text-base font-black leading-tight" style={{ color: '#0057a8', fontFamily: "'Sora', sans-serif" }}>SMART Centre</div>
-                  <div className="text-xs font-bold" style={{ color: '#16a34a' }}>Cameroon</div>
-                </div>
-                <div className="block sm:hidden text-base font-black" style={{ color: '#0057a8' }}>SCC</div>
+                <img
+                  src="/scc-logo.jpeg"
+                  alt="SCC Logo"
+                  className="h-10 w-auto object-contain"
+                  style={{ borderRadius: '6px' }}
+                />
               </Link>
 
               <nav className="hidden md:flex items-center gap-6 text-sm font-semibold">
@@ -336,19 +328,7 @@ export default function App() {
             }`}
           >
             <div className="h-16 px-5 flex items-center justify-between border-b border-gray-200">
-              <div className="flex items-center gap-2">
-                <svg width="32" height="32" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="60" cy="38" r="28" stroke="#0057a8" strokeWidth="8" fill="none"/>
-                  <path d="M60 10 L60 66" stroke="#0057a8" strokeWidth="8"/>
-                  <path d="M38 38 L82 38" stroke="#0057a8" strokeWidth="6"/>
-                  <path d="M48 66 L72 66 L60 85 Z" fill="#0057a8"/>
-                  <circle cx="60" cy="91" r="7" fill="#16a34a"/>
-                </svg>
-                <div>
-                  <div className="text-sm font-black" style={{ color: '#0057a8' }}>SMART Centre</div>
-                  <div className="text-xs font-bold" style={{ color: '#16a34a' }}>Cameroon</div>
-                </div>
-              </div>
+              <img src="/scc-logo.jpeg" alt="SCC" className="h-9 w-auto object-contain" style={{ borderRadius: '5px' }} />
               <button type="button" onClick={closeMobileMenu} className="rounded-md border border-gray-300 px-3 py-2 text-xl leading-none" aria-label="Close navigation menu">
                 x
               </button>
@@ -409,18 +389,7 @@ export default function App() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 grid gap-8 md:grid-cols-4">
             <div className="md:col-span-1">
               <div className="flex items-center gap-3 mb-4">
-                <svg width="44" height="44" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="60" cy="38" r="28" stroke="white" strokeWidth="8" fill="none"/>
-                  <path d="M60 10 L60 66" stroke="white" strokeWidth="8"/>
-                  <path d="M38 38 L82 38" stroke="white" strokeWidth="6"/>
-                  <path d="M48 66 L72 66 L60 85 Z" fill="white"/>
-                  <circle cx="60" cy="91" r="7" fill="#4ade80"/>
-                  <path d="M48 106 L72 106" stroke="white" strokeWidth="6" strokeLinecap="round"/>
-                </svg>
-                <div>
-                  <div className="font-black text-sm" style={{ color: 'white', fontFamily: "'Sora', sans-serif" }}>SMART Centre</div>
-                  <div className="text-xs font-bold" style={{ color: '#4ade80' }}>Cameroon</div>
-                </div>
+                <img src="/scc-logo.jpeg" alt="SCC" className="h-12 w-auto object-contain" style={{ borderRadius: '6px', filter: 'brightness(0) invert(1)' }} />
               </div>
               <p className="text-sm opacity-60 leading-relaxed mb-4">Simple, Affordable, Repairable Technologies for Water, Sanitation & Sustainable Livelihoods across Cameroon.</p>
               <div className="text-xs opacity-50 font-semibold">Franchise of SMART Centre Group · Netherlands</div>

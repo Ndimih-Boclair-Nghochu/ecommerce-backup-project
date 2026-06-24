@@ -278,26 +278,19 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
 
           {/* Logo mark + headline */}
           <div className="animate-fadeup-delay-1">
-            <div className="flex items-center justify-center gap-4 mb-6 flex-wrap">
-              {/* SCC SVG logo inline */}
+            <div className="flex items-center justify-center mb-6">
               <div className="animate-float">
-                <svg width="72" height="72" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="60" cy="38" r="28" stroke="white" strokeWidth="7" fill="none"/>
-                  <path d="M60 10 L60 66" stroke="white" strokeWidth="7"/>
-                  <path d="M38 38 L82 38" stroke="white" strokeWidth="5"/>
-                  <path d="M48 66 L72 66 L60 85 Z" fill="white"/>
-                  <circle cx="60" cy="90" r="6" fill="white"/>
-                  <path d="M48 104 L72 104" stroke="white" strokeWidth="5" strokeLinecap="round"/>
-                </svg>
-              </div>
-              <div className="text-left">
-                <div className="text-sm font-bold tracking-widest uppercase opacity-80 mb-1">The</div>
-                <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-none" style={{ fontFamily: "'Sora', sans-serif" }}>
-                  SMART Centre
-                </h1>
-                <div className="text-2xl md:text-3xl font-bold tracking-wide mt-1 opacity-90">Cameroon</div>
+                <img
+                  src="/scc-logo.jpeg"
+                  alt="SMART Centre Cameroon — SCC"
+                  className="h-24 md:h-32 w-auto object-contain"
+                  style={{ filter: 'brightness(0) invert(1)', borderRadius: '12px' }}
+                />
               </div>
             </div>
+            <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight mb-3" style={{ fontFamily: "'Sora', sans-serif" }}>
+              SMART Centre Cameroon
+            </h1>
 
             <p className="mx-auto max-w-3xl text-lg md:text-xl leading-relaxed opacity-90 mb-4">
               <span className="font-bold text-green-300">Simple · Marketable · Repairable Technologies</span>
@@ -350,7 +343,7 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-5 gap-4 mb-12">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-12">
             {WHY_SMART.map((item) => (
               <div key={item.letter} className="smart-letter rounded-2xl p-5 text-center cursor-default" style={{ background: '#e8f0fb', border: '2px solid #bfdbfe' }}>
                 <div className="text-4xl font-black mb-2" style={{ color: '#0057a8', fontFamily: "'Sora', sans-serif" }}>{item.letter}</div>
@@ -430,7 +423,14 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
                   </div>
                   <h3 className="text-lg font-black mb-2" style={{ color: '#0f172a' }}>{service.title}</h3>
                   <p className="text-sm leading-relaxed text-gray-600">{service.desc}</p>
-                  <div className={`mt-4 text-xs font-bold uppercase tracking-wider ${c.text}`}>Learn More →</div>
+                  <a
+                    href="https://www.smartcentrecameroon.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`mt-4 inline-block text-xs font-bold uppercase tracking-wider ${c.text} hover:underline`}
+                  >
+                    Learn More →
+                  </a>
                 </div>
               )
             })}
