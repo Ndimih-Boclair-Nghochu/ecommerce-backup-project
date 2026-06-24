@@ -2,27 +2,61 @@
 @tailwind components;
 @tailwind utilities;
 
+/* SCC Design System */
+:root {
+  --scc-blue: #0057a8;
+  --scc-blue-dark: #003d7a;
+  --scc-blue-light: #e8f0fb;
+  --scc-green: #16a34a;
+  --scc-green-light: #dcfce7;
+  --scc-amber: #d97706;
+  --scc-amber-light: #fef3c7;
+  --scc-slate: #475569;
+  --scc-bg: #f8fafc;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--scc-bg);
+  color: #0f172a;
+}
+
+h1, h2, h3 {
+  font-family: 'Sora', 'Inter', sans-serif;
+}
+
 .btn {
-  @apply px-4 py-2 rounded-lg font-bold transition;
+  @apply px-4 py-2 rounded-xl font-bold transition;
 }
 .btn-primary {
-  @apply bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:shadow-lg;
+  background: var(--scc-blue);
+  @apply text-white hover:opacity-90;
 }
-.btn-yellow {
-  @apply bg-yellow-400 text-purple-900 hover:bg-yellow-300;
+.btn-green {
+  background: var(--scc-green);
+  @apply text-white hover:opacity-90;
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-fadeIn {
   animation: fadeIn 0.3s ease-in-out;
 }
+
+/* Smooth scrolling */
+html { scroll-behavior: smooth; }
+
+/* Focus ring consistent with SCC blue */
+*:focus-visible {
+  outline: 2px solid var(--scc-blue);
+  outline-offset: 2px;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--scc-blue); }

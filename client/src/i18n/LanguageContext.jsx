@@ -25,7 +25,7 @@ const dictionaries = {
     availableOnly: 'Available only in: {regions}', variant: 'Variant', option: 'Option', related: 'Related Products',
     noRelated: 'No related products yet.', emptyWishlist: 'Your wishlist is empty', saveProducts: 'Save products you want to revisit later.',
     savedItems: '{count} saved item{plural}', addAllStock: 'Add All In Stock to Cart',
-    footerTagline: 'Premium electronics and accessories in Cameroon.', rights: 'All Rights Reserved.', language: 'Language'
+    footerTagline: 'Simple, Affordable, Repairable Technologies for Water, Sanitation & Sustainable Livelihoods in Cameroon.', rights: 'All Rights Reserved.', language: 'Language'
   },
   fr: {
     home: 'Accueil', products: 'Tous les produits', track: 'Suivre commande', wishlist: 'Favoris', admin: 'Admin',

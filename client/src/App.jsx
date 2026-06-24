@@ -21,11 +21,11 @@ const NotFound = lazy(() => import('./pages/NotFound'))
 const ChatWidget = lazy(() => import('./components/ChatWidget'))
 
 const DEFAULT_SETTINGS = {
-  shopName: 'MyShop',
-  mainShopTown: 'Bamenda',
+  shopName: 'SMART Centre Cameroon',
+  mainShopTown: 'Yaoundé',
   freeShippingThreshold: 100000,
-  shopPhone: '+237 6 52 882 753',
-  shopEmail: 'ndimihboclair4@gmail.com'
+  shopPhone: '+237 6 00 000 000',
+  shopEmail: 'info@smartcentrecameroon.com'
 }
 
 function readCachedSettings() {
@@ -132,12 +132,12 @@ export default function App() {
   useEffect(() => {
     const shopName = settings.shopName || 'MyShop'
     const path = location.pathname
-    if (path === '/') document.title = `${shopName} - Premium Electronics & Accessories Cameroon`
-    else if (path === '/products') document.title = `All Products - ${shopName}`
-    else if (path === '/cart') document.title = `Shopping Cart - ${shopName}`
-    else if (path === '/track-order') document.title = `Track Your Order - ${shopName}`
-    else if (path.startsWith('/products/')) document.title = `Product - ${shopName}`
-    else document.title = shopName
+    if (path === '/') document.title = `SMART Centre Cameroon — Water, Sanitation & Energy Solutions`
+    else if (path === '/products') document.title = `Products & Services — SMART Centre Cameroon`
+    else if (path === '/cart') document.title = `Cart — SMART Centre Cameroon`
+    else if (path === '/track-order') document.title = `Track Order — SMART Centre Cameroon`
+    else if (path.startsWith('/products/')) document.title = `Product — SMART Centre Cameroon`
+    else document.title = `SMART Centre Cameroon`
   }, [location.pathname, settings.shopName])
 
   useEffect(() => {
@@ -253,11 +253,24 @@ export default function App() {
       <div className="min-h-screen bg-gray-50 text-gray-900">
         <Toaster position="top-center" toastOptions={{ duration: 3000 }} />
 
-        <header className="sticky top-0 z-40 bg-white shadow-md">
-          <div className="max-w-7xl mx-auto px-4 py-3">
+        <header className="sticky top-0 z-40 bg-white shadow-sm" style={{ borderBottom: '3px solid #0057a8' }}>
+          <div className="max-w-7xl mx-auto px-4 py-2">
             <div className="h-16 flex items-center justify-between gap-3">
-              <Link to="/" className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-700 to-blue-600 bg-clip-text text-transparent hover:from-blue-800 hover:to-blue-700 transition truncate">
-                {settings.shopName}
+              <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition">
+                {/* SCC Logo mark */}
+                <svg width="40" height="40" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="60" cy="38" r="28" stroke="#0057a8" strokeWidth="8" fill="none"/>
+                  <path d="M60 10 L60 66" stroke="#0057a8" strokeWidth="8"/>
+                  <path d="M38 38 L82 38" stroke="#0057a8" strokeWidth="6"/>
+                  <path d="M48 66 L72 66 L60 85 Z" fill="#0057a8"/>
+                  <circle cx="60" cy="91" r="7" fill="#16a34a"/>
+                  <path d="M48 106 L72 106" stroke="#0057a8" strokeWidth="6" strokeLinecap="round"/>
+                </svg>
+                <div className="hidden sm:block">
+                  <div className="text-base font-black leading-tight" style={{ color: '#0057a8', fontFamily: "'Sora', sans-serif" }}>SMART Centre</div>
+                  <div className="text-xs font-bold" style={{ color: '#16a34a' }}>Cameroon</div>
+                </div>
+                <div className="block sm:hidden text-base font-black" style={{ color: '#0057a8' }}>SCC</div>
               </Link>
 
               <nav className="hidden md:flex items-center gap-6 text-sm font-semibold">
@@ -285,7 +298,8 @@ export default function App() {
                 </label>
                 <Link
                   to="/cart"
-                  className="inline-flex items-center rounded-lg bg-orange-500 px-3 py-2 text-sm font-bold text-white hover:bg-orange-600 transition"
+                  className="inline-flex items-center rounded-xl px-3 py-2 text-sm font-bold text-white hover:opacity-90 transition"
+                  style={{ background: '#0057a8' }}
                 >
                   {t('cart')} ({cartCount}) <span className="hidden sm:inline">&nbsp;- {formatXAF(subtotal)}</span>
                 </Link>
@@ -322,7 +336,19 @@ export default function App() {
             }`}
           >
             <div className="h-16 px-5 flex items-center justify-between border-b border-gray-200">
-              <span className="font-bold bg-gradient-to-r from-blue-700 to-blue-600 bg-clip-text text-transparent">{settings.shopName}</span>
+              <div className="flex items-center gap-2">
+                <svg width="32" height="32" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="60" cy="38" r="28" stroke="#0057a8" strokeWidth="8" fill="none"/>
+                  <path d="M60 10 L60 66" stroke="#0057a8" strokeWidth="8"/>
+                  <path d="M38 38 L82 38" stroke="#0057a8" strokeWidth="6"/>
+                  <path d="M48 66 L72 66 L60 85 Z" fill="#0057a8"/>
+                  <circle cx="60" cy="91" r="7" fill="#16a34a"/>
+                </svg>
+                <div>
+                  <div className="text-sm font-black" style={{ color: '#0057a8' }}>SMART Centre</div>
+                  <div className="text-xs font-bold" style={{ color: '#16a34a' }}>Cameroon</div>
+                </div>
+              </div>
               <button type="button" onClick={closeMobileMenu} className="rounded-md border border-gray-300 px-3 py-2 text-xl leading-none" aria-label="Close navigation menu">
                 x
               </button>
@@ -379,26 +405,79 @@ export default function App() {
           </Routes>
         </Suspense>
 
-        <footer className="bg-white border-t">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 grid gap-6 md:grid-cols-3">
+        <footer style={{ background: '#0f172a', color: 'white' }}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 grid gap-8 md:grid-cols-4">
+            <div className="md:col-span-1">
+              <div className="flex items-center gap-3 mb-4">
+                <svg width="44" height="44" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="60" cy="38" r="28" stroke="white" strokeWidth="8" fill="none"/>
+                  <path d="M60 10 L60 66" stroke="white" strokeWidth="8"/>
+                  <path d="M38 38 L82 38" stroke="white" strokeWidth="6"/>
+                  <path d="M48 66 L72 66 L60 85 Z" fill="white"/>
+                  <circle cx="60" cy="91" r="7" fill="#4ade80"/>
+                  <path d="M48 106 L72 106" stroke="white" strokeWidth="6" strokeLinecap="round"/>
+                </svg>
+                <div>
+                  <div className="font-black text-sm" style={{ color: 'white', fontFamily: "'Sora', sans-serif" }}>SMART Centre</div>
+                  <div className="text-xs font-bold" style={{ color: '#4ade80' }}>Cameroon</div>
+                </div>
+              </div>
+              <p className="text-sm opacity-60 leading-relaxed mb-4">Simple, Affordable, Repairable Technologies for Water, Sanitation & Sustainable Livelihoods across Cameroon.</p>
+              <div className="text-xs opacity-50 font-semibold">Franchise of SMART Centre Group · Netherlands</div>
+            </div>
+
             <div>
-              <p className="text-xl font-bold bg-gradient-to-r from-blue-700 to-blue-600 bg-clip-text text-transparent">{settings.shopName}</p>
-              <p className="mt-2 text-sm text-gray-500">{t('footerTagline')}</p>
+              <h4 className="font-black text-sm uppercase tracking-wider mb-4 opacity-60">Services</h4>
+              <ul className="space-y-2 text-sm opacity-70">
+                {['Research & Groundwater', 'Water Storage', 'Well Drilling', 'Welding & Fabrication', 'Solar Energy', 'General Water Works'].map(s => (
+                  <li key={s}><Link to="/products" className="hover:opacity-100 transition">{s}</Link></li>
+                ))}
+              </ul>
             </div>
-            <div className="text-sm text-gray-600 space-y-1">
-              <p>mile 4, Bamenda, Cameroon</p>
-              <p>{settings.shopPhone}</p>
-              <p>{settings.shopEmail}</p>
+
+            <div>
+              <h4 className="font-black text-sm uppercase tracking-wider mb-4 opacity-60">Quick Links</h4>
+              <ul className="space-y-2 text-sm opacity-70">
+                <li><Link to="/" className="hover:opacity-100 transition">Home</Link></li>
+                <li><Link to="/products" className="hover:opacity-100 transition">All Products</Link></li>
+                <li><Link to="/track-order" className="hover:opacity-100 transition">Track Order</Link></li>
+                <li><Link to="/wishlist" className="hover:opacity-100 transition">Wishlist</Link></li>
+                <li><Link to="/customer-login" className="hover:opacity-100 transition">My Account</Link></li>
+                <li><a href="https://smartcentregroup.com" target="_blank" rel="noopener noreferrer" className="hover:opacity-100 transition">SMART Centre Group ↗</a></li>
+              </ul>
             </div>
-            <div className="flex flex-wrap md:justify-end gap-4 text-sm font-semibold">
-              <Link to="/" className="text-gray-600 hover:text-blue-700 transition">{t('home')}</Link>
-              <Link to="/products" className="text-gray-600 hover:text-blue-700 transition">{t('products')}</Link>
-              <Link to="/track-order" className="text-gray-600 hover:text-blue-700 transition">{t('track')}</Link>
-              <Link to="/wishlist" className="text-gray-600 hover:text-blue-700 transition">{t('wishlist')}</Link>
+
+            <div>
+              <h4 className="font-black text-sm uppercase tracking-wider mb-4 opacity-60">Contact</h4>
+              <ul className="space-y-3 text-sm opacity-70">
+                <li className="flex items-start gap-2">
+                  <span>📍</span>
+                  <span>Cameroon (Nationwide)<br/>Regional representatives across all regions</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span>📞</span>
+                  <a href={`tel:${settings.shopPhone}`} className="hover:opacity-100 transition">{settings.shopPhone}</a>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span>✉️</span>
+                  <a href={`mailto:${settings.shopEmail}`} className="hover:opacity-100 transition">{settings.shopEmail}</a>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span>🌐</span>
+                  <a href="https://www.smartcentrecameroon.com" className="hover:opacity-100 transition">smartcentrecameroon.com</a>
+                </li>
+              </ul>
+
+              <div className="mt-6 p-3 rounded-xl text-xs" style={{ background: 'rgba(22,163,74,0.15)', border: '1px solid rgba(22,163,74,0.3)' }}>
+                <div className="font-bold text-green-400 mb-1">Serving NGOs, Government</div>
+                <div className="opacity-70">Contractors & Individuals worldwide</div>
+              </div>
             </div>
           </div>
-          <div className="border-t border-gray-100 py-4 text-center text-xs text-gray-400">
-            (c) {new Date().getFullYear()} {settings.shopName}. {t('rights')}
+
+          <div className="border-t py-5 text-center text-xs" style={{ borderColor: 'rgba(255,255,255,0.1)', opacity: 0.5 }}>
+            © {new Date().getFullYear()} SMART Centre Cameroon Ltd. All Rights Reserved. · Franchise of{' '}
+            <a href="https://smartcentregroup.com" target="_blank" rel="noopener noreferrer" className="underline">SMART Centre Group</a>
           </div>
         </footer>
 

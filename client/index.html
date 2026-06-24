@@ -3,17 +3,31 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Shop premium electronics and accessories in Cameroon. Fast delivery to Bamenda, Douala, Yaoundé and across Cameroon." />
-    <meta name="keywords" content="online shop cameroon, electronics bamenda, ecommerce cameroon, buy online XAF" />
-    <meta property="og:title" content="MyShop — Premium Electronics & Accessories" />
-    <meta property="og:description" content="Shop the best electronics and accessories in Cameroon with fast delivery nationwide." />
+    <meta name="description" content="SMART Centre Cameroon – Simple, Affordable, Repairable Technologies for Water, Sanitation & Sustainable Livelihoods. Borehole drilling, solar energy, water storage across Cameroon." />
+    <meta name="keywords" content="smart centre cameroon, borehole drilling cameroon, water solutions cameroon, solar energy cameroon, WASH cameroon, SCC, water sanitation hygiene" />
+    <meta property="og:title" content="SMART Centre Cameroon (SCC) — Water, Sanitation & Energy Solutions" />
+    <meta property="og:description" content="Empowering communities across Cameroon with Simple, Marketable, Repairable Technologies for Water, Sanitation & Sustainable Livelihoods." />
     <meta property="og:type" content="website" />
-    <link rel="canonical" href="https://yourdomain.cm" />
-    <title>MyShop - E-commerce</title>
-    <!-- Preconnect for faster image loading -->
+    <meta property="og:image" content="https://www.smartcentrecameroon.com/logo.png" />
+    <link rel="canonical" href="https://www.smartcentrecameroon.com" />
+    <title>SMART Centre Cameroon — Water, Sanitation & Energy Solutions</title>
     <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet" />
     <style>
-      body { margin: 0; font-family: system-ui, sans-serif; background: #f9fafb; }
+      *, *::before, *::after { box-sizing: border-box; }
+      body { margin: 0; font-family: 'Inter', system-ui, sans-serif; background: #f8fafc; color: #0f172a; }
+      :root {
+        --scc-blue: #0057a8;
+        --scc-blue-dark: #003d7a;
+        --scc-blue-light: #e8f0fb;
+        --scc-green: #16a34a;
+        --scc-green-light: #dcfce7;
+        --scc-amber: #d97706;
+        --scc-amber-light: #fef3c7;
+        --scc-slate: #475569;
+      }
     </style>
   </head>
   <body>
@@ -22,31 +36,15 @@
       (function() {
         if ('serviceWorker' in navigator) {
           navigator.serviceWorker.getRegistrations().then(function(registrations) {
-            registrations.forEach(function(registration) {
-              registration.unregister();
-            });
+            registrations.forEach(function(r) { r.unregister(); });
           }).catch(function() {});
         }
-
         if ('caches' in window) {
           window.caches.keys().then(function(keys) {
-            keys.forEach(function(key) {
-              window.caches.delete(key);
-            });
+            keys.forEach(function(key) { window.caches.delete(key); });
           }).catch(function() {});
         }
       })();
-    </script>
-    <script>
-      window.addEventListener('load', function() {
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.getRegistrations().then(function(registrations) {
-            registrations.forEach(function(registration) {
-              registration.unregister();
-            });
-          });
-        }
-      });
     </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
