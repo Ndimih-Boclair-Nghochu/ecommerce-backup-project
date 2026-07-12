@@ -1154,6 +1154,51 @@ app.put('/api/admin/free-shipping', checkPermission('manageLocations'), validate
 }));
 
 app.put('/api/admin/settings', requireSuperAdmin, asyncHandler(async (req, res) => {
+  const rawEmail = typeof req.body.email === 'string' ? req.body.email.trim() : '';
+  const rawPassword = typeof req.body.password === 'string' ? req.body.password : '';
+
+  const updates = [];
+  const values = [];
+  let emailChanged = false;
+
+  if (rawEmail) {
+    const normalizedEmail = rawEmail.toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      return res.status(400).json({ error: 'Enter a valid email address' });
+    }
+    const existing = await pool.query(
+      'SELECT id FROM admins WHERE LOWER(email) = LOWER($1) AND id <> $2',
+      [normalizedEmail, req.admin.id]
+    );
+    if (existing.rowCount > 0) {
+      return res.status(409).json({ error: 'That email is already in use by another account' });
+    }
+    values.push(normalizedEmail);
+    updates.push(`email = $${values.length}`);
+    emailChanged = true;
+  }
+
+  if (rawPassword) {
+    if (rawPassword.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+    }
+    const passwordHash = await bcrypt.hash(rawPassword, 12);
+    values.push(passwordHash);
+    updates.push(`password_hash = $${values.length}`);
+  }
+
+  let updatedAdmin = req.admin;
+  if (updates.length > 0) {
+    values.push(req.admin.id);
+    const result = await pool.query(
+      `UPDATE admins SET ${updates.join(', ')}, updated_at = NOW()
+       WHERE id = $${values.length}
+       RETURNING id, name, email, role, permissions, is_active, created_at, updated_at`,
+      values
+    );
+    updatedAdmin = adminFromRow(result.rows[0]);
+  }
+
   if (req.body.platformName) {
     await pool.query(
       `INSERT INTO settings (key, value)
@@ -1162,8 +1207,28 @@ app.put('/api/admin/settings', requireSuperAdmin, asyncHandler(async (req, res) 
       [String(req.body.platformName)]
     );
   }
-  await logActivity(req, 'update_settings', { platformName: req.body.platformName || undefined });
-  res.json({ message: 'Settings updated' });
+
+  let token;
+  if (emailChanged) {
+    token = jwt.sign(
+      { id: updatedAdmin.id, email: updatedAdmin.email, role: updatedAdmin.role },
+      JWT_SECRET,
+      { expiresIn: '12h' }
+    );
+  }
+
+  await logActivity(req, 'update_settings', {
+    emailChanged,
+    passwordChanged: Boolean(rawPassword),
+    platformName: req.body.platformName || undefined
+  });
+
+  res.json({
+    message: 'Settings updated',
+    admin: updatedAdmin,
+    email: updatedAdmin.email,
+    token
+  });
 }));
 
 app.put('/api/admin/hero-section', requireSuperAdmin, asyncHandler(async (req, res) => {

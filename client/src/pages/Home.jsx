@@ -15,37 +15,50 @@ const SERVICES = [
     icon: '🔍',
     title: 'Research & Groundwater',
     desc: 'Borehole siting, hydrogeological surveys, pumping tests, water quality analysis, GIS mapping and project feasibility studies.',
-    color: 'blue'
+    color: 'blue',
+    img: 'https://images.unsplash.com/photo-1559825481-12a05cc00344?w=800&q=80'
   },
   {
     icon: '🏗️',
     title: 'Water Storage',
     desc: 'Overhead & ground storage tanks (concrete, plastic, steel, fiberglass), water towers, plumbing, tank cleaning and maintenance.',
-    color: 'green'
+    color: 'green',
+    img: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&q=80'
   },
   {
     icon: '⛏️',
     title: 'Well Drilling',
     desc: 'Borehole drilling (manual, rotary, DTH), casing & screen installation, handpump & submersible pump installation, borehole rehabilitation.',
-    color: 'amber'
+    color: 'amber',
+    img: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=800&q=80'
   },
   {
     icon: '🔧',
     title: 'Welding & Fabrication',
     desc: 'Structural steel works, pipe fitting, custom metal works including gates, tanks, towers, frames, and mobile welding services.',
-    color: 'blue'
+    color: 'blue',
+    img: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=800&q=80'
   },
   {
     icon: '☀️',
     title: 'Solar Energy',
     desc: 'Solar water pump installation (AC/DC/Hybrid), solar power systems for homes, farms & institutions, inverter & battery installation.',
-    color: 'green'
+    color: 'green',
+    img: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=800&q=80'
   },
   {
     icon: '🚿',
     title: 'General Water Works',
     desc: 'Plumbing, sanitary works, rainwater harvesting, civil works, maintenance contracts. We also train & build skills (practical & theoretical).',
-    color: 'amber'
+    color: 'amber',
+    img: 'https://images.unsplash.com/photo-1585421514738-01798e348b17?w=800&q=80'
+  },
+  {
+    icon: '📚',
+    title: 'Skills Training',
+    desc: 'Hands-on practical & theoretical training for the local private sector — building durable skills for profit-based, sustainable livelihoods.',
+    color: 'blue',
+    img: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80'
   }
 ]
 
@@ -148,6 +161,14 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
   const [activeService, setActiveService] = useState(null)
   const [countersVisible, setCountersVisible] = useState(false)
   const statsRef = React.useRef(null)
+  const servicesScrollRef = React.useRef(null)
+
+  const scrollServices = (dir) => {
+    const el = servicesScrollRef.current
+    if (!el) return
+    const amount = Math.max(el.clientWidth * 0.85, 300)
+    el.scrollBy({ left: dir === 'left' ? -amount : amount, behavior: 'smooth' })
+  }
 
   useEffect(() => {
     let active = true
@@ -217,9 +238,9 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
   useEffect(() => { if (productPage >= pageCount) setProductPage(pageCount - 1) }, [pageCount, productPage])
 
   const colorMap = {
-    blue: { bg: 'bg-blue-50', border: 'border-blue-200', icon: 'bg-blue-100 text-blue-700', text: 'text-blue-700' },
-    green: { bg: 'bg-green-50', border: 'border-green-200', icon: 'bg-green-100 text-green-700', text: 'text-green-700' },
-    amber: { bg: 'bg-amber-50', border: 'border-amber-200', icon: 'bg-amber-100 text-amber-700', text: 'text-amber-700' }
+    blue: { bg: 'bg-blue-50', border: 'border-blue-200', icon: 'bg-blue-100 text-blue-700', text: 'text-blue-700', gradient: 'linear-gradient(135deg, #0057a8 0%, #003d7a 100%)', accent: '#0057a8' },
+    green: { bg: 'bg-green-50', border: 'border-green-200', icon: 'bg-green-100 text-green-700', text: 'text-green-700', gradient: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)', accent: '#16a34a' },
+    amber: { bg: 'bg-amber-50', border: 'border-amber-200', icon: 'bg-amber-100 text-amber-700', text: 'text-amber-700', gradient: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)', accent: '#d97706' }
   }
 
   return (
@@ -250,6 +271,14 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
         .animate-float { animation: float 4s ease-in-out infinite; }
         .service-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,87,168,0.12); }
         .service-card { transition: transform 0.25s, box-shadow 0.25s; }
+        .service-card:hover .service-card-img { transform: scale(1.06); }
+        .service-card-img { transition: transform 0.4s ease; }
+        .services-rail { scrollbar-width: thin; scrollbar-color: #0057a8 #e2e8f0; scroll-padding-left: 1rem; }
+        .services-rail::-webkit-scrollbar { height: 8px; }
+        .services-rail::-webkit-scrollbar-track { background: #e2e8f0; border-radius: 999px; }
+        .services-rail::-webkit-scrollbar-thumb { background: #0057a8; border-radius: 999px; }
+        .services-rail::-webkit-scrollbar-thumb:hover { background: #003d7a; }
+        .services-nav-btn:hover { background: #0057a8 !important; }
         .partner-card:hover { border-color: #0057a8; }
         .partner-card { transition: border-color 0.2s; }
         .smart-letter { transition: transform 0.2s, background 0.2s; }
@@ -276,18 +305,8 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
             Franchise of SMART Centre Group · Netherlands
           </div>
 
-          {/* Logo mark + headline */}
+          {/* Headline */}
           <div className="animate-fadeup-delay-1">
-            <div className="flex items-center justify-center mb-6">
-              <div className="animate-float">
-                <img
-                  src="/scc-logo.jpeg"
-                  alt="SMART Centre Cameroon — SCC"
-                  className="h-24 md:h-32 w-auto object-contain"
-                  style={{ filter: 'brightness(0) invert(1)', borderRadius: '12px' }}
-                />
-              </div>
-            </div>
             <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight mb-3" style={{ fontFamily: "'Sora', sans-serif" }}>
               SMART Centre Cameroon
             </h1>
@@ -398,48 +417,86 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
       {/* ── SERVICES ── */}
       <section id="services" className="py-16 px-4" style={{ background: '#f8fafc' }}>
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <span className="inline-block text-xs font-black uppercase tracking-widest mb-3 px-3 py-1 rounded-full" style={{ color: '#16a34a', background: '#dcfce7' }}>Services & Training</span>
-            <h2 className="text-3xl md:text-4xl font-black mb-4" style={{ fontFamily: "'Sora', sans-serif", color: '#0f172a' }}>
-              What We <span style={{ color: '#0057a8' }}>Offer</span>
-            </h2>
-            <p className="max-w-xl mx-auto text-gray-600">
-              Serving NGOs, Government, Contractors & Individuals — providing quality service, integrity and commitment across Cameroon.
-            </p>
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10">
+            <div className="text-center md:text-left">
+              <span className="inline-block text-xs font-black uppercase tracking-widest mb-3 px-3 py-1 rounded-full" style={{ color: '#16a34a', background: '#dcfce7' }}>Services &amp; Training</span>
+              <h2 className="text-3xl md:text-4xl font-black mb-3" style={{ fontFamily: "'Sora', sans-serif", color: '#0f172a' }}>
+                What We <span style={{ color: '#0057a8' }}>Offer</span>
+              </h2>
+              <p className="max-w-xl mx-auto md:mx-0 text-gray-600">
+                Serving NGOs, Government, Contractors &amp; Individuals — quality service, integrity and commitment across Cameroon. Swipe to explore.
+              </p>
+            </div>
+            {/* Scroll controls (desktop) */}
+            <div className="hidden md:flex items-center gap-3 shrink-0">
+              <button
+                type="button"
+                onClick={() => scrollServices('left')}
+                aria-label="Scroll services left"
+                className="services-nav-btn h-11 w-11 rounded-full border-2 flex items-center justify-center bg-white transition hover:text-white"
+                style={{ borderColor: '#0057a8', color: '#0057a8' }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollServices('right')}
+                aria-label="Scroll services right"
+                className="services-nav-btn h-11 w-11 rounded-full border-2 flex items-center justify-center bg-white transition hover:text-white"
+                style={{ borderColor: '#0057a8', color: '#0057a8' }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+              </button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {/* Horizontal scroll rail */}
+          <div ref={servicesScrollRef} className="services-rail flex gap-5 overflow-x-auto pb-4 -mx-4 px-4 snap-x snap-mandatory">
             {SERVICES.map((service, i) => {
               const c = colorMap[service.color]
               return (
-                <div
+                <article
                   key={i}
-                  className={`service-card rounded-2xl p-6 cursor-default border-2 ${c.bg} ${c.border}`}
+                  className="service-card snap-start shrink-0 w-[80vw] sm:w-[340px] max-w-[360px] rounded-2xl overflow-hidden bg-white border border-gray-100 shadow-sm flex flex-col"
                   onMouseEnter={() => setActiveService(i)}
                   onMouseLeave={() => setActiveService(null)}
                 >
-                  <div className={`inline-flex h-12 w-12 items-center justify-center rounded-xl text-2xl mb-4 ${c.icon}`}>
-                    {service.icon}
+                  {/* Image header with gradient fallback */}
+                  <div className="relative h-44 w-full overflow-hidden" style={{ background: c.gradient }}>
+                    <img
+                      src={service.img}
+                      alt={service.title}
+                      loading="lazy"
+                      className="service-card-img h-full w-full object-cover"
+                      onError={(e) => { e.currentTarget.style.display = 'none' }}
+                    />
+                    <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(15,23,42,0) 35%, rgba(15,23,42,0.55) 100%)' }} />
+                    <div className="absolute top-3 left-3 h-11 w-11 rounded-xl flex items-center justify-center text-2xl shadow-md" style={{ background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(4px)' }}>
+                      {service.icon}
+                    </div>
+                    <h3 className="absolute bottom-3 left-4 right-4 text-lg font-black text-white drop-shadow" style={{ fontFamily: "'Sora', sans-serif" }}>{service.title}</h3>
                   </div>
-                  <h3 className="text-lg font-black mb-2" style={{ color: '#0f172a' }}>{service.title}</h3>
-                  <p className="text-sm leading-relaxed text-gray-600">{service.desc}</p>
-                  <a
-                    href="https://www.smartcentrecameroon.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`mt-4 inline-block text-xs font-bold uppercase tracking-wider ${c.text} hover:underline`}
-                  >
-                    Learn More →
-                  </a>
-                </div>
+                  {/* Body */}
+                  <div className="p-5 flex flex-col flex-1">
+                    <p className="text-sm leading-relaxed text-gray-600 flex-1">{service.desc}</p>
+                    <a
+                      href="https://www.smartcentrecameroon.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`mt-4 inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider ${c.text} hover:gap-2 transition-all`}
+                    >
+                      Learn More →
+                    </a>
+                  </div>
+                </article>
               )
             })}
           </div>
 
           <div className="mt-8 text-center">
             <p className="text-sm text-gray-500 italic mb-4">"Quality Service, Integrity, Commitment – At SMART Centre Cameroon"</p>
-            <Link to="/products" className="inline-flex items-center gap-2 rounded-xl px-8 py-4 font-bold text-white" style={{ background: '#0057a8' }}>
-              View All Products & Services →
+            <Link to="/products" className="inline-flex items-center gap-2 rounded-xl px-8 py-4 font-bold text-white transition hover:scale-105" style={{ background: '#0057a8' }}>
+              View All Products &amp; Services →
             </Link>
           </div>
         </div>

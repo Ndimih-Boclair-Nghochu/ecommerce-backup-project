@@ -593,25 +593,33 @@ export default function AdminDashboard() {
     e.preventDefault()
     setLoading(true)
     try {
-      await axios.put('/api/admin/settings', 
-        { 
-          email: settingsForm.email || undefined, 
+      const { data } = await axios.put('/api/admin/settings',
+        {
+          email: settingsForm.email || undefined,
           password: settingsForm.newPassword || undefined,
           platformName: settingsForm.platformName || undefined
         },
         { headers: { Authorization: `Bearer ${token}` } }
       )
-      if (settingsForm.email) {
-        localStorage.setItem('adminEmail', settingsForm.email)
-        setAdminEmail(settingsForm.email)
+      const updatedEmail = data?.admin?.email || data?.email || settingsForm.email
+      if (updatedEmail) {
+        localStorage.setItem('adminEmail', updatedEmail)
+        setAdminEmail(updatedEmail)
+      }
+      if (data?.token) {
+        localStorage.setItem('adminToken', data.token)
       }
       if (settingsForm.platformName) {
         setPlatformName(settingsForm.platformName)
       }
-      setMessage({ type: 'success', text: 'Settings updated successfully' })
+      const changes = []
+      if (settingsForm.email) changes.push('email')
+      if (settingsForm.newPassword) changes.push('password')
+      if (settingsForm.platformName) changes.push('platform name')
+      setMessage({ type: 'success', text: changes.length ? `Updated ${changes.join(', ')} successfully` : 'Settings updated successfully' })
       setSettingsForm({ email: '', currentPassword: '', newPassword: '', platformName: '' })
     } catch (err) {
-      setMessage({ type: 'error', text: 'Failed to update settings' })
+      setMessage({ type: 'error', text: err.response?.data?.error || 'Failed to update settings' })
     } finally {
       setLoading(false)
       setTimeout(() => setMessage({ type: '', text: '' }), 3000)

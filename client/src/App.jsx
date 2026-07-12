@@ -385,6 +385,7 @@ export default function App() {
           </Routes>
         </Suspense>
 
+        {!isAdminRoute && (
         <footer style={{ background: '#0f172a', color: 'white' }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 grid gap-8 md:grid-cols-4">
             <div className="md:col-span-1">
@@ -449,6 +450,7 @@ export default function App() {
             <a href="https://smartcentregroup.com" target="_blank" rel="noopener noreferrer" className="underline">SMART Centre Group</a>
           </div>
         </footer>
+        )}
 
         {!isAdminRoute && chatReady && (
           <Suspense fallback={null}>
