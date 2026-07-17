@@ -86,21 +86,6 @@ function PRODUCTS_PER_ROW_BY_WIDTH_fn() {
   return 2
 }
 
-// Hero background image
-function HeroSlideshow() {
-  return (
-    <div className="absolute inset-0 overflow-hidden">
-      <img
-        src={HERO_BACKGROUND_IMAGE}
-        alt=""
-        className="h-full w-full object-cover"
-        loading="eager"
-      />
-      <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.18)' }} />
-    </div>
-  )
-}
-
 // Floating animated water drop
 function WaterDrop({ delay = 0, x = 50 }) {
   return (
@@ -265,57 +250,38 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
       </div>
 
       {/* ── HERO ── */}
-      <section className="relative overflow-hidden" style={{ minHeight: '90vh', display: 'flex', alignItems: 'center' }}>
-        <HeroSlideshow />
-
-        <div className="relative z-10 w-full py-20 px-4 text-white text-center">
-          {/* SCC Badge */}
-          <div className="animate-fadeup inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-bold mb-6" style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.3)' }}>
-            <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse inline-block" />
-            Franchise of SMART Centre Group · Netherlands
-          </div>
-
-          {/* Headline */}
-          <div className="animate-fadeup-delay-1">
-            <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight mb-3" style={{ fontFamily: "'Sora', sans-serif" }}>
-              SMART Centre Cameroon
-            </h1>
-
-            <p className="mx-auto max-w-3xl text-lg md:text-xl leading-relaxed opacity-90 mb-4">
-              <span className="font-bold text-green-300">Simple · Marketable · Repairable Technologies</span>
-            </p>
-            <p className="mx-auto max-w-2xl text-base md:text-lg leading-relaxed opacity-80 mb-10">
-              Empowering communities across Cameroon with self-supply WASH solutions — from borehole drilling and water storage to solar energy and sanitation.
-            </p>
-          </div>
-
-          <div className="animate-fadeup-delay-2 flex flex-wrap justify-center gap-4">
-            <Link to="/products" className="rounded-xl px-8 py-4 font-bold text-white text-base shadow-xl transition hover:scale-105" style={{ background: '#16a34a' }}>
-              🛒 Shop Our Products & Services
-            </Link>
-            <a href="#services" className="rounded-xl border-2 border-white px-8 py-4 font-bold text-white text-base transition hover:bg-white/10">
-              🔍 Explore Services
-            </a>
-          </div>
-
-          {/* Quick stats bar */}
-          <div className="animate-fadeup-delay-3 mx-auto mt-14 max-w-3xl grid grid-cols-3 gap-3">
-            {[
-              { value: '10+', label: 'Years in Cameroon' },
-              { value: '9', label: 'African SC Countries' },
-              { value: '100%', label: 'Cameroon Coverage' }
-            ].map(s => (
-              <div key={s.label} className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)' }}>
-                <div className="text-2xl md:text-3xl font-black counter-num">{s.value}</div>
-                <div className="text-xs md:text-sm opacity-80 mt-1">{s.label}</div>
-              </div>
-            ))}
-          </div>
+      <section className="relative overflow-hidden">
+        {/* Blurred ambient backdrop so the full banner is always visible, uncropped */}
+        <div className="absolute inset-0" aria-hidden="true">
+          <img
+            src={HERO_BACKGROUND_IMAGE}
+            alt=""
+            className="h-full w-full object-cover"
+            style={{ filter: 'blur(28px)', transform: 'scale(1.15)' }}
+          />
+          <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.25)' }} />
         </div>
 
-        {/* Scroll hint */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 opacity-60 animate-bounce">
-          <svg width="24" height="24" fill="white" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5"/><path d="M7 10l5 5 5-5" stroke="white" strokeWidth="2" fill="none"/></svg>
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-3 pt-4 pb-8 sm:px-6 sm:pt-8 sm:pb-12 lg:px-8">
+          {/* Full banner, natural aspect ratio on every screen size */}
+          <img
+            src={HERO_BACKGROUND_IMAGE}
+            alt="SMARTech Organic — Food Products & Groceries"
+            className="animate-fadeup w-full rounded-lg shadow-2xl sm:rounded-2xl"
+            style={{ aspectRatio: '1280 / 512', objectFit: 'cover' }}
+            loading="eager"
+          />
+
+          {/* Single call-to-action */}
+          <div className="animate-fadeup-delay-1 mt-5 flex justify-center sm:mt-8">
+            <Link
+              to="/products"
+              className="w-full max-w-xs rounded-xl px-8 py-4 text-center text-base font-bold text-white shadow-xl transition hover:scale-105 sm:w-auto sm:max-w-none sm:text-lg"
+              style={{ background: '#16a34a' }}
+            >
+              🛒 Shop Our Products
+            </Link>
+          </div>
         </div>
       </section>
 
