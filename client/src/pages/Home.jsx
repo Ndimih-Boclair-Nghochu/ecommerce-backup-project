@@ -69,14 +69,6 @@ const PARTNERS = [
   { name: 'MetaMeta', country: 'Netherlands', desc: 'Franchise coordinator and SCG lead organisation', url: '#' }
 ]
 
-const WHY_SMART = [
-  { letter: 'S', word: 'Simple', desc: 'Technologies that anyone can understand, use and maintain without complex training.' },
-  { letter: 'M', word: 'Marketable', desc: 'Market-based solutions that create sustainable businesses and livelihoods locally.' },
-  { letter: 'A', word: 'Affordable', desc: 'Solutions within reach of families at all income levels, including lower-income households.' },
-  { letter: 'R', word: 'Repairable', desc: 'Locally repairable with locally sourced parts — no long-distance supply chains needed.' },
-  { letter: 'T', word: 'Technologies', desc: 'Proven, tested technologies for WASH, agriculture, waste management and food science.' }
-]
-
 const HERO_BACKGROUND_IMAGE = '/hero-banner.jpg'
 
 function PRODUCTS_PER_ROW_BY_WIDTH_fn() {
@@ -243,7 +235,6 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
         .hero-section { display: flex; align-items: center; justify-content: center; }
         .hero-backdrop { filter: blur(8px); transform: scale(1.05); }
         @media (max-width: 639px) {
-          .hero-section { min-height: 72vh; }
           .hero-backdrop { filter: blur(2px); transform: scale(1.02); }
         }
       `}</style>
@@ -286,71 +277,6 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
             >
               🛒 Shop Our Products
             </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── WHAT IS SMART ── */}
-      <section id="about" className="py-16 px-4" style={{ background: 'white' }}>
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <span className="inline-block text-xs font-black uppercase tracking-widest mb-3 px-3 py-1 rounded-full" style={{ color: '#0057a8', background: '#e8f0fb' }}>Our Mission</span>
-            <h2 className="text-3xl md:text-4xl font-black mb-4" style={{ fontFamily: "'Sora', sans-serif", color: '#0f172a' }}>
-              What is <span style={{ color: '#0057a8' }}>SMART</span>?
-            </h2>
-            <p className="max-w-2xl mx-auto text-gray-600 leading-relaxed">
-              SMART Centre Cameroon Ltd operates a franchise model with SMART Centre Group (coordinated by MetaMeta, Netherlands) — bringing proven WASH technologies across Cameroon and future Central Africa.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-12">
-            {WHY_SMART.map((item) => (
-              <div key={item.letter} className="smart-letter rounded-2xl p-5 text-center cursor-default" style={{ background: '#e8f0fb', border: '2px solid #bfdbfe' }}>
-                <div className="text-4xl font-black mb-2" style={{ color: '#0057a8', fontFamily: "'Sora', sans-serif" }}>{item.letter}</div>
-                <div className="font-bold text-sm mb-2" style={{ color: '#0057a8' }}>{item.word}</div>
-                <p className="text-xs text-gray-600 leading-relaxed">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="rounded-2xl p-6 md:p-10" style={{ background: 'linear-gradient(135deg, #0057a8 0%, #003d7a 100%)', color: 'white' }}>
-            <div className="grid md:grid-cols-2 gap-8 items-center">
-              <div>
-                <h3 className="text-2xl font-black mb-4" style={{ fontFamily: "'Sora', sans-serif" }}>Our Strategic Vision</h3>
-                <ul className="space-y-3 text-sm leading-relaxed opacity-90">
-                  {[
-                    'Promote technologies/services that are Simple, Market-based, Affordable and Repairable',
-                    'Focus on training the local private sector for "profit-based sustainability"',
-                    'Promote self-supply, family-level technologies for lower-income families',
-                    'Promote HWTS (Household Water Treatment and Safe Storage) with household water filters',
-                    'Assist local private sector in establishing affordable WASH supply chains'
-                  ].map((item, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <span className="mt-0.5 h-5 w-5 shrink-0 rounded-full flex items-center justify-center text-xs font-black" style={{ background: '#16a34a' }}>✓</span>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="text-center">
-                <div className="text-5xl mb-4">💧</div>
-                <p className="text-xl font-bold mb-2">WASH Focus</p>
-                <p className="opacity-80 text-sm">Water · Sanitation · Hygiene</p>
-                <div className="mt-6 grid grid-cols-2 gap-3">
-                  {[
-                    { icon: '🌾', label: 'Agriculture' },
-                    { icon: '♻️', label: 'Waste Mgmt' },
-                    { icon: '🥗', label: 'Food Science' },
-                    { icon: '🌍', label: 'Central Africa' }
-                  ].map(i => (
-                    <div key={i.label} className="rounded-xl py-3 px-2 text-sm font-semibold" style={{ background: 'rgba(255,255,255,0.12)' }}>
-                      <div className="text-2xl mb-1">{i.icon}</div>
-                      {i.label}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </section>
