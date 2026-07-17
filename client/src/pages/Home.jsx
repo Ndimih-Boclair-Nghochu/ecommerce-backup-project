@@ -258,7 +258,7 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
           <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.08)' }} />
         </div>
 
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-3 pt-4 pb-8 sm:px-6 sm:pt-8 sm:pb-12 lg:px-8">
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-3 py-4 sm:px-6 sm:pt-8 sm:pb-12 lg:px-8">
           {/* Full banner, natural aspect ratio on every screen size */}
           <img
             src={HERO_BACKGROUND_IMAGE}
@@ -268,16 +268,29 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
             loading="eager"
           />
 
-          {/* Single call-to-action */}
-          <div className="animate-fadeup-delay-1 mt-5 flex justify-center sm:mt-8">
+          {/* Call-to-action inside the hero — tablet/desktop only */}
+          <div className="animate-fadeup-delay-1 mt-8 hidden justify-center sm:flex">
             <Link
               to="/products"
-              className="w-full max-w-xs rounded-xl px-8 py-4 text-center text-base font-bold text-white shadow-xl transition hover:scale-105 sm:w-auto sm:max-w-none sm:text-lg"
+              className="rounded-xl px-8 py-4 text-center text-lg font-bold text-white shadow-xl transition hover:scale-105"
               style={{ background: '#0057a8' }}
             >
               🛒 Shop Our Products
             </Link>
           </div>
+        </div>
+      </section>
+
+      {/* ── SHOP CTA below the hero — mobile only ── */}
+      <section className="px-4 py-6 sm:hidden" style={{ background: 'white' }}>
+        <div className="animate-fadeup-delay-1 flex justify-center">
+          <Link
+            to="/products"
+            className="w-full max-w-xs rounded-xl px-8 py-4 text-center text-base font-bold text-white shadow-xl transition hover:scale-105"
+            style={{ background: '#0057a8' }}
+          >
+            🛒 Shop Our Products
+          </Link>
         </div>
       </section>
 
