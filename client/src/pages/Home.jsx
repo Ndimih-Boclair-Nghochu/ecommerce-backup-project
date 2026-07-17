@@ -257,9 +257,9 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
             src={HERO_BACKGROUND_IMAGE}
             alt=""
             className="h-full w-full object-cover"
-            style={{ filter: 'blur(28px)', transform: 'scale(1.15)' }}
+            style={{ filter: 'blur(8px)', transform: 'scale(1.05)' }}
           />
-          <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.25)' }} />
+          <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.08)' }} />
         </div>
 
         <div className="relative z-10 mx-auto w-full max-w-7xl px-3 pt-4 pb-8 sm:px-6 sm:pt-8 sm:pb-12 lg:px-8">
