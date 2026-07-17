@@ -236,7 +236,7 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
         .hero-backdrop { filter: blur(8px); transform: scale(1.05); }
         @media (max-width: 639px) {
           .hero-section { min-height: 50vh; }
-          .hero-backdrop { filter: blur(2px); transform: scale(1.02); }
+          .hero-backdrop { filter: blur(2px); transform: none; object-fit: fill; }
         }
       `}</style>
 
