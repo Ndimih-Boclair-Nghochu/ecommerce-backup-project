@@ -77,20 +77,7 @@ const WHY_SMART = [
   { letter: 'T', word: 'Technologies', desc: 'Proven, tested technologies for WASH, agriculture, waste management and food science.' }
 ]
 
-const HERO_SLIDES = [
-  {
-    img: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=1920',
-    caption: 'Clean Water for Every Community'
-  },
-  {
-    img: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=1920',
-    caption: 'Solar Energy Across Cameroon'
-  },
-  {
-    img: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920',
-    caption: 'Empowering Local Technicians'
-  }
-]
+const HERO_BACKGROUND_IMAGE = '/hero-banner.jpg'
 
 function PRODUCTS_PER_ROW_BY_WIDTH_fn() {
   if (typeof window === 'undefined') return 4
@@ -99,34 +86,17 @@ function PRODUCTS_PER_ROW_BY_WIDTH_fn() {
   return 2
 }
 
-// Animated hero slideshow
+// Hero background image
 function HeroSlideshow() {
-  const [current, setCurrent] = useState(0)
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrent(c => (c + 1) % HERO_SLIDES.length)
-    }, 5000)
-    return () => clearInterval(timer)
-  }, [])
-
   return (
     <div className="absolute inset-0 overflow-hidden">
-      {HERO_SLIDES.map((slide, i) => (
-        <div
-          key={i}
-          className="absolute inset-0 transition-opacity duration-1000"
-          style={{ opacity: current === i ? 1 : 0 }}
-        >
-          <img
-            src={slide.img}
-            alt=""
-            className="h-full w-full object-cover"
-            loading={i === 0 ? 'eager' : 'lazy'}
-          />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, rgba(0,87,168,0.85) 0%, rgba(0,61,122,0.75) 100%)' }} />
-        </div>
-      ))}
+      <img
+        src={HERO_BACKGROUND_IMAGE}
+        alt=""
+        className="h-full w-full object-cover"
+        loading="eager"
+      />
+      <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.18)' }} />
     </div>
   )
 }
