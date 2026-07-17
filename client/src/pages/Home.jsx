@@ -240,6 +240,12 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
         .smart-letter:hover { transform: scale(1.08); }
         .counter-num { font-variant-numeric: tabular-nums; }
         .product-grid-enter { animation: fadeUp 0.4s ease; }
+        .hero-section { display: flex; align-items: center; justify-content: center; }
+        .hero-backdrop { filter: blur(8px); transform: scale(1.05); }
+        @media (max-width: 639px) {
+          .hero-section { min-height: 72vh; }
+          .hero-backdrop { filter: blur(2px); transform: scale(1.02); }
+        }
       `}</style>
 
       {/* Decorative drops */}
@@ -250,14 +256,13 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
       </div>
 
       {/* ── HERO ── */}
-      <section className="relative overflow-hidden">
+      <section className="hero-section relative overflow-hidden">
         {/* Blurred ambient backdrop so the full banner is always visible, uncropped */}
         <div className="absolute inset-0" aria-hidden="true">
           <img
             src={HERO_BACKGROUND_IMAGE}
             alt=""
-            className="h-full w-full object-cover"
-            style={{ filter: 'blur(8px)', transform: 'scale(1.05)' }}
+            className="hero-backdrop h-full w-full object-cover"
           />
           <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.08)' }} />
         </div>
@@ -277,7 +282,7 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
             <Link
               to="/products"
               className="w-full max-w-xs rounded-xl px-8 py-4 text-center text-base font-bold text-white shadow-xl transition hover:scale-105 sm:w-auto sm:max-w-none sm:text-lg"
-              style={{ background: '#16a34a' }}
+              style={{ background: '#0057a8' }}
             >
               🛒 Shop Our Products
             </Link>
