@@ -6,7 +6,27 @@ function normalizeApiBaseUrl(value) {
   return baseUrl.endsWith('/api') ? baseUrl.slice(0, -4) : baseUrl
 }
 
-const apiBaseUrl = normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL)
+// True when the configured API host is the same site as the current page
+// (identical host, or differing only by a leading "www."). In that case we
+// use same-origin relative requests so CORS is never involved.
+export function isSameSiteAsPage(baseUrl) {
+  if (typeof window === 'undefined') return false
+  try {
+    const target = new URL(baseUrl, window.location.href)
+    const stripWww = (host) => host.replace(/^www\./i, '')
+    return (
+      stripWww(target.hostname) === stripWww(window.location.hostname) &&
+      (target.port || '') === (window.location.port || '')
+    )
+  } catch {
+    return false
+  }
+}
+
+const configuredApiBaseUrl = normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL)
+const apiBaseUrl = configuredApiBaseUrl && !isSameSiteAsPage(configuredApiBaseUrl)
+  ? configuredApiBaseUrl
+  : ''
 
 if (apiBaseUrl) {
   axios.defaults.baseURL = apiBaseUrl

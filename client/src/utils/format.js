@@ -1,3 +1,5 @@
+import { isSameSiteAsPage } from '../lib/api'
+
 export function formatXAF(amount = 0) {
   const value = Number.isFinite(Number(amount)) ? Number(amount) : 0
   return `${new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(value)} XAF`
@@ -15,7 +17,8 @@ export function resolveAssetUrl(value) {
 
   const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim().replace(/\/+$/, '') || ''
   const apiBaseUrl = rawApiBaseUrl.endsWith('/api') ? rawApiBaseUrl.slice(0, -4) : rawApiBaseUrl
-  return apiBaseUrl ? `${apiBaseUrl}${normalizedUrl}` : normalizedUrl
+  if (!apiBaseUrl || isSameSiteAsPage(apiBaseUrl)) return normalizedUrl
+  return `${apiBaseUrl}${normalizedUrl}`
 }
 
 export function getProductImage(product) {

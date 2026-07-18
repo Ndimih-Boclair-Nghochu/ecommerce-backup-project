@@ -19,7 +19,12 @@ const app = express();
 const PORT = Number(process.env.PORT || 4000);
 const JWT_SECRET = process.env.JWT_SECRET;
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'ndimihboclair4@gmail.com';
-const CLIENT_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:5173';
+// CORS_ORIGIN may hold several comma-separated origins (e.g. apex + www);
+// cors() must receive them as an array so it echoes back only the matching one.
+const CLIENT_ORIGINS = (process.env.CORS_ORIGIN || 'http://localhost:5173')
+  .split(',')
+  .map((origin) => origin.trim().replace(/\/+$/, ''))
+  .filter(Boolean);
 
 const REAL_SHIPPING_FEES = {
   Bamenda: 0,
@@ -74,7 +79,7 @@ app.use(helmet({
 // Gzip compression for all responses (huge win on slow networks)
 app.use(compression({ level: 6, threshold: 1024 }));
 
-app.use(cors({ origin: CLIENT_ORIGIN }));
+app.use(cors({ origin: CLIENT_ORIGINS }));
 app.use(express.json({ limit: '2mb' }));
 
 const generalLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200 });
