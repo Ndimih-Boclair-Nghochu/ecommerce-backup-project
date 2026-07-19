@@ -13,60 +13,60 @@ const INITIAL_HERO_IMAGE = 'https://images.unsplash.com/photo-1504711434969-e338
 const SERVICES = [
   {
     icon: '🔍',
-    title: 'Research & Groundwater',
-    desc: 'Borehole siting, hydrogeological surveys, pumping tests, water quality analysis, GIS mapping and project feasibility studies.',
+    titleKey: 'svcResearchTitle',
+    descKey: 'svcResearchDesc',
     color: 'blue',
     img: 'https://images.unsplash.com/photo-1559825481-12a05cc00344?w=800&q=80'
   },
   {
     icon: '🏗️',
-    title: 'Water Storage',
-    desc: 'Overhead & ground storage tanks (concrete, plastic, steel, fiberglass), water towers, plumbing, tank cleaning and maintenance.',
+    titleKey: 'svcStorageTitle',
+    descKey: 'svcStorageDesc',
     color: 'green',
     img: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&q=80'
   },
   {
     icon: '⛏️',
-    title: 'Well Drilling',
-    desc: 'Borehole drilling (manual, rotary, DTH), casing & screen installation, handpump & submersible pump installation, borehole rehabilitation.',
+    titleKey: 'svcDrillingTitle',
+    descKey: 'svcDrillingDesc',
     color: 'amber',
     img: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=800&q=80'
   },
   {
     icon: '🔧',
-    title: 'Welding & Fabrication',
-    desc: 'Structural steel works, pipe fitting, custom metal works including gates, tanks, towers, frames, and mobile welding services.',
+    titleKey: 'svcWeldingTitle',
+    descKey: 'svcWeldingDesc',
     color: 'blue',
     img: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=800&q=80'
   },
   {
     icon: '☀️',
-    title: 'Solar Energy',
-    desc: 'Solar water pump installation (AC/DC/Hybrid), solar power systems for homes, farms & institutions, inverter & battery installation.',
+    titleKey: 'svcSolarTitle',
+    descKey: 'svcSolarDesc',
     color: 'green',
     img: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=800&q=80'
   },
   {
     icon: '🚿',
-    title: 'General Water Works',
-    desc: 'Plumbing, sanitary works, rainwater harvesting, civil works, maintenance contracts. We also train & build skills (practical & theoretical).',
+    titleKey: 'svcWaterworksTitle',
+    descKey: 'svcWaterworksDesc',
     color: 'amber',
     img: 'https://images.unsplash.com/photo-1585421514738-01798e348b17?w=800&q=80'
   },
   {
     icon: '📚',
-    title: 'Skills Training',
-    desc: 'Hands-on practical & theoretical training for the local private sector — building durable skills for profit-based, sustainable livelihoods.',
+    titleKey: 'svcTrainingTitle',
+    descKey: 'svcTrainingDesc',
     color: 'blue',
     img: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80'
   }
 ]
 
 const PARTNERS = [
-  { name: 'SMART Centre Group', country: 'Netherlands', desc: 'Coordinated by MetaMeta as a social enterprise', url: 'https://smartcentregroup.com' },
-  { name: 'EMAS', country: 'Bolivia / Germany', desc: 'Rope pump & manual drilling technology partner', url: '#' },
-  { name: 'TADEH', country: 'Spain', desc: 'WASH technology dissemination partner', url: '#' },
-  { name: 'MetaMeta', country: 'Netherlands', desc: 'Franchise coordinator and SCG lead organisation', url: '#' }
+  { name: 'SMART Centre Group', country: 'Netherlands', descKey: 'partnerScgDesc', url: 'https://smartcentregroup.com' },
+  { name: 'EMAS', country: 'Bolivia / Germany', descKey: 'partnerEmasDesc', url: '#' },
+  { name: 'TADEH', country: 'Spain', descKey: 'partnerTadehDesc', url: '#' },
+  { name: 'MetaMeta', country: 'Netherlands', descKey: 'partnerMetametaDesc', url: '#' }
 ]
 
 const HERO_BACKGROUND_IMAGE = '/hero-banner.jpg'
@@ -276,7 +276,7 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
               className="rounded-xl px-8 py-4 text-center text-lg font-bold text-white shadow-xl transition hover:scale-105"
               style={{ background: '#0057a8' }}
             >
-              🛒 Shop Our Products
+              🛒 {t('homeShopCta')}
             </Link>
           </div>
         </div>
@@ -290,7 +290,7 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
             className="w-full max-w-xs rounded-xl px-8 py-4 text-center text-base font-bold text-white shadow-xl transition hover:scale-105"
             style={{ background: '#0057a8' }}
           >
-            🛒 Shop Our Products
+            🛒 {t('homeShopCta')}
           </Link>
         </div>
       </section>
@@ -300,12 +300,12 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10">
             <div className="text-center md:text-left">
-              <span className="inline-block text-xs font-black uppercase tracking-widest mb-3 px-3 py-1 rounded-full" style={{ color: '#16a34a', background: '#dcfce7' }}>Services &amp; Training</span>
+              <span className="inline-block text-xs font-black uppercase tracking-widest mb-3 px-3 py-1 rounded-full" style={{ color: '#16a34a', background: '#dcfce7' }}>{t('servicesChip')}</span>
               <h2 className="text-3xl md:text-4xl font-black mb-3" style={{ fontFamily: "'Sora', sans-serif", color: '#0f172a' }}>
-                What We <span style={{ color: '#0057a8' }}>Offer</span>
+                {t('whatWe')} <span style={{ color: '#0057a8' }}>{t('offer')}</span>
               </h2>
               <p className="max-w-xl mx-auto md:mx-0 text-gray-600">
-                Serving NGOs, Government, Contractors &amp; Individuals — quality service, integrity and commitment across Cameroon. Swipe to explore.
+                {t('servicesIntro')}
               </p>
             </div>
             {/* Scroll controls (desktop) */}
@@ -346,7 +346,7 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
                   <div className="relative h-44 w-full overflow-hidden" style={{ background: c.gradient }}>
                     <img
                       src={service.img}
-                      alt={service.title}
+                      alt={t(service.titleKey)}
                       loading="lazy"
                       className="service-card-img h-full w-full object-cover"
                       onError={(e) => { e.currentTarget.style.display = 'none' }}
@@ -355,18 +355,18 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
                     <div className="absolute top-3 left-3 h-11 w-11 rounded-xl flex items-center justify-center text-2xl shadow-md" style={{ background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(4px)' }}>
                       {service.icon}
                     </div>
-                    <h3 className="absolute bottom-3 left-4 right-4 text-lg font-black text-white drop-shadow" style={{ fontFamily: "'Sora', sans-serif" }}>{service.title}</h3>
+                    <h3 className="absolute bottom-3 left-4 right-4 text-lg font-black text-white drop-shadow" style={{ fontFamily: "'Sora', sans-serif" }}>{t(service.titleKey)}</h3>
                   </div>
                   {/* Body */}
                   <div className="p-5 flex flex-col flex-1">
-                    <p className="text-sm leading-relaxed text-gray-600 flex-1">{service.desc}</p>
+                    <p className="text-sm leading-relaxed text-gray-600 flex-1">{t(service.descKey)}</p>
                     <a
                       href="https://www.smartcentrecameroon.com"
                       target="_blank"
                       rel="noopener noreferrer"
                       className={`mt-4 inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider ${c.text} hover:gap-2 transition-all`}
                     >
-                      Learn More →
+                      {t('learnMore')} →
                     </a>
                   </div>
                 </article>
@@ -375,9 +375,9 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
           </div>
 
           <div className="mt-8 text-center">
-            <p className="text-sm text-gray-500 italic mb-4">"Quality Service, Integrity, Commitment – At SMART Centre Cameroon"</p>
+            <p className="text-sm text-gray-500 italic mb-4">{t('servicesQuote')}</p>
             <Link to="/products" className="inline-flex items-center gap-2 rounded-xl px-8 py-4 font-bold text-white transition hover:scale-105" style={{ background: '#0057a8' }}>
-              View All Products &amp; Services →
+              {t('viewAllProductsServices')} →
             </Link>
           </div>
         </div>
@@ -386,13 +386,13 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
       {/* ── IMPACT STATS ── */}
       <section ref={statsRef} className="py-16 px-4" style={{ background: 'linear-gradient(135deg, #0057a8 0%, #003d7a 100%)', color: 'white' }}>
         <div className="max-w-5xl mx-auto text-center">
-          <h2 className="text-2xl md:text-3xl font-black mb-10" style={{ fontFamily: "'Sora', sans-serif" }}>Our Reach Across Cameroon</h2>
+          <h2 className="text-2xl md:text-3xl font-black mb-10" style={{ fontFamily: "'Sora', sans-serif" }}>{t('reachTitle')}</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
-              { value: '6', suffix: '+', label: 'Service Areas', icon: '🗺️' },
-              { value: '100', suffix: '%', label: 'Country Coverage', icon: '🌍' },
-              { value: products.length || '50', suffix: '+', label: 'Products Listed', icon: '📦' },
-              { value: '24', suffix: '/7', label: 'Support Available', icon: '📞' }
+              { value: '6', suffix: '+', label: t('statServiceAreas'), icon: '🗺️' },
+              { value: '100', suffix: '%', label: t('statCountryCoverage'), icon: '🌍' },
+              { value: products.length || '50', suffix: '+', label: t('statProductsListed'), icon: '📦' },
+              { value: '24', suffix: '/7', label: t('statSupport'), icon: '📞' }
             ].map((stat, i) => (
               <div key={i} className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)' }}>
                 <div className="text-3xl mb-2">{stat.icon}</div>
@@ -409,16 +409,16 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
         <div className="max-w-7xl mx-auto">
           <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <span className="inline-block text-xs font-black uppercase tracking-widest mb-3 px-3 py-1 rounded-full" style={{ color: '#0057a8', background: '#e8f0fb' }}>Shop</span>
-              <h2 className="text-3xl font-black mb-2" style={{ fontFamily: "'Sora', sans-serif", color: '#0f172a' }}>Products & Equipment</h2>
-              <p className="text-gray-600 text-sm max-w-xl">Browse our catalog of water, sanitation, solar and construction products. Order online and our team will contact you to confirm.</p>
+              <span className="inline-block text-xs font-black uppercase tracking-widest mb-3 px-3 py-1 rounded-full" style={{ color: '#0057a8', background: '#e8f0fb' }}>{t('shopChip')}</span>
+              <h2 className="text-3xl font-black mb-2" style={{ fontFamily: "'Sora', sans-serif", color: '#0f172a' }}>{t('productsEquipment')}</h2>
+              <p className="text-gray-600 text-sm max-w-xl">{t('productsIntro')}</p>
             </div>
             <div className="grid gap-3 rounded-2xl border border-gray-200 bg-white p-3 shadow-sm sm:grid-cols-[minmax(200px,1fr)_180px_auto] lg:min-w-[580px]">
               <input
                 type="search"
                 value={productSearch}
                 onChange={e => setProductSearch(e.target.value)}
-                placeholder="Search products..."
+                placeholder={`${t('searchProducts')}...`}
                 className="h-11 w-full rounded-xl border border-gray-200 px-4 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
               <select
@@ -427,11 +427,11 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
                 className="h-11 w-full rounded-xl border border-gray-200 px-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               >
                 {categories.map(c => (
-                  <option key={c} value={c}>{c === 'All' ? 'All categories' : c}</option>
+                  <option key={c} value={c}>{c === 'All' ? t('allCategories') : c}</option>
                 ))}
               </select>
               <Link to="/products" className="inline-flex h-11 items-center justify-center rounded-xl border border-gray-200 px-4 text-sm font-bold text-gray-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700">
-                View All
+                {t('viewAll')}
               </Link>
             </div>
           </div>
@@ -451,7 +451,7 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
               </div>
               <div className="mt-6 flex flex-col items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm sm:flex-row">
                 <p className="text-sm font-semibold text-gray-500">
-                  Showing {visibleProducts.length} of {filteredProducts.length} products · Page {productPage + 1} of {pageCount}
+                  {t('showingPage', { shown: visibleProducts.length, total: filteredProducts.length, page: productPage + 1, pages: pageCount })}
                 </p>
                 <div className="flex items-center gap-2">
                   <button onClick={() => setProductPage(p => Math.max(0, p - 1))} disabled={productPage === 0}
@@ -469,8 +469,8 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
           ) : (
             <div className="rounded-2xl border-2 border-dashed border-gray-200 bg-white p-12 text-center">
               <div className="text-4xl mb-4">📦</div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">{products.length ? 'No products found' : 'Products coming soon'}</h3>
-              <p className="text-gray-500">{products.length ? 'Try a different search or category.' : 'Our catalog is being set up. Check back soon!'}</p>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">{products.length ? t('noProductsFound') : t('productsComingSoon')}</h3>
+              <p className="text-gray-500">{products.length ? t('tryDifferentSearch') : t('catalogBeingSetUp')}</p>
             </div>
           )}
         </div>
@@ -480,10 +480,10 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
       <section className="py-16 px-4 bg-white">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-10">
-            <span className="inline-block text-xs font-black uppercase tracking-widest mb-3 px-3 py-1 rounded-full" style={{ color: '#d97706', background: '#fef3c7' }}>Network</span>
-            <h2 className="text-3xl font-black mb-3" style={{ fontFamily: "'Sora', sans-serif", color: '#0f172a' }}>Our International Partners</h2>
+            <span className="inline-block text-xs font-black uppercase tracking-widest mb-3 px-3 py-1 rounded-full" style={{ color: '#d97706', background: '#fef3c7' }}>{t('networkChip')}</span>
+            <h2 className="text-3xl font-black mb-3" style={{ fontFamily: "'Sora', sans-serif", color: '#0f172a' }}>{t('partnersTitle')}</h2>
             <p className="text-gray-600 max-w-xl mx-auto text-sm">
-              SMART Centre Cameroon is part of a global franchise network of SMART centres spanning Africa, Latin America and Europe.
+              {t('partnersIntro')}
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -493,7 +493,7 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
                 <div className="text-2xl mb-3">🤝</div>
                 <div className="font-black text-sm mb-1" style={{ color: '#0057a8' }}>{p.name}</div>
                 <div className="text-xs font-semibold text-gray-500 mb-2">{p.country}</div>
-                <p className="text-xs text-gray-600 leading-relaxed">{p.desc}</p>
+                <p className="text-xs text-gray-600 leading-relaxed">{t(p.descKey)}</p>
               </a>
             ))}
           </div>
@@ -504,19 +504,19 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
       <section className="py-16 px-4" style={{ background: '#f8fafc' }}>
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-10">
-            <span className="inline-block text-xs font-black uppercase tracking-widest mb-3 px-3 py-1 rounded-full" style={{ color: '#0057a8', background: '#e8f0fb' }}>Why SCC</span>
-            <h2 className="text-3xl font-black" style={{ fontFamily: "'Sora', sans-serif", color: '#0f172a' }}>The SCC Advantage</h2>
+            <span className="inline-block text-xs font-black uppercase tracking-widest mb-3 px-3 py-1 rounded-full" style={{ color: '#0057a8', background: '#e8f0fb' }}>{t('whySccChip')}</span>
+            <h2 className="text-3xl font-black" style={{ fontFamily: "'Sora', sans-serif", color: '#0f172a' }}>{t('sccAdvantage')}</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             {[
-              { icon: '🏭', title: 'Nationwide Operations', desc: 'Regional representatives across all of Cameroon, with future plans for Central Africa expansion.' },
-              { icon: '📚', title: 'Skills Training', desc: 'We train and build practical & theoretical skills in the local private sector for sustainable growth.' },
-              { icon: '💰', title: 'Affordable Solutions', desc: 'Market-based, self-supply technologies accessible even to lower-income families and communities.' }
+              { icon: '🏭', titleKey: 'advNationwideTitle', descKey: 'advNationwideDesc' },
+              { icon: '📚', titleKey: 'advTrainingTitle', descKey: 'advTrainingDesc' },
+              { icon: '💰', titleKey: 'advAffordableTitle', descKey: 'advAffordableDesc' }
             ].map((item, i) => (
               <div key={i} className="rounded-2xl border-2 border-gray-100 bg-white p-6 text-center service-card">
                 <div className="text-4xl mb-4">{item.icon}</div>
-                <h3 className="font-black text-base mb-2">{item.title}</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">{item.desc}</p>
+                <h3 className="font-black text-base mb-2">{t(item.titleKey)}</h3>
+                <p className="text-sm text-gray-600 leading-relaxed">{t(item.descKey)}</p>
               </div>
             ))}
           </div>
@@ -528,17 +528,17 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
         <div className="max-w-3xl mx-auto text-center">
           <div className="text-4xl mb-4">💧</div>
           <h2 className="text-3xl md:text-4xl font-black mb-4" style={{ fontFamily: "'Sora', sans-serif" }}>
-            Ready for Clean, Reliable Water?
+            {t('ctaTitle')}
           </h2>
           <p className="opacity-90 mb-8 text-lg">
-            Contact SMART Centre Cameroon today. We'll assess your needs and deliver the right SMART technology for your home, farm, or institution.
+            {t('ctaDesc')}
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <Link to="/products" className="rounded-xl px-8 py-4 font-bold bg-white transition hover:scale-105" style={{ color: '#16a34a' }}>
-              Shop Now
+              {t('shopNow')}
             </Link>
             <Link to="/track-order" className="rounded-xl border-2 border-white px-8 py-4 font-bold text-white transition hover:bg-white/10">
-              Track Your Order
+              {t('trackYourOrder')}
             </Link>
           </div>
         </div>

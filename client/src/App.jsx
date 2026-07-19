@@ -392,37 +392,37 @@ export default function App() {
               <div className="flex items-center gap-3 mb-4">
                 <img src="/scc-logo.jpeg" alt="SCC" className="h-12 w-auto object-contain" style={{ borderRadius: '6px', filter: 'brightness(0) invert(1)' }} />
               </div>
-              <p className="text-sm opacity-60 leading-relaxed mb-4">Simple, Affordable, Repairable Technologies for Water, Sanitation & Sustainable Livelihoods across Cameroon.</p>
-              <div className="text-xs opacity-50 font-semibold">Franchise of SMART Centre Group · Netherlands</div>
+              <p className="text-sm opacity-60 leading-relaxed mb-4">{t('footerTagline')}</p>
+              <div className="text-xs opacity-50 font-semibold">{t('franchiseOf')}</div>
             </div>
 
             <div>
-              <h4 className="font-black text-sm uppercase tracking-wider mb-4 opacity-60">Services</h4>
+              <h4 className="font-black text-sm uppercase tracking-wider mb-4 opacity-60">{t('servicesHeading')}</h4>
               <ul className="space-y-2 text-sm opacity-70">
-                {['Research & Groundwater', 'Water Storage', 'Well Drilling', 'Welding & Fabrication', 'Solar Energy', 'General Water Works'].map(s => (
-                  <li key={s}><Link to="/products" className="hover:opacity-100 transition">{s}</Link></li>
+                {['svcResearchTitle', 'svcStorageTitle', 'svcDrillingTitle', 'svcWeldingTitle', 'svcSolarTitle', 'svcWaterworksTitle'].map(s => (
+                  <li key={s}><Link to="/products" className="hover:opacity-100 transition">{t(s)}</Link></li>
                 ))}
               </ul>
             </div>
 
             <div>
-              <h4 className="font-black text-sm uppercase tracking-wider mb-4 opacity-60">Quick Links</h4>
+              <h4 className="font-black text-sm uppercase tracking-wider mb-4 opacity-60">{t('quickLinks')}</h4>
               <ul className="space-y-2 text-sm opacity-70">
-                <li><Link to="/" className="hover:opacity-100 transition">Home</Link></li>
-                <li><Link to="/products" className="hover:opacity-100 transition">All Products</Link></li>
-                <li><Link to="/track-order" className="hover:opacity-100 transition">Track Order</Link></li>
-                <li><Link to="/wishlist" className="hover:opacity-100 transition">Wishlist</Link></li>
-                <li><Link to="/customer-login" className="hover:opacity-100 transition">My Account</Link></li>
+                <li><Link to="/" className="hover:opacity-100 transition">{t('home')}</Link></li>
+                <li><Link to="/products" className="hover:opacity-100 transition">{t('products')}</Link></li>
+                <li><Link to="/track-order" className="hover:opacity-100 transition">{t('track')}</Link></li>
+                <li><Link to="/wishlist" className="hover:opacity-100 transition">{t('wishlist')}</Link></li>
+                <li><Link to="/customer-login" className="hover:opacity-100 transition">{t('myAccount')}</Link></li>
                 <li><a href="https://smartcentregroup.com" target="_blank" rel="noopener noreferrer" className="hover:opacity-100 transition">SMART Centre Group ↗</a></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="font-black text-sm uppercase tracking-wider mb-4 opacity-60">Contact</h4>
+              <h4 className="font-black text-sm uppercase tracking-wider mb-4 opacity-60">{t('contactHeading')}</h4>
               <ul className="space-y-3 text-sm opacity-70">
                 <li className="flex items-start gap-2">
                   <span>📍</span>
-                  <span>Cameroon (Nationwide)<br/>Regional representatives across all regions</span>
+                  <span>{t('footerAddressLine1')}<br/>{t('footerAddressLine2')}</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <span>📞</span>
@@ -439,14 +439,14 @@ export default function App() {
               </ul>
 
               <div className="mt-6 p-3 rounded-xl text-xs" style={{ background: 'rgba(22,163,74,0.15)', border: '1px solid rgba(22,163,74,0.3)' }}>
-                <div className="font-bold text-green-400 mb-1">Serving NGOs, Government</div>
-                <div className="opacity-70">Contractors & Individuals worldwide</div>
+                <div className="font-bold text-green-400 mb-1">{t('servingNgosGov')}</div>
+                <div className="opacity-70">{t('contractorsIndividuals')}</div>
               </div>
             </div>
           </div>
 
           <div className="border-t py-5 text-center text-xs" style={{ borderColor: 'rgba(255,255,255,0.1)', opacity: 0.5 }}>
-            © {new Date().getFullYear()} SMART Centre Cameroon Ltd. All Rights Reserved. · Franchise of{' '}
+            © {new Date().getFullYear()} SMART Centre Cameroon Ltd. {t('rights')} · Franchise of{' '}
             <a href="https://smartcentregroup.com" target="_blank" rel="noopener noreferrer" className="underline">SMART Centre Group</a>
           </div>
         </footer>

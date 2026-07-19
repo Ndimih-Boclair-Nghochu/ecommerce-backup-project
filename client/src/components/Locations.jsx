@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import axios from '../lib/api'
+import { useLanguage } from '../i18n/LanguageContext'
 
 export default function Locations() {
+  const { t } = useLanguage()
   const [locations, setLocations] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -35,21 +37,21 @@ export default function Locations() {
     <section className="py-12 sm:py-16 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-8 sm:mb-12">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-blue-700">Store locations</p>
-          <h2 className="mt-2 text-3xl font-black text-gray-950 sm:text-4xl">Visit Our Store</h2>
-          <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-gray-600 sm:text-base">Find us at convenient locations near you.</p>
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-blue-700">{t('storeLocationsChip')}</p>
+          <h2 className="mt-2 text-3xl font-black text-gray-950 sm:text-4xl">{t('visitOurStore')}</h2>
+          <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-gray-600 sm:text-base">{t('findUsNearYou')}</p>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm p-4 flex items-center justify-between flex-wrap gap-4 mb-8">
           <div className="flex items-center gap-3">
             <div className="w-3 h-3 rounded-full bg-green-500"></div>
-            <span className="text-sm font-semibold text-gray-700">Store details loaded</span>
+            <span className="text-sm font-semibold text-gray-700">{t('storeDetailsLoaded')}</span>
           </div>
           <button
             onClick={fetchLocations}
             className="px-4 py-2 rounded-lg text-sm font-semibold transition bg-blue-100 text-blue-700 hover:bg-blue-200"
           >
-            Refresh
+            {t('refresh')}
           </button>
         </div>
 
@@ -57,7 +59,7 @@ export default function Locations() {
         {mainStore && (
           <div className="mb-8 sm:mb-12">
             <h3 className="text-xl sm:text-2xl font-black mb-4 sm:mb-6 flex items-center gap-2 text-gray-950">
-              🏢 <span>Main Store</span>
+              🏢 <span>{t('mainStore')}</span>
             </h3>
             <div className="bg-white rounded-lg sm:rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow">
               <div className="p-4 sm:p-8">
@@ -68,28 +70,28 @@ export default function Locations() {
                       <div className="flex gap-3">
                         <span className="text-xl sm:text-2xl">📍</span>
                         <div>
-                          <p className="font-semibold text-sm sm:text-base">Address</p>
+                          <p className="font-semibold text-sm sm:text-base">{t('address')}</p>
                           <p className="text-xs sm:text-sm">{mainStore.address}</p>
                         </div>
                       </div>
                       <div className="flex gap-3">
                         <span className="text-xl sm:text-2xl">📱</span>
                         <div>
-                          <p className="font-semibold text-sm sm:text-base">Phone</p>
+                          <p className="font-semibold text-sm sm:text-base">{t('phoneLabel')}</p>
                           <p className="text-xs sm:text-sm">{mainStore.phone || 'N/A'}</p>
                         </div>
                       </div>
                       <div className="flex gap-3">
                         <span className="text-xl sm:text-2xl">✉️</span>
                         <div>
-                          <p className="font-semibold text-sm sm:text-base">Email</p>
+                          <p className="font-semibold text-sm sm:text-base">{t('emailLabel')}</p>
                           <p className="text-xs sm:text-sm">{mainStore.email || 'N/A'}</p>
                         </div>
                       </div>
                       <div className="flex gap-3">
                         <span className="text-xl sm:text-2xl">🕐</span>
                         <div>
-                          <p className="font-semibold text-sm sm:text-base">Hours</p>
+                          <p className="font-semibold text-sm sm:text-base">{t('hoursLabel')}</p>
                           <p className="text-xs sm:text-sm">{mainStore.hours || 'N/A'}</p>
                         </div>
                       </div>
@@ -110,7 +112,7 @@ export default function Locations() {
                           rel="noopener noreferrer"
                           className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
                         >
-                          Open in Google Maps
+                          {t('openInMaps')}
                         </a>
                       </div>
                     </div>
@@ -125,7 +127,7 @@ export default function Locations() {
         {branches.length > 0 && (
           <div>
             <h3 className="text-xl sm:text-2xl font-black mb-4 sm:mb-6 flex items-center gap-2 text-gray-950">
-              🌿 <span>Branch Locations ({branches.length})</span>
+              🌿 <span>{t('branchLocations', { count: branches.length })}</span>
             </h3>
             <div className="space-y-6 sm:space-y-8">
               {branches.map(location => (
@@ -139,7 +141,7 @@ export default function Locations() {
                           <div className="flex gap-3">
                             <span className="text-xl sm:text-2xl">📍</span>
                             <div>
-                              <p className="font-semibold text-sm sm:text-base">Address</p>
+                              <p className="font-semibold text-sm sm:text-base">{t('address')}</p>
                               <p className="text-xs sm:text-sm">{location.address}</p>
                               <p className="text-xs text-gray-500 mt-1">{location.city}</p>
                             </div>
@@ -148,7 +150,7 @@ export default function Locations() {
                             <div className="flex gap-3">
                               <span className="text-xl sm:text-2xl">📱</span>
                               <div>
-                                <p className="font-semibold text-sm sm:text-base">Phone</p>
+                                <p className="font-semibold text-sm sm:text-base">{t('phoneLabel')}</p>
                                 <p className="text-xs sm:text-sm">{location.phone}</p>
                               </div>
                             </div>
@@ -157,7 +159,7 @@ export default function Locations() {
                             <div className="flex gap-3">
                               <span className="text-xl sm:text-2xl">✉️</span>
                               <div>
-                                <p className="font-semibold text-sm sm:text-base">Email</p>
+                                <p className="font-semibold text-sm sm:text-base">{t('emailLabel')}</p>
                                 <p className="text-xs sm:text-sm">{location.email}</p>
                               </div>
                             </div>
@@ -166,7 +168,7 @@ export default function Locations() {
                             <div className="flex gap-3">
                               <span className="text-xl sm:text-2xl">🕐</span>
                               <div>
-                                <p className="font-semibold text-sm sm:text-base">Hours</p>
+                                <p className="font-semibold text-sm sm:text-base">{t('hoursLabel')}</p>
                                 <p className="text-xs sm:text-sm">{location.hours}</p>
                               </div>
                             </div>
@@ -190,7 +192,7 @@ export default function Locations() {
                               rel="noopener noreferrer"
                               className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
                             >
-                              Open in Google Maps
+                              {t('openInMaps')}
                             </a>
                           </div>
                         </div>
@@ -205,7 +207,7 @@ export default function Locations() {
 
         {locations.length === 0 && (
           <div className="text-center py-12 bg-white rounded-xl">
-            <p className="text-gray-500 text-lg">No store locations available at this time.</p>
+            <p className="text-gray-500 text-lg">{t('noLocations')}</p>
           </div>
         )}
       </div>
