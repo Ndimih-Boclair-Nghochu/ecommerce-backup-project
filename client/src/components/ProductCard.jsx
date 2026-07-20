@@ -27,13 +27,13 @@ export default function ProductCard({ product, addToCart, toggleWishlist, isInWi
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-xl">
       <Link to={`/products/${product.id}`} className="block">
-        {/* Square frame with object-contain: the whole photo stays visible at
-            every screen size instead of being cropped to fill the box. */}
-        <div className="relative aspect-square overflow-hidden bg-white">
+        {/* Square frame with object-cover: the photo fills the whole tile at
+            any screen size, so the grid stays even with no gaps around it. */}
+        <div className="relative aspect-square overflow-hidden bg-gray-100">
           <img
             src={activeImage}
             alt={displayProduct.displayName}
-            className="h-full w-full object-contain p-2 transition duration-500 group-hover:scale-105"
+            className="h-full w-full object-cover object-center transition duration-500 group-hover:scale-105"
             decoding="async"
             loading="lazy"
             onError={(event) => {
@@ -70,7 +70,7 @@ export default function ProductCard({ product, addToCart, toggleWishlist, isInWi
                   <img
                     src={resolved}
                     alt={`${displayProduct.displayName} view ${index + 1}`}
-                    className="h-full w-full bg-white object-contain"
+                    className="h-full w-full bg-gray-100 object-cover"
                     loading="lazy"
                     decoding="async"
                   />
