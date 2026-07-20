@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react'import toast from 'react-hot-toast'
+import React, { useState, useEffect, useRef } from 'react'
+import toast from 'react-hot-toast'
 
-import axios from 'axios'
+import axios from '../lib/api'
 import { resolveAssetUrl } from '../utils/format'
 
 export default function AdminMessaging({ token }) {
@@ -250,12 +251,12 @@ export default function AdminMessaging({ token }) {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-screen max-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
-      {/* Conversations List - Enhanced Design */}
-      <div className="lg:col-span-1 bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col border border-gray-200">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 h-[calc(100vh-11rem)] min-h-[30rem] bg-gradient-to-br from-gray-50 via-white to-blue-50">
+      {/* Conversations list — full width on phones, hidden once a chat is open */}
+      <div className={`${selectedConversation ? 'hidden lg:flex' : 'flex'} lg:col-span-1 min-h-0 bg-white rounded-2xl shadow-lg overflow-hidden flex-col border border-gray-200`}>
         {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 text-white p-6 shadow-md">
-          <h2 className="text-2xl font-bold flex items-center gap-2">
+        <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 text-white p-4 sm:p-6 shadow-md">
+          <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
             <span>💬</span> Conversations
           </h2>
           <p className="text-purple-100 text-sm mt-2 flex items-center gap-1">
@@ -314,36 +315,45 @@ export default function AdminMessaging({ token }) {
         </div>
       </div>
 
-      {/* Chat Area - Enhanced Design */}
-      <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col border border-gray-200">
+      {/* Chat area — full width on phones, only visible once a chat is open */}
+      <div className={`${selectedConversation ? 'flex' : 'hidden lg:flex'} lg:col-span-2 min-h-0 bg-white rounded-2xl shadow-lg overflow-hidden flex-col border border-gray-200`}>
         {selectedConversation ? (
           <>
             {/* Chat Header */}
-            <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 text-white p-6 shadow-md">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-full bg-white/30 flex items-center justify-center text-lg">
+            <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 text-white p-3 sm:p-6 shadow-md">
+              <div className="flex items-center justify-between gap-2">
+                <button
+                  onClick={() => setSelectedConversation(null)}
+                  className="lg:hidden shrink-0 rounded-lg bg-white/20 hover:bg-white/30 px-3 py-2 text-lg font-bold transition"
+                  aria-label="Back to conversations"
+                >
+                  ←
+                </button>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-base sm:text-xl font-bold flex items-center gap-2 min-w-0">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 shrink-0 rounded-full bg-white/30 flex items-center justify-center text-base sm:text-lg">
                       {conversations.find(c => c.deviceId === selectedConversation)?.userName?.[0]?.toUpperCase() || 'G'}
                     </div>
-                    Chat with {conversations.find(c => c.deviceId === selectedConversation)?.userName || 'Customer'}
+                    <span className="truncate">
+                      Chat with {conversations.find(c => c.deviceId === selectedConversation)?.userName || 'Customer'}
+                    </span>
                   </h3>
-                  <p className="text-purple-100 text-sm mt-1 font-mono">📱 {selectedConversation.substring(0, 20)}...</p>
+                  <p className="hidden sm:block text-purple-100 text-sm mt-1 font-mono truncate">📱 {selectedConversation.substring(0, 20)}...</p>
                 </div>
-                <div className="flex gap-2 relative">
+                <div className="flex gap-1.5 sm:gap-2 relative shrink-0">
                   <button
                     onClick={() => setAnimationsEnabled(!animationsEnabled)}
-                    className={`p-3 rounded-lg transition-all ${animationsEnabled ? 'bg-blue-500 hover:bg-blue-400' : 'bg-gray-600 hover:bg-gray-500'}`}
+                    className={`p-2 sm:p-3 rounded-lg transition-all ${animationsEnabled ? 'bg-blue-500 hover:bg-blue-400' : 'bg-gray-600 hover:bg-gray-500'}`}
                     title="Toggle animations"
                   >
                     {animationsEnabled ? '✨' : '⏸'}
                   </button>
-                  
+
                   {/* Action Menu */}
                   <div className="relative">
                     <button
                       onClick={() => setShowActionMenu(!showActionMenu)}
-                      className="p-3 rounded-lg bg-white/20 hover:bg-white/30 transition-all"
+                      className="p-2 sm:p-3 rounded-lg bg-white/20 hover:bg-white/30 transition-all"
                       title="Chat actions"
                     >
                       ⋮
@@ -389,7 +399,7 @@ export default function AdminMessaging({ token }) {
             </div>
 
             {/* Filter and Sort Controls */}
-            <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-b-2 border-purple-200 p-4 flex gap-3 items-center flex-wrap">
+            <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-b-2 border-purple-200 p-2.5 sm:p-4 flex gap-2 sm:gap-3 items-center flex-wrap">
               <div className="flex gap-2 items-center">
                 <span className="text-sm font-semibold text-gray-700">📊 Filter:</span>
                 {['all', 'admin', 'customer'].map(opt => (
@@ -425,7 +435,7 @@ export default function AdminMessaging({ token }) {
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-6 bg-gradient-to-b from-white via-gray-50 to-blue-50 space-y-4 scrollbar-thin scrollbar-thumb-purple-400 scrollbar-track-gray-100">
+            <div className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-6 bg-gradient-to-b from-white via-gray-50 to-blue-50 space-y-3 sm:space-y-4 scrollbar-thin scrollbar-thumb-purple-400 scrollbar-track-gray-100">
               {filteredMessages.length === 0 ? (
                 <div className="text-center text-gray-500 py-12">
                   <p className="text-5xl mb-3 animate-bounce">👋</p>
@@ -439,7 +449,7 @@ export default function AdminMessaging({ token }) {
                     className={`flex ${msg.sender === 'admin' ? 'justify-end' : 'justify-start'} ${animationsEnabled ? 'animate-in fade-in slide-in-from-bottom-2' : ''} cursor-pointer transition-all`}
                   >
                     <div
-                      className={`max-w-sm px-5 py-3 rounded-2xl transition-all duration-200 ${
+                      className={`max-w-[85%] sm:max-w-sm min-w-0 px-3.5 py-2.5 sm:px-5 sm:py-3 rounded-2xl transition-all duration-200 ${
                         msg.sender === 'admin'
                           ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-br-none shadow-md hover:shadow-lg hover:from-purple-700 hover:to-blue-700'
                           : 'bg-white border-2 border-gray-300 text-gray-900 rounded-bl-none shadow-sm hover:shadow-md hover:border-purple-300'
@@ -462,7 +472,9 @@ export default function AdminMessaging({ token }) {
                             <img 
                               src={resolveAssetUrl(msg.imageUrl)}
                               alt="Message attachment" 
-                              className="w-48 h-48 object-cover rounded-lg mb-2 cursor-pointer hover:opacity-90 transition shadow-md border-2 border-gray-300" 
+                              className="w-full max-w-[12rem] aspect-square object-cover rounded-lg mb-2 cursor-pointer hover:opacity-90 transition shadow-md border-2 border-gray-300"
+                              loading="lazy"
+                              onError={(e) => { e.currentTarget.style.display = 'none' }}
                               onClick={(e) => {
                                 e.stopPropagation()
                                 window.open(resolveAssetUrl(msg.imageUrl), '_blank')
@@ -471,7 +483,7 @@ export default function AdminMessaging({ token }) {
                           )}
                         </>
                       )}
-                      <p className="text-sm leading-relaxed font-medium">{msg.message}</p>
+                      <p className="text-sm leading-relaxed font-medium whitespace-pre-wrap break-words">{msg.message}</p>
                       <p className={`text-xs mt-2.5 font-semibold flex items-center gap-1 ${
                         msg.sender === 'admin'
                           ? 'text-purple-100'
@@ -487,7 +499,7 @@ export default function AdminMessaging({ token }) {
             </div>
 
             {/* Input Area - Enhanced */}
-            <div className="border-t-2 border-gray-200 p-6 bg-white shadow-lg">
+            <div className="border-t-2 border-gray-200 p-3 sm:p-6 bg-white shadow-lg">
               {imagePreview && (
                 <div className="mb-3 relative inline-block">
                   {imagePreview === 'pdf' ? (
@@ -509,14 +521,14 @@ export default function AdminMessaging({ token }) {
                   </button>
                 </div>
               )}
-              <div className="flex gap-3">
+              <div className="flex gap-2 sm:gap-3">
                 <input
                   type="text"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                  placeholder="Type your response... (Shift+Enter for new line)"
-                  className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent transition shadow-sm"
+                  placeholder="Type your response..."
+                  className="flex-1 min-w-0 px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent transition shadow-sm text-sm sm:text-base"
                   disabled={loading || uploading}
                 />
                 <input
@@ -531,19 +543,18 @@ export default function AdminMessaging({ token }) {
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploading || loading}
                   title="Attach image or PDF"
-                  className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-4 py-3 rounded-lg transition disabled:opacity-50 shadow-md"
+                  className="shrink-0 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg transition disabled:opacity-50 shadow-md"
                 >
                   📎
                 </button>
                 <button
                   onClick={handleSendMessage}
                   disabled={loading || uploading || (!inputValue.trim() && !selectedImage)}
-                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed font-bold shadow-md hover:shadow-lg"
+                  className="shrink-0 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-4 sm:px-8 py-2.5 sm:py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed font-bold shadow-md hover:shadow-lg"
                 >
-                  {loading || uploading ? '⏳' : '📤 Send'}
+                  {loading || uploading ? '⏳' : <><span className="sm:hidden">📤</span><span className="hidden sm:inline">📤 Send</span></>}
                 </button>
               </div>
-              <p className="text-xs text-gray-500 mt-2">💡 Shift+Enter for new line</p>
             </div>
           </>
         ) : (

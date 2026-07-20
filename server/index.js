@@ -86,12 +86,30 @@ const generalLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200 });
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, message: 'Too many login attempts' });
 const orderLimiter = rateLimit({ windowMs: 60 * 1000, max: 5 });
 
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
+// Uploads are served from both /uploads and /api/uploads, mounted before the
+// rate limiter so loading images never consumes a request allowance. The /api
+// prefix is what makes uploads work in production: a reverse proxy routes /api
+// to this server, while a bare /uploads request can be answered by the static
+// site and return index.html instead of the image.
+const serveUploadedFiles = express.static(uploadDir, {
+  maxAge: '7d',
+  etag: true,
+  lastModified: true
+});
+app.use('/uploads', serveUploadedFiles);
+app.use('/api/uploads', serveUploadedFiles);
+// A missing upload must fail loudly rather than fall through to the SPA
+// catch-all, which would answer an <img> request with HTML.
+const uploadNotFound = (req, res) => res.status(404).json({ error: 'File not found' });
+app.use('/uploads', uploadNotFound);
+app.use('/api/uploads', uploadNotFound);
+
 app.use('/api/', generalLimiter);
 app.use('/api/admin/login', authLimiter);
 app.use('/api/sub-admin/login', authLimiter);
-
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
@@ -121,15 +139,9 @@ function getUploadedFile(req) {
 function sendUploadResponse(req, res) {
   const file = getUploadedFile(req);
   if (!file) return res.status(400).json({ error: 'No file uploaded' });
-  const imageUrl = `/uploads/${file.filename}`;
+  const imageUrl = `/api/uploads/${file.filename}`;
   return res.json({ imageUrl, url: imageUrl });
 }
-
-app.use('/uploads', express.static(uploadDir, {
-  maxAge: '7d',
-  etag: true,
-  lastModified: true
-}));
 
 function requireJwtSecret() {
   if (!JWT_SECRET || JWT_SECRET.length < 32) {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { formatXAF, getProductImage, resolveAssetUrl } from '../utils/format'
 import { useLanguage } from '../i18n/LanguageContext'
@@ -13,6 +13,10 @@ export default function ProductCard({ product, addToCart, toggleWishlist, isInWi
 
   const subImages = (product.images || []).filter((img) => img?.url)
   const [activeImage, setActiveImage] = useState(mainImage)
+
+  // Follow the product's own image when it changes, so a newly uploaded or
+  // edited picture replaces the one captured when this card first rendered.
+  useEffect(() => { setActiveImage(mainImage) }, [mainImage])
 
   const handleThumbClick = (event, url) => {
     event.preventDefault()

@@ -233,7 +233,14 @@ export default function ChatWidget() {
                             Open attached PDF
                           </a>
                         ) : (
-                          <img src={resolveAssetUrl(message.imageUrl)} alt="Attachment" className="max-h-44 w-full rounded-lg object-cover" />
+                          <img
+                            src={resolveAssetUrl(message.imageUrl)}
+                            alt="Attachment"
+                            className="max-h-44 w-full cursor-pointer rounded-lg bg-white/10 object-contain transition hover:opacity-90"
+                            loading="lazy"
+                            onClick={() => window.open(resolveAssetUrl(message.imageUrl), '_blank', 'noopener')}
+                            onError={(event) => { event.currentTarget.style.display = 'none' }}
+                          />
                         )}
                       </div>
                     )}
