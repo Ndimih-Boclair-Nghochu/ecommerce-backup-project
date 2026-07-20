@@ -116,14 +116,14 @@ export default function ProductDetail({ addToCart, toggleWishlist, isInWishlist,
         <div className="mt-6 grid gap-8 lg:grid-cols-2">
           <div>
             <div className="relative aspect-square overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-              <img src={resolveAssetUrl(selectedImage) || getProductImage(product)} alt={displayProduct.displayName} className="h-full w-full object-cover" />
+              <img src={resolveAssetUrl(selectedImage) || getProductImage(product)} alt={displayProduct.displayName} className="h-full w-full object-contain p-3" />
               {outOfStock && <div className="absolute inset-x-0 top-0 bg-red-600 py-3 text-center font-bold text-white">{t('outOfStock')}</div>}
             </div>
             {variants.length > 1 && (
               <div className="mt-4 grid grid-cols-4 sm:grid-cols-6 gap-3">
                 {variants.map((variant) => (
                   <button key={`${variant.color}-${variant.url}`} type="button" onClick={() => { setSelectedVariant(variant); setSelectedImage(variant.url) }} className={`aspect-square overflow-hidden rounded-xl border-2 ${selectedVariant?.url === variant.url ? 'border-blue-700' : 'border-gray-200'}`} aria-label={`Select ${variant.color || 'variant'}`}>
-                    <img src={resolveAssetUrl(variant.url)} alt={variant.color || displayProduct.displayName} className="h-full w-full object-cover" />
+                    <img src={resolveAssetUrl(variant.url)} alt={variant.color || displayProduct.displayName} className="h-full w-full bg-white object-contain p-1" />
                   </button>
                 ))}
               </div>

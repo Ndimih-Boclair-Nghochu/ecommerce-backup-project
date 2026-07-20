@@ -19,7 +19,7 @@ export default function ChatWidget() {
   const [unreadCount, setUnreadCount] = useState(0)
   const [showSearch, setShowSearch] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [platformName, setPlatformName] = useState('MyShop')
+  const [platformName, setPlatformName] = useState('')
   const messagesEndRef = useRef(null)
   const fileInputRef = useRef(null)
 
@@ -34,8 +34,8 @@ export default function ChatWidget() {
     loadMessages(id)
 
     axios.get('/api/platform-name')
-      .then((res) => setPlatformName(res.data.platformName || 'MyShop'))
-      .catch(() => setPlatformName('MyShop'))
+      .then((res) => setPlatformName(res.data.platformName || ''))
+      .catch(() => setPlatformName(''))
   }, [])
 
   useEffect(() => {
@@ -139,10 +139,13 @@ export default function ChatWidget() {
     }
   }
 
+  // The shop's own name identifies the chat; fall back only until it loads.
+  const shopName = platformName || 'Customer Support'
+
   const systemIntro = {
     id: 'system-intro',
     sender: 'admin',
-    message: `Welcome to ${platformName} support. Send your question here and our team will reply as soon as possible. You can also attach a product photo, receipt, or PDF if it helps.`,
+    message: `${platformName ? `Welcome to ${platformName}.` : 'Welcome.'} Send your question here and our team will reply as soon as possible. You can also attach a product photo, receipt, or PDF if it helps.`,
     timestamp: null
   }
 
@@ -156,7 +159,8 @@ export default function ChatWidget() {
         className={`fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full text-sm font-bold text-white shadow-2xl transition hover:scale-105 sm:h-16 sm:w-16 ${
           isOpen ? 'bg-red-600 hover:bg-red-700' : 'bg-gradient-to-br from-blue-700 to-blue-600 hover:from-blue-800 hover:to-blue-700'
         }`}
-        aria-label={isOpen ? 'Close chat' : 'Open chat'}
+        aria-label={isOpen ? 'Close chat' : `Chat with ${shopName}`}
+        title={isOpen ? 'Close chat' : `Chat with ${shopName}`}
       >
         {isOpen ? 'x' : 'Chat'}
       </button>
@@ -170,16 +174,16 @@ export default function ChatWidget() {
       {isOpen && (
         <section
           className="fixed inset-x-3 bottom-3 z-50 flex h-[min(620px,calc(100vh-1.5rem))] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl sm:inset-x-auto sm:bottom-24 sm:right-6 sm:w-[430px]"
-          aria-label="Customer support chat"
+          aria-label={platformName ? `${platformName} customer support chat` : 'Customer support chat'}
         >
           <header className="bg-gradient-to-r from-blue-700 to-blue-600 px-4 py-4 text-white">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="flex items-center gap-2">
                   <span className="h-2.5 w-2.5 rounded-full bg-green-400" />
-                  <h2 className="text-base font-bold">Customer Support</h2>
+                  <h2 className="text-base font-bold">{shopName}</h2>
                 </div>
-                <p className="mt-1 text-xs text-blue-100">We usually respond during business hours.</p>
+                <p className="mt-1 text-xs text-blue-100">Customer Support &middot; we usually respond during business hours.</p>
               </div>
               <div className="flex items-center gap-1">
                 <button
@@ -225,7 +229,7 @@ export default function ChatWidget() {
                         : 'rounded-bl-md border border-gray-200 bg-white text-gray-800'
                     }`}
                   >
-                    {!fromCustomer && <p className="mb-1 text-xs font-bold text-blue-700">Support</p>}
+                    {!fromCustomer && <p className="mb-1 text-xs font-bold text-blue-700">{shopName}</p>}
                     {message.imageUrl && (
                       <div className="mb-2">
                         {message.imageUrl.toLowerCase().endsWith('.pdf') ? (

@@ -265,7 +265,7 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
             {cart.map((item) => (
               <article key={item.id} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
                 <div className="grid grid-cols-[88px_1fr] gap-4">
-                  <img src={getProductImage(item)} alt={item.name} className="h-24 w-24 rounded-md object-cover bg-gray-100" />
+                  <img src={getProductImage(item)} alt={item.name} className="h-24 w-24 rounded-md border border-gray-100 bg-white object-contain p-1" />
                   <div>
                     <div className="flex items-start justify-between gap-3">
                       <div>
