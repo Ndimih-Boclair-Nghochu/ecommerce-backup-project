@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from '../lib/api'
 import Receipt from '../components/Receipt'
@@ -9,7 +9,6 @@ import DashboardOverview from '../components/DashboardOverview'
 import OrderManagement from '../components/OrderManagement'
 import SubAdminManagement from '../components/SubAdminManagement'
 import PointOfSale from '../components/PointOfSale'
-import AgencySelectModal from '../components/AgencySelectModal'
 import { getProductImage, resolveAssetUrl } from '../utils/format'
 
 export default function AdminDashboard() {
@@ -41,9 +40,6 @@ export default function AdminDashboard() {
   const [newTownFee, setNewTownFee] = useState('')
   const [viewOrder, setViewOrder] = useState(null)
   const [receiptOrder, setReceiptOrder] = useState(null)
-  const [showAgencyModal, setShowAgencyModal] = useState(false)
-  const [agencyModalOrder, setAgencyModalOrder] = useState(null)
-  const [pendingStatusChange, setPendingStatusChange] = useState(null)
   const [mainShopTown, setMainShopTown] = useState('Douala')
   const [freeShippingThreshold, setFreeShippingThreshold] = useState(50000)
   const [regionFreeShipping, setRegionFreeShipping] = useState({})
@@ -113,7 +109,7 @@ export default function AdminDashboard() {
 
   const [productForm, setProductForm] = useState({
     name: '', price: '', description: '', stock: '', 
-    category: 'Electronics', image: '', mostOrdered: false, isNew: false,
+    category: '', image: '', mostOrdered: false, isNew: false,
     availableRegions: ['ALL'],
     images: [{ color: 'default', url: '' }], sku: '', weight: '', dimensions: '',
     storeAvailability: {}, // { storeId: quantity }
@@ -126,9 +122,19 @@ export default function AdminDashboard() {
   const [showLowStockOnly, setShowLowStockOnly] = useState(false)
 
   // Category Management
-  const [categories, setCategories] = useState(['Electronics', 'Accessories', 'Clothing', 'Home', 'Beauty'])
+  // Categories are derived from existing products so a category disappears
+  // automatically once its last product is deleted. `extraCategories` only holds
+  // brand-new names typed in the product form before the product is saved.
+  const [extraCategories, setExtraCategories] = useState([])
   const [newCategory, setNewCategory] = useState('')
   const [showCategoryForm, setShowCategoryForm] = useState(false)
+  const categories = useMemo(() => {
+    const set = new Set()
+    products.forEach((p) => { if (p.category && String(p.category).trim()) set.add(String(p.category).trim()) })
+    extraCategories.forEach((c) => { if (c && String(c).trim()) set.add(String(c).trim()) })
+    if (productForm.category && String(productForm.category).trim()) set.add(String(productForm.category).trim())
+    return Array.from(set).sort((a, b) => a.localeCompare(b))
+  }, [products, extraCategories, productForm.category])
 
   // Store Availability & Features
   const [productSpecifications, setProductSpecifications] = useState({ key: '', value: '' })
@@ -373,47 +379,6 @@ export default function AdminDashboard() {
     }
   }
 
-  const handleAgencySelect = async (agencyIndex) => {
-    if (!agencyModalOrder) return
-    
-    try {
-      const selectedAgency = agencyModalOrder.buyer.agencies[agencyIndex]
-      
-      // Update order with selected agency and new status
-      await axios.put(`/api/admin/orders/${agencyModalOrder.id}`, 
-        { 
-          status: pendingStatusChange,
-          selectedDeliveryAgency: selectedAgency,
-          deliveryAgencyIndex: agencyIndex
-        }, 
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
-      
-      // Update local state
-      setOrders(orders.map(o => 
-        o.id === agencyModalOrder.id 
-          ? {
-              ...o, 
-              status: pendingStatusChange,
-              selectedDeliveryAgency: selectedAgency,
-              deliveryAgencyIndex: agencyIndex
-            } 
-          : o
-      ))
-      
-      setMessage({ 
-        type: 'success', 
-        text: `✅ Order marked as delivered. Agency: ${selectedAgency.name}` 
-      })
-      setShowAgencyModal(false)
-      setAgencyModalOrder(null)
-      setPendingStatusChange(null)
-      setTimeout(() => setMessage({ type: '', text: '' }), 2000)
-    } catch (err) {
-      setMessage({ type: 'error', text: '❌ Failed to update order with agency' })
-      console.error('Agency selection error:', err)
-    }
-  }
 
   const fetchLocations = async () => {
     try {
@@ -490,7 +455,7 @@ export default function AdminDashboard() {
         })
         setMessage({ type: 'success', text: 'Product created successfully' })
       }
-      setProductForm({ name: '', price: '', description: '', stock: '', category: 'Electronics', image: '', mostOrdered: false, isNew: false, availableRegions: ['ALL'], images: [{ color: 'default', url: '' }], sku: '', weight: '', dimensions: '', storeAvailability: {}, specifications: [], warranty: '', barcode: '', tax: 0 })
+      setProductForm({ name: '', price: '', description: '', stock: '', category: '', image: '', mostOrdered: false, isNew: false, availableRegions: ['ALL'], images: [{ color: 'default', url: '' }], sku: '', weight: '', dimensions: '', storeAvailability: {}, specifications: [], warranty: '', barcode: '', tax: 0 })
       setEditingProductId(null)
       setShowProductForm(false)
       fetchProducts()
@@ -564,7 +529,7 @@ export default function AdminDashboard() {
       price: product.price || '',
       description: product.description || '',
       stock: product.stock || '',
-      category: product.category || 'Electronics',
+      category: product.category || '',
       image: product.image || '',
       mostOrdered: !!product.mostOrdered,
       isNew: !!product.isNew,
@@ -666,7 +631,7 @@ export default function AdminDashboard() {
       setProducts([])
       setOrders([])
       setUsers([])
-      setCategories([])
+      setExtraCategories([])
       setSubAdmins([])
       // Notify all other pages/tabs about reset
       sessionStorage.setItem('platformReset', JSON.stringify({ timestamp: Date.now(), isReset: true }))
@@ -826,7 +791,6 @@ export default function AdminDashboard() {
     { key: 'overview', label: 'Overview', icon: '📊' },
     { key: 'products', label: 'Products', icon: '📦' },
     { key: 'pos', label: 'POS', icon: '🏪' },
-    { key: 'shipping', label: 'Shipping', icon: '🚚' },
     { key: 'orders', label: 'Orders', icon: '🧾' },
     { key: 'sub-admins', label: 'Team', icon: '👥' },
     { key: 'locations', label: 'Locations', icon: '📍' },
@@ -997,7 +961,7 @@ export default function AdminDashboard() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-6 mb-4 sm:mb-6">
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Product Management</h2>
               {!showProductForm && (
-                <button onClick={() => { setShowProductForm(true); setEditingProductId(null); setProductForm({ name: '', price: '', description: '', stock: '', category: 'Electronics', image: '', mostOrdered: false, isNew: false, availableRegions: ['ALL'], images: [{ color: 'default', url: '' }], sku: '', weight: '', dimensions: '', storeAvailability: {}, specifications: [], warranty: '', barcode: '', tax: 0 }); }} 
+                <button onClick={() => { setShowProductForm(true); setEditingProductId(null); setProductForm({ name: '', price: '', description: '', stock: '', category: '', image: '', mostOrdered: false, isNew: false, availableRegions: ['ALL'], images: [{ color: 'default', url: '' }], sku: '', weight: '', dimensions: '', storeAvailability: {}, specifications: [], warranty: '', barcode: '', tax: 0 }); }} 
                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold text-sm sm:text-base transition shadow-md">
                   ➕ Add Product
                 </button>
@@ -1040,9 +1004,10 @@ export default function AdminDashboard() {
                           <div className="mt-2 flex gap-2">
                             <input type="text" placeholder="New category" value={newCategory} onChange={(e) => setNewCategory(e.target.value)} className="flex-1 px-3 py-2 border border-gray-300 rounded text-sm" />
                             <button type="button" onClick={() => {
-                              if (newCategory && !categories.includes(newCategory)) {
-                                setCategories([...categories, newCategory])
-                                setProductForm({...productForm, category: newCategory})
+                              const name = newCategory.trim()
+                              if (name && !categories.includes(name)) {
+                                setExtraCategories((prev) => [...prev, name])
+                                setProductForm({...productForm, category: name})
                                 setNewCategory('')
                                 setShowCategoryForm(false)
                               }
@@ -1112,55 +1077,6 @@ export default function AdminDashboard() {
                           <div className="text-xs text-gray-600">Show new product badge</div>
                         </div>
                       </label>
-                    </div>
-                  </div>
-
-                  {/* SECTION 4: Regional Availability */}
-                  <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-lg p-4 sm:p-6 border border-orange-200">
-                    <h4 className="text-base font-bold text-orange-900 mb-4 flex items-center gap-2">🌍 Regional Availability</h4>
-                    <div className="bg-white p-4 rounded-lg border border-orange-200">
-                      <label className="flex items-center gap-3 cursor-pointer p-3 mb-3 bg-orange-50 rounded-lg border-2 border-orange-300">
-                        <input
-                          type="checkbox"
-                          checked={productForm.availableRegions.includes('ALL')}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setProductForm({ ...productForm, availableRegions: ['ALL'] })
-                            } else {
-                              setProductForm({ ...productForm, availableRegions: [] })
-                            }
-                          }}
-                          className="w-6 h-6 cursor-pointer"
-                        />
-                        <div>
-                          <div className="font-bold text-gray-900">📦 Ship to All Regions</div>
-                          <div className="text-xs text-gray-600">Available in all shipping areas</div>
-                        </div>
-                      </label>
-                      {productForm.availableRegions.includes('ALL') ? (
-                        <div className="text-center py-4 text-green-600 font-semibold">
-                          ✅ Available in all regions
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                          {shippingKeys.map(region => (
-                            <label key={region} className="flex items-center gap-2 cursor-pointer p-2 bg-gray-50 rounded border border-gray-200 hover:bg-blue-50 transition">
-                              <input
-                                type="checkbox"
-                                checked={productForm.availableRegions.includes(region)}
-                                onChange={(e) => {
-                                  const current = new Set(productForm.availableRegions.filter(r => r !== 'ALL'))
-                                  if (e.target.checked) current.add(region)
-                                  else current.delete(region)
-                                  setProductForm({ ...productForm, availableRegions: Array.from(current) })
-                                }}
-                                className="w-5 h-5 cursor-pointer"
-                              />
-                              <span className="text-sm font-medium text-gray-700">{region}</span>
-                            </label>
-                          ))}
-                        </div>
-                      )}
                     </div>
                   </div>
 
@@ -1519,291 +1435,6 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* SHIPPING TAB */}
-        {activeTab === 'shipping' && (
-          <div>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-6 mb-4 sm:mb-6">
-              <div>
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">🚚 Shipping Management</h2>
-                <p className="text-sm text-gray-600 mt-1">Manage shipping fees by region/town across Cameroon</p>
-              </div>
-              <button onClick={fetchShippingFees} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-semibold text-sm sm:text-base transition shadow-md">
-                🔄 Refresh Rates
-              </button>
-            </div>
-
-            <div className="space-y-6">
-              {/* SECTION 1: Main Shop Location */}
-              <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl shadow-md p-4 sm:p-6 lg:p-8 border-2 border-purple-200">
-                <h3 className="text-lg sm:text-xl font-bold text-purple-900 mb-4 flex items-center gap-2">🏪 Main Shop Location</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-2">Select Main Town</label>
-                    <select 
-                      value={mainShopTown} 
-                      onChange={(e) => saveMainShopTown(e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 bg-white font-semibold text-gray-800"
-                    >
-                      {shippingKeys.length === 0 ? (
-                        <option>No towns available</option>
-                      ) : (
-                        shippingKeys.map(town => (
-                          <option key={town} value={town}>{town}</option>
-                        ))
-                      )}
-                    </select>
-                    <div className="mt-3 p-3 bg-purple-100 rounded-lg border-l-4 border-purple-600">
-                      <p className="text-xs text-purple-900 font-semibold">💡 About Main Location:</p>
-                      <p className="text-xs text-purple-800 mt-1">This is where your primary warehouse is located. Offers free/discounted shipping for bulk orders (50,000+ XAF)</p>
-                    </div>
-                  </div>
-                  <div className="flex flex-col justify-center">
-                    <div className="bg-white p-6 rounded-xl border-3 border-purple-300 text-center shadow-lg">
-                      <p className="text-xs uppercase tracking-wider text-gray-600 font-bold mb-2">📍 Current Main Location</p>
-                      <p className="text-3xl font-bold text-purple-600">{mainShopTown}</p>
-                      <p className="text-xs text-gray-500 mt-3">Base fulfillment location</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* SECTION 2: Regional Shipping Rates */}
-              <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl shadow-md p-4 sm:p-6 lg:p-8 border-2 border-blue-200">
-                <h3 className="text-lg sm:text-xl font-bold text-blue-900 mb-4 flex items-center gap-2">💰 Shipping Rates by Region</h3>
-                <p className="text-xs text-gray-600 mb-4">Set delivery fees for each region. These are applied automatically to customer orders.</p>
-
-                <form onSubmit={async (e) => {
-                  e.preventDefault()
-                  setLoadingShipping(true)
-                  try {
-                    const payload = {}
-                    for (const region of shippingKeys) {
-                      const val = Number(shippingForm[region] ?? 0)
-                      payload[region] = isNaN(val) ? 0 : val
-                    }
-                    await axios.put('/api/admin/shipping-fees', payload, { headers: { Authorization: `Bearer ${token}` } })
-                    setMessage({ type: 'success', text: 'Shipping fees updated successfully' })
-                    fetchShippingFees()
-                  } catch (err) {
-                    setMessage({ type: 'error', text: err.response?.data?.error || 'Failed to update fees' })
-                  } finally {
-                    setLoadingShipping(false)
-                    setTimeout(() => setMessage({ type: '', text: '' }), 3000)
-                  }
-                }}>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                    {shippingKeys.map(region => (
-                      <div key={region} className="bg-white p-4 rounded-lg border-2 border-blue-200 hover:border-blue-400 transition">
-                        <div className="flex items-center justify-between mb-3">
-                          <label className="block font-bold text-gray-900">{region}</label>
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              if (window.confirm(`Remove ${region} from shipping rates? This will delete it permanently.`)) {
-                                try {
-                                  const updated = { ...shippingForm }
-                                  delete updated[region]
-                                  await axios.put('/api/admin/shipping-fees', updated, { headers: { Authorization: `Bearer ${token}` } })
-                                  setMessage({ type: 'success', text: `${region} removed successfully` })
-                                  if (mainShopTown === region) setMainShopTown(Object.keys(updated)[0] || 'Douala')
-                                  fetchShippingFees()
-                                } catch (err) {
-                                  setMessage({ type: 'error', text: err.response?.data?.error || 'Failed to delete region' })
-                                } finally {
-                                  setTimeout(() => setMessage({ type: '', text: '' }), 3000)
-                                }
-                              }
-                            }}
-                            className="text-red-500 hover:text-red-700 transition text-sm font-bold"
-                            title={`Delete ${region}`}
-                          >
-                            🗑️
-                          </button>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <input type="number" min="0" value={shippingForm[region] ?? 0} onChange={(e) => setShippingForm({ ...shippingForm, [region]: e.target.value })} className="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 font-bold text-lg" />
-                          <span className="text-sm font-bold text-gray-600">XAF</span>
-                        </div>
-                        {region === mainShopTown && (
-                          <div className="mt-2 text-xs text-purple-600 font-semibold">⭐ Main Location</div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Form Actions */}
-                  <div className="flex gap-3">
-                    <button type="submit" disabled={loadingShipping} className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 rounded-lg font-bold transition disabled:opacity-50 shadow-md">
-                      ✅ Save All Changes
-                    </button>
-                    <button type="button" onClick={() => setShippingForm(shippingFees)} className="flex-1 bg-gray-400 hover:bg-gray-500 text-white py-3 rounded-lg font-bold transition shadow-md">
-                      ↶ Reset Changes
-                    </button>
-                  </div>
-                </form>
-              </div>
-
-              {/* SECTION 3: Add New Region */}
-              <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl shadow-md p-4 sm:p-6 lg:p-8 border-2 border-orange-200">
-                <h3 className="text-lg sm:text-xl font-bold text-orange-900 mb-4 flex items-center gap-2">➕ Add New Region/Town</h3>
-                <p className="text-xs text-gray-600 mb-4">Expand your shipping network by adding new delivery regions</p>
-                
-                <div className="bg-white p-4 rounded-lg border-2 border-orange-200">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-2">Region/Town Name</label>
-                      <input type="text" placeholder="e.g., Douala, Yaoundé" value={newTown} onChange={(e) => setNewTown(e.target.value)} className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-600 text-sm" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-2">Shipping Fee (XAF)</label>
-                      <input type="number" min="0" placeholder="0" value={newTownFee} onChange={(e) => setNewTownFee(e.target.value)} className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-600 text-sm" />
-                    </div>
-                    <button type="button" onClick={async () => {
-                      if (!newTown || !newTownFee) {
-                        setMessage({ type: 'error', text: 'Please fill in town name and fee' })
-                        setTimeout(() => setMessage({ type: '', text: '' }), 2000)
-                        return
-                      }
-                      try {
-                        await axios.put('/api/admin/shipping-fees', { [newTown]: Number(newTownFee || 0) }, { headers: { Authorization: `Bearer ${token}` } })
-                        setMessage({ type: 'success', text: `${newTown} added successfully` })
-                        setNewTown('')
-                        setNewTownFee('')
-                        fetchShippingFees()
-                      } catch (err) {
-                        setMessage({ type: 'error', text: err.response?.data?.error || 'Failed to add region' })
-                      } finally {
-                        setTimeout(() => setMessage({ type: '', text: '' }), 3000)
-                      }
-                    }} className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white px-6 py-2 rounded-lg font-bold transition shadow-md">
-                      ➕ Add Region
-                    </button>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-3">💡 Tip: Make sure the fee reflects realistic delivery costs for that region</p>
-                </div>
-              </div>
-
-              {/* SECTION 4: Shipping Summary */}
-              {shippingKeys.length > 0 && (
-                <div className="bg-gradient-to-r from-teal-50 to-cyan-50 rounded-xl shadow-md p-4 sm:p-6 border-2 border-teal-200">
-                  <h3 className="text-lg font-bold text-teal-900 mb-4 flex items-center gap-2">📊 Shipping Summary</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-white p-4 rounded-lg">
-                      <p className="text-xs text-gray-600 font-semibold mb-1">Total Regions</p>
-                      <p className="text-3xl font-bold text-teal-600">{shippingKeys.length}</p>
-                    </div>
-                    <div className="bg-white p-4 rounded-lg">
-                      <p className="text-xs text-gray-600 font-semibold mb-1">Avg Shipping Fee</p>
-                      <p className="text-3xl font-bold text-teal-600">XAF {Math.round(Object.values(shippingForm).reduce((a, b) => (Number(a || 0) + Number(b || 0)), 0) / shippingKeys.length).toLocaleString()}</p>
-                    </div>
-                    <div className="bg-white p-4 rounded-lg">
-                      <p className="text-xs text-gray-600 font-semibold mb-1">Free Shipping At</p>
-                      <p className="text-3xl font-bold text-teal-600">XAF {freeShippingThreshold.toLocaleString()}</p>
-                      <p className="text-xs text-gray-500 mt-1">in {mainShopTown}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* SECTION 5: Free Shipping Settings */}
-              <div className="bg-gradient-to-r from-rose-50 to-pink-50 rounded-xl shadow-md p-4 sm:p-6 border-2 border-rose-200">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-bold text-rose-900 flex items-center gap-2">🎁 Free Shipping Settings</h3>
-                  <button 
-                    onClick={() => setShowFreeShippingForm(!showFreeShippingForm)}
-                    className="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
-                  >
-                    {showFreeShippingForm ? '✕ Cancel' : '+ Configure'}
-                  </button>
-                </div>
-
-                {showFreeShippingForm ? (
-                  <div className="space-y-6">
-                    {/* Platform-wide Free Shipping */}
-                    <div className="bg-white rounded-lg p-4 border-2 border-rose-200">
-                      <h4 className="font-bold text-gray-800 mb-4 text-center">🌍 Platform-Wide Free Shipping Threshold</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-                        <div>
-                          <label className="block text-xs font-semibold text-gray-700 mb-2">Minimum Order Amount (XAF)</label>
-                          <input 
-                            type="number" 
-                            value={freeShippingThreshold}
-                            onChange={(e) => setFreeShippingThreshold(Number(e.target.value))}
-                            className="w-full px-4 py-3 border-2 border-rose-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-600 font-semibold"
-                            placeholder="50000"
-                            min="0"
-                          />
-                          <p className="text-xs text-rose-700 mt-2 font-semibold">💡 Orders exceeding this amount get free shipping to {mainShopTown}</p>
-                        </div>
-                        <div className="bg-rose-100 p-4 rounded-lg text-center">
-                          <p className="text-xs text-gray-600 mb-1">Preview</p>
-                          <p className="text-2xl font-bold text-rose-600">XAF {freeShippingThreshold.toLocaleString()}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Region-Specific Free Shipping */}
-                    {shippingKeys.length > 0 && (
-                      <div className="bg-white rounded-lg p-4 border-2 border-pink-200">
-                        <h4 className="font-bold text-gray-800 mb-4 text-center">🏙️ Region-Specific Free Shipping Thresholds</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {shippingKeys.map(region => (
-                            <div key={region} className="p-3 bg-gray-50 rounded-lg border border-pink-200">
-                              <div className="flex justify-between items-center mb-2">
-                                <label className="text-xs font-semibold text-gray-700">{region}</label>
-                                <span className="text-xs bg-pink-200 text-pink-800 px-2 py-1 rounded-full font-semibold">Shipping: XAF {shippingForm[region] || 0}</span>
-                              </div>
-                              <input 
-                                type="number" 
-                                value={regionFreeShipping[region] || ''}
-                                onChange={(e) => setRegionFreeShipping({
-                                  ...regionFreeShipping,
-                                  [region]: e.target.value ? Number(e.target.value) : undefined
-                                })}
-                                className="w-full px-3 py-2 border border-pink-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-600 text-sm font-semibold"
-                                placeholder="Leave empty to use platform default"
-                              />
-                              <p className="text-xs text-gray-500 mt-1">Min. for free shipping (empty = use platform threshold)</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Action Buttons */}
-                    <div className="flex gap-3 justify-center pt-4">
-                      <button 
-                        onClick={saveFreeShippingSettings}
-                        className="bg-rose-600 hover:bg-rose-700 text-white px-8 py-3 rounded-lg font-bold transition shadow-md flex items-center gap-2"
-                      >
-                        ✓ Save Settings
-                      </button>
-                      <button 
-                        onClick={() => setShowFreeShippingForm(false)}
-                        className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-8 py-3 rounded-lg font-bold transition"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="bg-white p-4 rounded-lg border-2 border-rose-200 text-center">
-                        <p className="text-xs text-gray-600 mb-1">🌍 Platform Threshold</p>
-                        <p className="text-2xl font-bold text-rose-600">XAF {freeShippingThreshold.toLocaleString()}</p>
-                      </div>
-                      <div className="bg-white p-4 rounded-lg border-2 border-pink-200 text-center">
-                        <p className="text-xs text-gray-600 mb-1">🏙️ Region Overrides</p>
-                        <p className="text-2xl font-bold text-pink-600">{Object.keys(regionFreeShipping).filter(r => regionFreeShipping[r] !== undefined).length}</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* ORDERS TAB */}
         {activeTab === 'orders' && (
@@ -1834,17 +1465,6 @@ export default function AdminDashboard() {
           />
         )}
 
-        {/* Agency Selection Modal */}
-        <AgencySelectModal
-          isOpen={showAgencyModal}
-          order={agencyModalOrder}
-          onClose={() => {
-            setShowAgencyModal(false)
-            setAgencyModalOrder(null)
-            setPendingStatusChange(null)
-          }}
-          onSelectAgency={handleAgencySelect}
-        />
 
         {/* Order Detail Modal - DEPRECATED - Kept for compatibility */}
         {viewOrder && false && (

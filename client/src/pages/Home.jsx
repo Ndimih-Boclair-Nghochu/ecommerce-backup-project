@@ -295,6 +295,92 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
         </div>
       </section>
 
+      {/* ── PRODUCTS SECTION (immediately after hero) ── */}
+      <section id="shop" className="py-12 sm:py-16 px-4" style={{ background: '#f8fafc' }}>
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-6">
+            <span className="inline-block text-xs font-black uppercase tracking-widest mb-3 px-3 py-1 rounded-full" style={{ color: '#0057a8', background: '#e8f0fb' }}>{t('shopChip')}</span>
+            <h2 className="text-3xl font-black mb-2" style={{ fontFamily: "'Sora', sans-serif", color: '#0f172a' }}>{t('productsEquipment')}</h2>
+            <p className="text-gray-600 text-sm max-w-xl mx-auto">{t('productsIntro')}</p>
+          </div>
+
+          {/* Prominent search bar — first, obvious on every device */}
+          <div className="mx-auto mb-5 w-full max-w-3xl">
+            <div className="flex items-stretch overflow-hidden rounded-full border-2 bg-white shadow-lg transition focus-within:ring-4 focus-within:ring-blue-100" style={{ borderColor: '#0057a8' }}>
+              <span className="flex items-center pl-5 pr-1 text-gray-400" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+              </span>
+              <input
+                type="search"
+                value={productSearch}
+                onChange={e => setProductSearch(e.target.value)}
+                placeholder={`${t('searchProducts')}...`}
+                aria-label={t('searchProducts')}
+                className="h-12 sm:h-14 w-full min-w-0 border-0 bg-transparent px-3 text-base text-gray-900 outline-none placeholder:text-gray-400"
+              />
+              <span className="hidden sm:flex items-center px-7 text-sm font-bold text-white" style={{ background: '#0057a8' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                {t('searchProducts')}
+              </span>
+            </div>
+          </div>
+
+          {/* Secondary filters: category chips + view all */}
+          <div className="mb-8 flex flex-nowrap items-center gap-2 overflow-x-auto pb-2 sm:flex-wrap sm:justify-center sm:overflow-visible">
+            {categories.map(c => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setSelectedCategory(c)}
+                className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition ${selectedCategory === c ? 'text-white' : 'border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50'}`}
+                style={selectedCategory === c ? { background: '#0057a8', borderColor: '#0057a8' } : undefined}
+              >
+                {c === 'All' ? t('allCategories') : c}
+              </button>
+            ))}
+            <Link to="/products" className="ml-1 shrink-0 rounded-full px-4 py-2 text-sm font-bold text-blue-700 hover:underline">{t('viewAll')} →</Link>
+          </div>
+
+          {loading ? (
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
+              {Array.from({ length: productsPerPage }).map((_, i) => (
+                <div key={i} className="h-72 rounded-2xl bg-white border border-gray-200 animate-pulse" />
+              ))}
+            </div>
+          ) : filteredProducts.length ? (
+            <>
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4 product-grid-enter">
+                {visibleProducts.map(product => (
+                  <ProductCard key={product.id} product={product} addToCart={addToCart} toggleWishlist={toggleWishlist} isInWishlist={isInWishlist} />
+                ))}
+              </div>
+              <div className="mt-6 flex flex-col items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm sm:flex-row">
+                <p className="text-sm font-semibold text-gray-500">
+                  {t('showingPage', { shown: visibleProducts.length, total: filteredProducts.length, page: productPage + 1, pages: pageCount })}
+                </p>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setProductPage(p => Math.max(0, p - 1))} disabled={productPage === 0}
+                    className="h-10 w-10 rounded-full border border-gray-200 font-bold text-gray-700 transition hover:border-blue-200 hover:bg-blue-50 disabled:opacity-40 disabled:cursor-not-allowed">
+                    ←
+                  </button>
+                  <button onClick={() => setProductPage(p => Math.min(pageCount - 1, p + 1))} disabled={productPage >= pageCount - 1}
+                    className="h-10 w-10 rounded-full font-bold text-white transition hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+                    style={{ background: '#0057a8' }}>
+                    →
+                  </button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="rounded-2xl border-2 border-dashed border-gray-200 bg-white p-12 text-center">
+              <div className="text-4xl mb-4">📦</div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">{products.length ? t('noProductsFound') : t('productsComingSoon')}</h3>
+              <p className="text-gray-500">{products.length ? t('tryDifferentSearch') : t('catalogBeingSetUp')}</p>
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* ── SERVICES ── */}
       <section id="services" className="py-16 px-4" style={{ background: '#f8fafc' }}>
         <div className="max-w-7xl mx-auto">
@@ -401,78 +487,6 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* ── PRODUCTS SECTION ── */}
-      <section className="py-16 px-4" style={{ background: '#f8fafc' }}>
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <span className="inline-block text-xs font-black uppercase tracking-widest mb-3 px-3 py-1 rounded-full" style={{ color: '#0057a8', background: '#e8f0fb' }}>{t('shopChip')}</span>
-              <h2 className="text-3xl font-black mb-2" style={{ fontFamily: "'Sora', sans-serif", color: '#0f172a' }}>{t('productsEquipment')}</h2>
-              <p className="text-gray-600 text-sm max-w-xl">{t('productsIntro')}</p>
-            </div>
-            <div className="grid gap-3 rounded-2xl border border-gray-200 bg-white p-3 shadow-sm sm:grid-cols-[minmax(200px,1fr)_180px_auto] lg:min-w-[580px]">
-              <input
-                type="search"
-                value={productSearch}
-                onChange={e => setProductSearch(e.target.value)}
-                placeholder={`${t('searchProducts')}...`}
-                className="h-11 w-full rounded-xl border border-gray-200 px-4 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-              />
-              <select
-                value={selectedCategory}
-                onChange={e => setSelectedCategory(e.target.value)}
-                className="h-11 w-full rounded-xl border border-gray-200 px-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-              >
-                {categories.map(c => (
-                  <option key={c} value={c}>{c === 'All' ? t('allCategories') : c}</option>
-                ))}
-              </select>
-              <Link to="/products" className="inline-flex h-11 items-center justify-center rounded-xl border border-gray-200 px-4 text-sm font-bold text-gray-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700">
-                {t('viewAll')}
-              </Link>
-            </div>
-          </div>
-
-          {loading ? (
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
-              {Array.from({ length: productsPerPage }).map((_, i) => (
-                <div key={i} className="h-72 rounded-2xl bg-white border border-gray-200 animate-pulse" />
-              ))}
-            </div>
-          ) : filteredProducts.length ? (
-            <>
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4 product-grid-enter">
-                {visibleProducts.map(product => (
-                  <ProductCard key={product.id} product={product} addToCart={addToCart} toggleWishlist={toggleWishlist} isInWishlist={isInWishlist} />
-                ))}
-              </div>
-              <div className="mt-6 flex flex-col items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm sm:flex-row">
-                <p className="text-sm font-semibold text-gray-500">
-                  {t('showingPage', { shown: visibleProducts.length, total: filteredProducts.length, page: productPage + 1, pages: pageCount })}
-                </p>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => setProductPage(p => Math.max(0, p - 1))} disabled={productPage === 0}
-                    className="h-10 w-10 rounded-full border border-gray-200 font-bold text-gray-700 transition hover:border-blue-200 hover:bg-blue-50 disabled:opacity-40 disabled:cursor-not-allowed">
-                    ←
-                  </button>
-                  <button onClick={() => setProductPage(p => Math.min(pageCount - 1, p + 1))} disabled={productPage >= pageCount - 1}
-                    className="h-10 w-10 rounded-full font-bold text-white transition hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
-                    style={{ background: '#0057a8' }}>
-                    →
-                  </button>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="rounded-2xl border-2 border-dashed border-gray-200 bg-white p-12 text-center">
-              <div className="text-4xl mb-4">📦</div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">{products.length ? t('noProductsFound') : t('productsComingSoon')}</h3>
-              <p className="text-gray-500">{products.length ? t('tryDifferentSearch') : t('catalogBeingSetUp')}</p>
-            </div>
-          )}
         </div>
       </section>
 

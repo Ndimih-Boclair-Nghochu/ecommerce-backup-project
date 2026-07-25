@@ -121,7 +121,7 @@ export default function OrderTracking({ settings }) {
                     <div className="p-5 space-y-5">
                       <StatusStepper status={order.status} />
                       <div className="grid gap-3 sm:grid-cols-3 text-sm">
-                        <div><span className="text-gray-500">Region:</span> <span className="font-semibold">{order.region}</span></div>
+                        <div><span className="text-gray-500">Delivery to:</span> <span className="font-semibold">{order.region}</span></div>
                         <div><span className="text-gray-500">Status:</span> <span className="font-semibold capitalize">{order.status}</span></div>
                         <div><span className="text-gray-500">Fulfillment:</span> <span className="font-semibold">{order.deliveryOption === 'pickup' ? 'Pickup' : 'Delivery'}</span></div>
                       </div>

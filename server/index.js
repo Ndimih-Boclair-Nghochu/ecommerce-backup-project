@@ -678,14 +678,13 @@ app.post('/api/orders', orderLimiter, orderValidation, asyncHandler(async (req, 
   try {
     await client.query('BEGIN');
     const settings = await getSettings();
-    const shippingFees = await getShippingFees();
     const buyer = req.body.buyer || {};
     const isInStoreSale = Boolean(req.body.isInStoreSale || req.body.is_in_store_sale);
     const deliveryOption = req.body.deliveryOption || req.body.delivery_option || 'delivery';
     const isPickup = deliveryOption === 'pickup';
     const pickupLocation = buyer.pickupLocation || req.body.pickupLocation || req.body.pickup_location || '';
     const pickupTime = buyer.pickupTime || req.body.pickupTime || req.body.pickup_time || '';
-    const region = req.body.region || settings.main_shop_town || 'Bamenda';
+    const region = req.body.region || req.body.country || buyer.country || settings.main_shop_town || 'N/A';
     const items = req.body.items || [];
     const orderItems = [];
     let subtotal = 0;
@@ -719,9 +718,8 @@ app.post('/api/orders', orderLimiter, orderValidation, asyncHandler(async (req, 
       });
     }
 
-    const threshold = Number(settings.free_shipping_threshold || 100000);
-    const baseShipping = isInStoreSale || isPickup ? 0 : Number(shippingFees[region] ?? 0);
-    const shippingFee = !isInStoreSale && !isPickup && subtotal >= threshold ? 0 : baseShipping;
+    // Shipping regions were removed — delivery is arranged with the customer after the order.
+    const shippingFee = 0;
     const discountPercent = Math.max(0, Number(req.body.discountPercent || req.body.discount_percent || 0));
     const discountAmount = Math.round(subtotal * (discountPercent / 100));
     const total = Math.max(0, subtotal - discountAmount + shippingFee);

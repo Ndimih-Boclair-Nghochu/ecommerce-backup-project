@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import axios from 'axios'
-import AgencySelectModal from './AgencySelectModal'
 
 export default function OrderManagement({ orders = [], onOrderUpdate, token, onViewReceipt = () => {}, resetStatus = null }) {
   const [activeFilter, setActiveFilter] = useState('all')
@@ -11,9 +10,6 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
   const [bulkAction, setBulkAction] = useState('')
   const [expandedOrderId, setExpandedOrderId] = useState(null)
   const [message, setMessage] = useState({ type: '', text: '' })
-  const [agencyModalOpen, setAgencyModalOpen] = useState(false)
-  const [orderForAgency, setOrderForAgency] = useState(null)
-  const [pendingStatusChange, setPendingStatusChange] = useState(null)
   const [lastUpdate, setLastUpdate] = useState(new Date())
   const [isRealTimeActive, setIsRealTimeActive] = useState(true)
 
@@ -125,41 +121,21 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
 
   // Handle status update
   const handleStatusChange = async (orderId, newStatus, order) => {
-    console.debug('🔍 handleStatusChange called', { 
-      orderId, 
-      newStatus, 
-      currentStatus: order.status,
-      hasAgencies: order.buyer?.agencies?.length || 0,
-      agencies: order.buyer?.agencies
-    })
-    
-    console.debug('⏭️ Proceeding with direct status change')
     await completeStatusChange(orderId, newStatus, order)
   }
 
-  // Complete the status change (either directly or after agency selection)
-  const completeStatusChange = async (orderId, newStatus, order, selectedAgency = null) => {
+  // Complete the status change
+  const completeStatusChange = async (orderId, newStatus, order) => {
     try {
-      console.debug('🔄 Status change initiated')
-      console.debug('Updating order:', { orderId, newStatus, token: !!token, agency: selectedAgency })
-      console.debug('📝 Order object:', order)
-      
-      const updateData = {
-        status: newStatus,
-        deliveryAgency: selectedAgency || order.deliveryAgency || ''
-      }
-      
-      const resp = await axios.put(`/api/admin/orders/${orderId}`, 
-        updateData, 
+      const updateData = { status: newStatus }
+
+      const resp = await axios.put(`/api/admin/orders/${orderId}`,
+        updateData,
         { headers: { Authorization: `Bearer ${token}` } }
       )
-      console.debug('Status update response:', resp.data)
-      console.debug('✅ Response received, calling onOrderUpdate')
       onOrderUpdate(orderId, resp.data, false)
     } catch (err) {
-      console.error('❌ Status update error:', err)
-      console.error('Error response:', err.response?.data)
-      console.error('Error message:', err.message)
+      console.error('Status update error:', err)
       showMessage('error', err.response?.data?.error || 'Failed to update order status')
     }
   }
@@ -185,38 +161,6 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
       console.error('❌ Payment update error:', err)
       showMessage('error', err.response?.data?.error || 'Failed to update payment status')
     }
-  }
-
-  // Handle agency selection from modal
-  const handleAgencySelect = async (agencyIndex) => {
-    if (!pendingStatusChange || !orderForAgency) return
-
-    let agencyName = ''
-    const agencies = orderForAgency.buyer?.agencies || []
-    
-    if (agencies[agencyIndex]) {
-      const selectedAgency = agencies[agencyIndex]
-      // Handle both string and object formats
-      if (typeof selectedAgency === 'string') {
-        agencyName = selectedAgency
-      } else if (typeof selectedAgency === 'object' && selectedAgency.name) {
-        agencyName = selectedAgency.name
-      } else {
-        agencyName = `Agency ${agencyIndex + 1}`
-      }
-    }
-
-    await completeStatusChange(
-      pendingStatusChange.orderId,
-      pendingStatusChange.newStatus,
-      orderForAgency,
-      agencyName
-    )
-
-    // Close modal and reset
-    setAgencyModalOpen(false)
-    setOrderForAgency(null)
-    setPendingStatusChange(null)
   }
 
   // Handle bulk actions
@@ -282,18 +226,6 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
 
   return (
     <div className="space-y-6">
-      {/* Agency Selection Modal */}
-      <AgencySelectModal
-        isOpen={agencyModalOpen}
-        order={orderForAgency}
-        onClose={() => {
-          setAgencyModalOpen(false)
-          setOrderForAgency(null)
-          setPendingStatusChange(null)
-        }}
-        onSelectAgency={handleAgencySelect}
-      />
-
       {/* Platform Reset Notice */}
       {resetStatus?.isReset && (
         <div className="bg-orange-100 border-l-4 border-orange-600 p-4 rounded-lg">
@@ -535,7 +467,6 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
                       </td>
                       <td className="px-4 py-4">
                         <div className="font-bold text-gray-900">XAF {(order.totals?.total || 0).toLocaleString()}</div>
-                        <div className="text-xs text-gray-600">Shipping: XAF {(order.shippingFee || 0).toLocaleString()}</div>
                       </td>
                       <td className="px-4 py-4">
                         <span className={`inline-block px-2 py-1 rounded-lg text-xs font-bold ${
@@ -638,10 +569,8 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
                                       {order.deliveryOption === 'pickup' ? '🏪 Pickup in Store' : '🚚 Delivery'}
                                     </span>
                                   </div>
-                                  <div><span className="font-semibold">Region:</span> {order.region}</div>
-                                  <div><span className="font-semibold">Shipping Fee:</span> XAF {(order.shippingFee || 0).toLocaleString()}</div>
+                                  {order.region && <div><span className="font-semibold">Delivery to:</span> {order.region}</div>}
                                   <div><span className="font-semibold">Date Ordered:</span> {new Date(order.createdAt).toLocaleDateString()} {new Date(order.createdAt).toLocaleTimeString()}</div>
-                                  <div><span className="font-semibold">Agency:</span> {order.deliveryAgency || 'Not yet assigned'}</div>
                                   {order.deliveryOption === 'pickup' && order.buyer?.pickupLocation && (
                                     <div className="pt-2 border-t border-green-200">
                                       <span className="font-semibold">Pickup Location:</span> {order.buyer.pickupLocation}
@@ -778,7 +707,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
 
                             {/* Order Summary */}
                             <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 border border-blue-200">
-                              <div className="grid grid-cols-4 gap-4 text-center">
+                              <div className="grid grid-cols-3 gap-4 text-center">
                                 <div>
                                   <div className="text-xs text-gray-600 font-semibold">Subtotal</div>
                                   <div className="text-lg font-bold text-gray-900">XAF {(order.totals?.subtotal || 0).toLocaleString()}</div>
@@ -786,10 +715,6 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
                                 <div>
                                   <div className="text-xs text-gray-600 font-semibold">Tax (5%)</div>
                                   <div className="text-lg font-bold text-gray-900">XAF {(order.totals?.tax || 0).toLocaleString()}</div>
-                                </div>
-                                <div>
-                                  <div className="text-xs text-gray-600 font-semibold">Shipping</div>
-                                  <div className="text-lg font-bold text-gray-900">XAF {(order.shippingFee || 0).toLocaleString()}</div>
                                 </div>
                                 <div className="bg-white rounded-lg p-2">
                                   <div className="text-xs text-gray-600 font-semibold">TOTAL</div>

@@ -8,12 +8,19 @@ const emptyBuyer = {
   name: '',
   email: '',
   phone: '',
+  country: 'Cameroon',
+  region: '',
+  city: '',
   address: '',
-  agencies: [''],
   notes: ''
 }
 
-const normalizeTown = (value = '') => String(value || '').trim().toLowerCase()
+// A short list of suggestions; the field accepts any country the buyer types.
+const COUNTRY_SUGGESTIONS = [
+  'Cameroon', 'Nigeria', 'Ghana', 'Chad', 'Central African Republic', 'Gabon',
+  'Equatorial Guinea', 'Congo', 'DR Congo', "Côte d'Ivoire", 'Senegal',
+  'Kenya', 'South Africa', 'United States', 'United Kingdom', 'France', 'Canada'
+]
 
 const getAvailability = (item) => item.storeAvailability || item.store_availability || {}
 
@@ -38,9 +45,7 @@ function RequiredLabel({ children }) {
 }
 
 export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, subtotal, settings }) {
-  const [shippingFees, setShippingFees] = useState({})
   const [pickupLocations, setPickupLocations] = useState([])
-  const [region, setRegion] = useState(settings?.mainShopTown || 'Bamenda')
   const [deliveryOption, setDeliveryOption] = useState('delivery')
   const [pickupLocationId, setPickupLocationId] = useState('')
   const [pickupTime, setPickupTime] = useState('')
@@ -48,21 +53,6 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
   const [errors, setErrors] = useState({})
   const [placingOrder, setPlacingOrder] = useState(false)
   const [successOrder, setSuccessOrder] = useState(null)
-
-  useEffect(() => {
-    let active = true
-    axios.get('/api/shipping-fees')
-      .then((res) => {
-        if (!active) return
-        const fees = res.data || {}
-        setShippingFees(fees)
-        setRegion((current) => current || settings?.mainShopTown || Object.keys(fees)[0] || 'Bamenda')
-      })
-      .catch(() => toast.error('Shipping fees could not be loaded'))
-    return () => {
-      active = false
-    }
-  }, [settings?.mainShopTown])
 
   useEffect(() => {
     let active = true
@@ -77,8 +67,6 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
     }
   }, [])
 
-  const mainTown = settings?.mainShopTown || 'Bamenda'
-  const regions = useMemo(() => Object.keys(shippingFees).sort((a, b) => a.localeCompare(b)), [shippingFees])
   const availablePickupLocations = useMemo(
     () => pickupLocations.filter((location) => cart.every((item) => isProductAvailableAtLocation(item, location))),
     [pickupLocations, cart]
@@ -87,21 +75,9 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
     () => availablePickupLocations.find((location) => location.id === pickupLocationId) || availablePickupLocations[0] || null,
     [availablePickupLocations, pickupLocationId]
   )
-  const selectedPickupCity = selectedPickupLocation?.city || ''
-  const cartAvailableInRegion = useMemo(
-    () => pickupLocations.some((location) => (
-      normalizeTown(location.city) === normalizeTown(region)
-      && cart.every((item) => isProductAvailableAtLocation(item, location))
-    )),
-    [pickupLocations, cart, region]
-  )
-  const showAgencies = deliveryOption === 'delivery'
-    && !(cartAvailableInRegion || normalizeTown(region) === normalizeTown(mainTown))
-  const freeShippingThreshold = Number(settings?.freeShippingThreshold || 100000)
-  const baseShipping = Number(shippingFees[region] ?? 0)
-  const freeShipping = deliveryOption === 'delivery' && subtotal >= freeShippingThreshold
-  const shipping = deliveryOption === 'pickup' ? 0 : (freeShipping ? 0 : baseShipping)
-  const total = subtotal + shipping
+
+  // No shipping fees are charged online — delivery is arranged after the order is confirmed.
+  const total = subtotal
 
   useEffect(() => {
     if (!availablePickupLocations.length) return
@@ -110,19 +86,17 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
     }
   }, [availablePickupLocations, pickupLocationId])
 
-  useEffect(() => {
-    if (deliveryOption === 'pickup' && selectedPickupCity) {
-      setRegion(selectedPickupCity)
-    }
-  }, [deliveryOption, selectedPickupCity])
-
   const validateForm = () => {
     const nextErrors = {}
     if (!buyer.name.trim()) nextErrors.name = 'Name is required'
     if (!buyer.email.trim()) nextErrors.email = 'Email is required'
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyer.email)) nextErrors.email = 'Enter a valid email address'
     if (!buyer.phone.trim()) nextErrors.phone = 'Phone number is required'
-    if (deliveryOption === 'delivery' && !buyer.address.trim()) nextErrors.address = 'Delivery address is required'
+    if (deliveryOption === 'delivery') {
+      if (!buyer.country.trim()) nextErrors.country = 'Country is required'
+      if (!buyer.city.trim()) nextErrors.city = 'City / Town is required'
+      if (!buyer.address.trim()) nextErrors.address = 'Street address is required'
+    }
     if (deliveryOption === 'pickup' && !selectedPickupLocation) nextErrors.pickupLocation = 'Select a pickup store'
     if (deliveryOption === 'pickup' && !pickupTime) nextErrors.pickupTime = 'Select your pickup time'
     if (!cart.length) nextErrors.cart = 'Your cart is empty'
@@ -135,28 +109,22 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
     setErrors((current) => ({ ...current, [field]: undefined }))
   }
 
-  const handleAgencyChange = (index, value) => {
-    setBuyer((current) => {
-      const agencies = [...current.agencies]
-      agencies[index] = value
-      return { ...current, agencies }
-    })
-  }
-
-  const addAgencyField = () => {
-    setBuyer((current) => ({ ...current, agencies: [...current.agencies, ''] }))
-  }
-
-  const removeAgencyField = (index) => {
-    setBuyer((current) => ({
+  const chooseDeliveryOption = (option) => {
+    setDeliveryOption(option)
+    setErrors((current) => ({
       ...current,
-      agencies: current.agencies.length > 1 ? current.agencies.filter((_, itemIndex) => itemIndex !== index) : ['']
+      country: undefined,
+      city: undefined,
+      address: undefined,
+      pickupLocation: undefined,
+      pickupTime: undefined
     }))
   }
 
-  const chooseDeliveryOption = (option) => {
-    setDeliveryOption(option)
-    setErrors((current) => ({ ...current, address: undefined, pickupLocation: undefined, pickupTime: undefined }))
+  const composedDeliveryAddress = () => {
+    return [buyer.address.trim(), buyer.city.trim(), buyer.region.trim(), buyer.country.trim()]
+      .filter(Boolean)
+      .join(', ')
   }
 
   const placeOrder = async (event) => {
@@ -170,7 +138,6 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
     setPlacingOrder(true)
     try {
       const pickupLabel = formatPickupLocation(selectedPickupLocation)
-      const normalizedAgencies = buyer.agencies.map((agency) => agency.trim()).filter(Boolean)
       const payload = {
         buyer: {
           name: buyer.name.trim(),
@@ -178,13 +145,18 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
           phone: buyer.phone.trim(),
           address: deliveryOption === 'pickup'
             ? (selectedPickupLocation?.address || pickupLabel)
-            : buyer.address.trim(),
-          agencies: showAgencies ? normalizedAgencies : [],
+            : composedDeliveryAddress(),
+          country: deliveryOption === 'pickup' ? '' : buyer.country.trim(),
+          region: deliveryOption === 'pickup' ? '' : buyer.region.trim(),
+          city: deliveryOption === 'pickup' ? '' : buyer.city.trim(),
+          agencies: [],
           pickupLocation: deliveryOption === 'pickup' ? pickupLabel : '',
           pickupTime: deliveryOption === 'pickup' ? pickupTime : '',
           specialInstructions: buyer.notes.trim()
         },
-        region: deliveryOption === 'pickup' && selectedPickupCity ? selectedPickupCity : region,
+        // Backend keeps a required "region" column — use the country (or pickup city) for it.
+        region: deliveryOption === 'pickup' ? (selectedPickupLocation?.city || 'Pickup') : (buyer.country.trim() || 'N/A'),
+        country: deliveryOption === 'pickup' ? '' : buyer.country.trim(),
         deliveryOption,
         pickupLocation: deliveryOption === 'pickup' ? pickupLabel : '',
         pickupTime: deliveryOption === 'pickup' ? pickupTime : '',
@@ -299,7 +271,7 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
           <aside className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm h-fit">
             <h2 className="text-xl font-bold text-gray-950">Checkout</h2>
             <p className="mt-2 text-sm text-gray-600">
-              No online payment is collected here. The shop will contact you after the order is received.
+              No online payment is collected here. The shop will contact you after the order is received to confirm delivery and any delivery fee.
             </p>
 
             <form onSubmit={placeOrder} className="mt-6 space-y-4">
@@ -344,50 +316,37 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
               {deliveryOption === 'delivery' ? (
                 <>
                   <div>
-                    <RequiredLabel>Delivery Region</RequiredLabel>
-                    <select value={region} onChange={(event) => setRegion(event.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none">
-                      {(regions.length ? regions : [mainTown]).map((city) => (
-                        <option key={city} value={city}>{city}</option>
-                      ))}
-                    </select>
+                    <RequiredLabel>Country</RequiredLabel>
+                    <input
+                      list="country-suggestions"
+                      value={buyer.country}
+                      onChange={(event) => handleBuyerChange('country', event.target.value)}
+                      placeholder="e.g. Cameroon"
+                      className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none"
+                    />
+                    <datalist id="country-suggestions">
+                      {COUNTRY_SUGGESTIONS.map((country) => <option key={country} value={country} />)}
+                    </datalist>
+                    {errors.country && <p className="mt-1 text-sm text-red-600">{errors.country}</p>}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-bold text-gray-800 mb-1">State / Region</label>
+                      <input value={buyer.region} onChange={(event) => handleBuyerChange('region', event.target.value)} placeholder="e.g. North West" className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none" />
+                    </div>
+                    <div>
+                      <RequiredLabel>City / Town</RequiredLabel>
+                      <input value={buyer.city} onChange={(event) => handleBuyerChange('city', event.target.value)} placeholder="e.g. Bamenda" className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none" />
+                      {errors.city && <p className="mt-1 text-sm text-red-600">{errors.city}</p>}
+                    </div>
                   </div>
 
                   <div>
-                    <RequiredLabel>Delivery Address</RequiredLabel>
-                    <textarea value={buyer.address} onChange={(event) => handleBuyerChange('address', event.target.value)} rows="3" className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none" />
+                    <RequiredLabel>Street Address</RequiredLabel>
+                    <textarea value={buyer.address} onChange={(event) => handleBuyerChange('address', event.target.value)} rows="3" placeholder="House number, street, neighbourhood, landmark…" className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none" />
                     {errors.address && <p className="mt-1 text-sm text-red-600">{errors.address}</p>}
                   </div>
-
-                  {showAgencies && (
-                    <div>
-                      <label className="block text-sm font-bold text-gray-800 mb-2">Nearby collection agencies</label>
-                      <p className="mb-2 text-xs text-gray-500">Add one or more agencies if you want delivery through a local pickup point.</p>
-                      <div className="space-y-2">
-                        {buyer.agencies.map((agency, index) => (
-                          <div key={index} className="flex gap-2">
-                            <input
-                              value={agency}
-                              onChange={(event) => handleAgencyChange(index, event.target.value)}
-                              placeholder={`Agency ${index + 1}`}
-                              className="min-w-0 flex-1 rounded-md border border-gray-300 px-3 py-2 focus:border-blue-700 focus:outline-none"
-                            />
-                            {buyer.agencies.length > 1 && (
-                              <button
-                                type="button"
-                                onClick={() => removeAgencyField(index)}
-                                className="rounded-md border border-gray-300 px-3 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50"
-                              >
-                                Remove
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                      <button type="button" onClick={addAgencyField} className="mt-2 text-sm font-bold text-blue-700 hover:text-blue-900">
-                        Add another agency
-                      </button>
-                    </div>
-                  )}
                 </>
               ) : (
                 <>
@@ -440,16 +399,18 @@ export default function Cart({ cart, removeFromCart, updateQuantity, clearCart, 
               <div className="rounded-lg bg-gray-50 p-4 space-y-2">
                 <div className="flex justify-between text-sm"><span>Subtotal</span><span className="font-semibold">{formatXAF(subtotal)}</span></div>
                 <div className="flex justify-between text-sm">
-                  <span>{deliveryOption === 'pickup' ? 'Pickup' : 'Shipping'}</span>
-                  <span className="font-semibold">
-                    {deliveryOption === 'pickup' ? 'Free' : (freeShipping ? 'Free' : formatXAF(shipping))}
+                  <span>{deliveryOption === 'pickup' ? 'Pickup' : 'Delivery'}</span>
+                  <span className="font-semibold text-gray-500">
+                    {deliveryOption === 'pickup' ? 'Free' : 'Arranged on confirmation'}
                   </span>
                 </div>
-                {freeShipping && <p className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-800 inline-flex">Free shipping</p>}
                 <div className="border-t border-gray-200 pt-2 flex justify-between text-lg font-bold">
                   <span>Total</span>
                   <span>{formatXAF(total)}</span>
                 </div>
+                {deliveryOption === 'delivery' && (
+                  <p className="text-xs text-gray-500">Any delivery fee is confirmed with you by the shop after your order.</p>
+                )}
               </div>
 
               {errors.cart && <p className="text-sm text-red-600">{errors.cart}</p>}
