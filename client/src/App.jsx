@@ -5,6 +5,31 @@ import axios from './lib/api'
 import ErrorBoundary from './components/ErrorBoundary'
 import { formatXAF } from './utils/format'
 import { useLanguage } from './i18n/LanguageContext'
+import { setSeo, setOrganizationJsonLd } from './utils/seo'
+
+const HOME_IMAGE = '/hero-banner.jpg'
+const ROUTE_SEO = {
+  '/': {
+    title: 'SMART Centre Cameroon — Water, Sanitation & Energy Solutions',
+    description: 'Shop water, solar and sanitation products and services across Cameroon. Borehole drilling, water storage, solar energy, welding and skills training from SMART Centre Cameroon.'
+  },
+  '/products': {
+    title: 'Products & Services — SMART Centre Cameroon',
+    description: 'Browse all products and services from SMART Centre Cameroon — pumps, tanks, solar kits, fittings and more, with nationwide delivery.'
+  },
+  '/cart': {
+    title: 'Cart — SMART Centre Cameroon',
+    description: 'Review your cart and place your order with SMART Centre Cameroon.'
+  },
+  '/track-order': {
+    title: 'Track Order — SMART Centre Cameroon',
+    description: 'Track the status of your SMART Centre Cameroon order.'
+  },
+  '/wishlist': {
+    title: 'Wishlist — SMART Centre Cameroon',
+    description: 'Your saved products at SMART Centre Cameroon.'
+  }
+}
 
 const Home = lazy(() => import('./pages/Home'))
 const AllProducts = lazy(() => import('./pages/AllProducts'))
@@ -129,16 +154,27 @@ export default function App() {
     }
   }, [location.pathname])
 
+  // Site-wide Organization + WebSite structured data (with on-site SearchAction).
   useEffect(() => {
-    const shopName = settings.shopName || 'MyShop'
+    setOrganizationJsonLd({
+      shopName: settings.shopName || 'SMART Centre Cameroon',
+      shopEmail: settings.shopEmail,
+      shopPhone: settings.shopPhone
+    })
+  }, [settings.shopName, settings.shopEmail, settings.shopPhone])
+
+  // Per-route title, meta description, canonical and Open Graph tags.
+  // Product detail pages (/products/:id) set their own richer SEO + Product JSON-LD.
+  useEffect(() => {
     const path = location.pathname
-    if (path === '/') document.title = `SMART Centre Cameroon — Water, Sanitation & Energy Solutions`
-    else if (path === '/products') document.title = `Products & Services — SMART Centre Cameroon`
-    else if (path === '/cart') document.title = `Cart — SMART Centre Cameroon`
-    else if (path === '/track-order') document.title = `Track Order — SMART Centre Cameroon`
-    else if (path.startsWith('/products/')) document.title = `Product — SMART Centre Cameroon`
-    else document.title = `SMART Centre Cameroon`
-  }, [location.pathname, settings.shopName])
+    if (/^\/products\/[^/]+$/.test(path)) return
+    const seo = ROUTE_SEO[path]
+    if (seo) {
+      setSeo({ ...seo, image: path === '/' ? HOME_IMAGE : undefined })
+    } else {
+      document.title = 'SMART Centre Cameroon'
+    }
+  }, [location.pathname])
 
   useEffect(() => {
     if (!mobileMenuOpen) return

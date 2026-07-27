@@ -41,13 +41,20 @@ function Filters({ categories, filters, setFilters, activeFilterCount, clearFilt
 
 const defaultFilters = { category: 'All', minPrice: '', maxPrice: '', inStockOnly: false }
 
+const readInitialQuery = () => {
+  if (typeof window === 'undefined') return { search: '', category: '' }
+  const params = new URLSearchParams(window.location.search)
+  return { search: params.get('search') || params.get('q') || '', category: params.get('category') || '' }
+}
+
 export default function AllProducts({ addToCart, toggleWishlist, isInWishlist }) {
   const { t } = useLanguage()
+  const initialQuery = readInitialQuery()
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState('')
+  const [searchTerm, setSearchTerm] = useState(initialQuery.search)
   const [sortBy, setSortBy] = useState('newest')
-  const [filters, setFilters] = useState(defaultFilters)
+  const [filters, setFilters] = useState({ ...defaultFilters, category: initialQuery.category || 'All' })
   const [filtersOpen, setFiltersOpen] = useState(false)
 
   useEffect(() => {

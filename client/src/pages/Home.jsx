@@ -30,7 +30,7 @@ const SERVICES = [
     titleKey: 'svcDrillingTitle',
     descKey: 'svcDrillingDesc',
     color: 'amber',
-    img: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=800&q=80'
+    img: 'https://images.pexels.com/photos/15391048/pexels-photo-15391048.jpeg?auto=compress&cs=tinysrgb&w=800'
   },
   {
     icon: '🔧',

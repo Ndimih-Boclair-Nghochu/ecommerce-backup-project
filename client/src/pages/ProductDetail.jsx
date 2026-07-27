@@ -5,6 +5,7 @@ import axios from '../lib/api'
 import ProductCard from '../components/ProductCard'
 import { formatXAF, getProductImage, resolveAssetUrl } from '../utils/format'
 import { useLanguage } from '../i18n/LanguageContext'
+import { setSeo, setProductJsonLd, clearProductJsonLd } from '../utils/seo'
 
 export default function ProductDetail({ addToCart, toggleWishlist, isInWishlist, settings }) {
   const { id } = useParams()
@@ -51,8 +52,33 @@ export default function ProductDetail({ addToCart, toggleWishlist, isInWishlist,
   const reviews = reviewSummary.reviews || []
 
   useEffect(() => {
-    if (displayProduct) document.title = `${displayProduct.displayName} - ${settings?.shopName || 'MyShop'}`
-  }, [displayProduct, settings?.shopName])
+    if (!displayProduct || !product) return
+    const shopName = settings?.shopName || 'SMART Centre Cameroon'
+    const image = getProductImage(product)
+    const rawDescription = displayProduct.displayDescription || `${displayProduct.displayName} available at ${shopName}.`
+    const description = String(rawDescription).replace(/\s+/g, ' ').trim().slice(0, 300)
+    setSeo({
+      title: `${displayProduct.displayName} — ${shopName}`,
+      description,
+      image,
+      type: 'product',
+      keywords: [displayProduct.displayName, displayProduct.displayCategory, shopName, 'buy online Cameroon'].filter(Boolean).join(', ')
+    })
+    setProductJsonLd(
+      {
+        name: displayProduct.displayName,
+        description,
+        sku: product.sku,
+        id: product.id,
+        category: displayProduct.displayCategory || product.category,
+        stock: product.stock,
+        averageRating: reviewSummary.averageRating,
+        reviewCount: reviewSummary.reviewCount
+      },
+      { image, price: product.price, currency: 'XAF' }
+    )
+    return () => clearProductJsonLd()
+  }, [displayProduct, product, settings?.shopName, reviewSummary.averageRating, reviewSummary.reviewCount])
 
   if (loading) {
     return (

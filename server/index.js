@@ -1644,6 +1644,71 @@ app.use((err, req, res, next) => {
   });
 });
 
+function getSiteBaseUrl(req) {
+  const envUrl = process.env.SITE_URL || process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL;
+  if (envUrl) return String(envUrl).replace(/\/+$/, '');
+  const proto = String(req.headers['x-forwarded-proto'] || req.protocol || 'https').split(',')[0].trim();
+  const host = req.headers['x-forwarded-host'] || req.headers.host || '';
+  return `${proto}://${host}`;
+}
+
+function xmlEscape(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+// robots.txt — allow crawling and advertise the sitemap so search engines
+// discover every page (and every product listed in the sitemap).
+app.get('/robots.txt', (req, res) => {
+  const base = getSiteBaseUrl(req);
+  res.type('text/plain');
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+  res.send(`User-agent: *\nAllow: /\n\nSitemap: ${base}/sitemap.xml\n`);
+});
+
+// Dynamic sitemap — regenerated on every request from the live product list,
+// so each product becomes crawlable as soon as it is uploaded.
+app.get('/sitemap.xml', asyncHandler(async (req, res) => {
+  const base = getSiteBaseUrl(req);
+  const staticRoutes = [
+    { path: '/', priority: '1.0', changefreq: 'daily' },
+    { path: '/products', priority: '0.9', changefreq: 'daily' },
+    { path: '/track-order', priority: '0.5', changefreq: 'monthly' }
+  ];
+
+  let products = [];
+  try {
+    const result = await pool.query(
+      `SELECT id, updated_at FROM products ORDER BY updated_at DESC NULLS LAST LIMIT 5000`
+    );
+    products = result.rows;
+  } catch (err) {
+    console.error('Sitemap product lookup failed:', err.message);
+  }
+
+  const entries = [];
+  for (const route of staticRoutes) {
+    entries.push(
+      `  <url><loc>${xmlEscape(base + route.path)}</loc><changefreq>${route.changefreq}</changefreq><priority>${route.priority}</priority></url>`
+    );
+  }
+  for (const product of products) {
+    const lastmod = product.updated_at ? new Date(product.updated_at).toISOString() : new Date().toISOString();
+    entries.push(
+      `  <url><loc>${xmlEscape(`${base}/products/${product.id}`)}</loc><lastmod>${lastmod}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>`
+    );
+  }
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries.join('\n')}\n</urlset>\n`;
+  res.type('application/xml');
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.send(xml);
+}));
+
 const clientBuildPath = path.join(__dirname, '../client/dist');
 // Cache hashed assets for one year; keep HTML fresh so deployments update immediately.
 app.use(express.static(clientBuildPath, {
