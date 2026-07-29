@@ -930,23 +930,89 @@ app.post('/api/sub-admin/login', loginValidation, asyncHandler(async (req, res) 
 
 app.use('/api/admin', authenticate);
 
-app.get('/api/admin/real-time-stats', asyncHandler(async (req, res) => {
-  const orders = await pool.query('SELECT * FROM orders ORDER BY created_at DESC');
-  const mapped = orders.rows.map(orderFromRow);
-  const completed = mapped.filter((order) => ['delivered', 'completed'].includes(order.status));
-  const totalRevenue = completed.reduce((sum, order) => sum + order.total, 0);
-  const totalItemsSold = completed.reduce(
+// Length in milliseconds of each rolling reporting window. The "previous"
+// window of the same length is used to compute a real trend percentage.
+const STATS_PERIOD_MS = {
+  today: 24 * 60 * 60 * 1000,
+  week: 7 * 24 * 60 * 60 * 1000,
+  month: 30 * 24 * 60 * 60 * 1000,
+  year: 365 * 24 * 60 * 60 * 1000
+};
+
+function summarizeOrders(orders) {
+  const completed = orders.filter((order) => ['delivered', 'completed'].includes(order.status));
+  const revenue = completed.reduce((sum, order) => sum + order.total, 0);
+  const itemsSold = completed.reduce(
     (sum, order) => sum + order.items.reduce((inner, item) => inner + Number(item.quantity || 0), 0),
     0
   );
+  return {
+    revenue,
+    orders: orders.length,
+    completedOrders: completed.length,
+    itemsSold,
+    averageOrderValue: completed.length ? Math.round(revenue / completed.length) : 0
+  };
+}
+
+function trendPercent(current, previous) {
+  if (!previous) return current > 0 ? 100 : 0;
+  return Math.round(((current - previous) / previous) * 1000) / 10;
+}
+
+app.get('/api/admin/real-time-stats', asyncHandler(async (req, res) => {
+  const period = ['today', 'week', 'month', 'year', 'all'].includes(req.query.period) ? req.query.period : 'month';
+  const region = typeof req.query.region === 'string' && req.query.region !== 'all' ? req.query.region : null;
+
+  const result = await pool.query('SELECT * FROM orders ORDER BY created_at DESC');
+  let mapped = result.rows.map(orderFromRow);
+
+  // Distinct regions across every order power the region filter.
+  const availableRegions = [...new Set(mapped.map((o) => o.region).filter(Boolean))].sort();
+  if (region) mapped = mapped.filter((order) => order.region === region);
+
+  const now = Date.now();
+  const windowMs = STATS_PERIOD_MS[period] || null;
+  const inCurrent = windowMs
+    ? mapped.filter((o) => new Date(o.createdAt).getTime() >= now - windowMs)
+    : mapped;
+  const inPrevious = windowMs
+    ? mapped.filter((o) => {
+        const t = new Date(o.createdAt).getTime();
+        return t >= now - windowMs * 2 && t < now - windowMs;
+      })
+    : [];
+
+  const current = summarizeOrders(inCurrent);
+  const previous = summarizeOrders(inPrevious);
+
+  // Realized revenue by region, for the current window, largest first.
+  const regionMap = {};
+  for (const order of inCurrent) {
+    if (!['delivered', 'completed'].includes(order.status)) continue;
+    const name = order.region || 'Unspecified';
+    if (!regionMap[name]) regionMap[name] = { name, revenue: 0, orders: 0 };
+    regionMap[name].revenue += order.total;
+    regionMap[name].orders += 1;
+  }
+  const regionBreakdown = Object.values(regionMap)
+    .map((r) => ({ ...r, percentage: current.revenue ? Math.round((r.revenue / current.revenue) * 1000) / 10 : 0 }))
+    .sort((a, b) => b.revenue - a.revenue);
+
   res.json({
-    totalRevenue,
-    totalOrders: mapped.length,
-    totalItemsSold,
-    averageOrderValue: mapped.length ? Math.round(mapped.reduce((sum, order) => sum + order.total, 0) / mapped.length) : 0,
-    revenueTrend: 0,
-    ordersTrend: 0,
-    recentOrders: mapped.slice(0, 10).map((order) => ({
+    period,
+    region: region || 'all',
+    availableRegions,
+    generatedAt: new Date().toISOString(),
+    totalRevenue: current.revenue,
+    totalOrders: current.orders,
+    completedOrders: current.completedOrders,
+    totalItemsSold: current.itemsSold,
+    averageOrderValue: current.averageOrderValue,
+    revenueTrend: windowMs ? trendPercent(current.revenue, previous.revenue) : null,
+    ordersTrend: windowMs ? trendPercent(current.orders, previous.orders) : null,
+    regionBreakdown,
+    recentOrders: inCurrent.slice(0, 8).map((order) => ({
       id: order.id,
       buyerName: order.buyer.name,
       region: order.region,
@@ -954,7 +1020,7 @@ app.get('/api/admin/real-time-stats', asyncHandler(async (req, res) => {
       status: order.status,
       createdAt: order.createdAt
     })),
-    byStatus: mapped.reduce((acc, order) => {
+    byStatus: inCurrent.reduce((acc, order) => {
       acc[order.status] = (acc[order.status] || 0) + 1;
       return acc;
     }, {})

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import axios from '../lib/api'
 
 export default function POSStatistics({ token }) {
   const [stats, setStats] = useState(null)
@@ -84,39 +84,29 @@ export default function POSStatistics({ token }) {
 
       {/* OVERVIEW TAB */}
       {activeTab === 'overview' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Total Revenue */}
-          <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl shadow-md p-6 border border-green-200">
-            <p className="text-gray-600 text-sm font-semibold mb-2">💰 Total Revenue</p>
-            <p className="text-3xl font-bold text-green-600">
-              XAF {stats.totalRevenue.toLocaleString()}
-            </p>
-            <p className="text-xs text-gray-500 mt-2">From all transactions</p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="rounded-xl border border-gray-200 bg-white p-5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Total Revenue</p>
+            <p className="mt-2 text-2xl font-bold text-gray-900">XAF {stats.totalRevenue.toLocaleString()}</p>
+            <p className="mt-1 text-xs text-gray-400">From all transactions</p>
           </div>
 
-          {/* Total Transactions */}
-          <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl shadow-md p-6 border border-blue-200">
-            <p className="text-gray-600 text-sm font-semibold mb-2">🧾 Transactions</p>
-            <p className="text-3xl font-bold text-blue-600">{stats.totalReceipts}</p>
-            <p className="text-xs text-gray-500 mt-2">Total receipts</p>
+          <div className="rounded-xl border border-gray-200 bg-white p-5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Transactions</p>
+            <p className="mt-2 text-2xl font-bold text-gray-900">{stats.totalReceipts}</p>
+            <p className="mt-1 text-xs text-gray-400">Total receipts</p>
           </div>
 
-          {/* Average Transaction */}
-          <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl shadow-md p-6 border border-purple-200">
-            <p className="text-gray-600 text-sm font-semibold mb-2">📈 Avg Transaction</p>
-            <p className="text-3xl font-bold text-purple-600">
-              XAF {stats.averageTransaction.toLocaleString()}
-            </p>
-            <p className="text-xs text-gray-500 mt-2">Per receipt</p>
+          <div className="rounded-xl border border-gray-200 bg-white p-5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Avg Transaction</p>
+            <p className="mt-2 text-2xl font-bold text-gray-900">XAF {stats.averageTransaction.toLocaleString()}</p>
+            <p className="mt-1 text-xs text-gray-400">Per receipt</p>
           </div>
 
-          {/* Total Items Sold */}
-          <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl shadow-md p-6 border border-orange-200">
-            <p className="text-gray-600 text-sm font-semibold mb-2">📦 Items Sold</p>
-            <p className="text-3xl font-bold text-orange-600">
-              {stats.itemsSold.reduce((sum, item) => sum + item.quantity, 0)}
-            </p>
-            <p className="text-xs text-gray-500 mt-2">Total units</p>
+          <div className="rounded-xl border border-gray-200 bg-white p-5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Items Sold</p>
+            <p className="mt-2 text-2xl font-bold text-gray-900">{stats.itemsSold.reduce((sum, item) => sum + item.quantity, 0)}</p>
+            <p className="mt-1 text-xs text-gray-400">Total units</p>
           </div>
         </div>
       )}
