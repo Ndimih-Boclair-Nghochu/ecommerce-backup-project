@@ -25,11 +25,12 @@ export default function ProductCard({ product, addToCart, toggleWishlist, isInWi
   }
 
   return (
-    <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-xl">
+    <article className="group flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-md transition duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg">
       <Link to={`/products/${product.id}`} className="block">
-        {/* Square frame with object-cover: the photo fills the whole tile at
-            any screen size, so the grid stays even with no gaps around it. */}
-        <div className="relative aspect-square overflow-hidden bg-gray-100">
+        {/* Fixed-height landscape frame matching the admin products tab
+            (w-full h-48 object-cover): the photo fills the tile edge to edge
+            and every card lines up at the same height. */}
+        <div className="relative h-48 overflow-hidden bg-gray-100">
           <img
             src={activeImage}
             alt={displayProduct.displayName}
