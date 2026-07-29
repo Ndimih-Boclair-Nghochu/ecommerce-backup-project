@@ -50,7 +50,12 @@ const DEFAULT_SETTINGS = {
   mainShopTown: 'Yaoundé',
   freeShippingThreshold: 100000,
   shopPhone: '+237 6 00 000 000',
-  shopEmail: 'info@smartcentrecameroon.com'
+  shopEmail: 'info@smartcentrecameroon.com',
+  contactAddress: 'Cameroon (Nationwide)\nRegional representatives across all regions',
+  contactWebsiteUrl: 'https://www.smartcentrecameroon.com',
+  contactWebsiteLabel: 'smartcentrecameroon.com',
+  contactNoteTitle: 'Serving NGOs, Government',
+  contactNoteSubtitle: 'Contractors & Individuals worldwide'
 }
 
 function readCachedSettings() {
@@ -456,28 +461,38 @@ export default function App() {
             <div>
               <h4 className="font-black text-sm uppercase tracking-wider mb-4 opacity-60">{t('contactHeading')}</h4>
               <ul className="space-y-3 text-sm opacity-70">
-                <li className="flex items-start gap-2">
-                  <span>📍</span>
-                  <span>{t('footerAddressLine1')}<br/>{t('footerAddressLine2')}</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <span>📞</span>
-                  <a href={`tel:${settings.shopPhone}`} className="hover:opacity-100 transition">{settings.shopPhone}</a>
-                </li>
-                <li className="flex items-center gap-2">
-                  <span>✉️</span>
-                  <a href={`mailto:${settings.shopEmail}`} className="hover:opacity-100 transition">{settings.shopEmail}</a>
-                </li>
-                <li className="flex items-center gap-2">
-                  <span>🌐</span>
-                  <a href="https://www.smartcentrecameroon.com" className="hover:opacity-100 transition">smartcentrecameroon.com</a>
-                </li>
+                {settings.contactAddress && (
+                  <li className="flex items-start gap-2">
+                    <span>📍</span>
+                    <span className="whitespace-pre-line">{settings.contactAddress}</span>
+                  </li>
+                )}
+                {settings.shopPhone && (
+                  <li className="flex items-center gap-2">
+                    <span>📞</span>
+                    <a href={`tel:${settings.shopPhone.replace(/\s+/g, '')}`} className="hover:opacity-100 transition">{settings.shopPhone}</a>
+                  </li>
+                )}
+                {settings.shopEmail && (
+                  <li className="flex items-center gap-2">
+                    <span>✉️</span>
+                    <a href={`mailto:${settings.shopEmail}`} className="hover:opacity-100 transition break-all">{settings.shopEmail}</a>
+                  </li>
+                )}
+                {settings.contactWebsiteLabel && (
+                  <li className="flex items-center gap-2">
+                    <span>🌐</span>
+                    <a href={settings.contactWebsiteUrl || '#'} target="_blank" rel="noopener noreferrer" className="hover:opacity-100 transition break-all">{settings.contactWebsiteLabel}</a>
+                  </li>
+                )}
               </ul>
 
-              <div className="mt-6 p-3 rounded-xl text-xs" style={{ background: 'rgba(22,163,74,0.15)', border: '1px solid rgba(22,163,74,0.3)' }}>
-                <div className="font-bold text-green-400 mb-1">{t('servingNgosGov')}</div>
-                <div className="opacity-70">{t('contractorsIndividuals')}</div>
-              </div>
+              {(settings.contactNoteTitle || settings.contactNoteSubtitle) && (
+                <div className="mt-6 p-3 rounded-xl text-xs" style={{ background: 'rgba(22,163,74,0.15)', border: '1px solid rgba(22,163,74,0.3)' }}>
+                  {settings.contactNoteTitle && <div className="font-bold text-green-400 mb-1">{settings.contactNoteTitle}</div>}
+                  {settings.contactNoteSubtitle && <div className="opacity-70">{settings.contactNoteSubtitle}</div>}
+                </div>
+              )}
             </div>
           </div>
 

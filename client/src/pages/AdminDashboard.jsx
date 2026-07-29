@@ -145,7 +145,10 @@ export default function AdminDashboard() {
   })
 
   const [settingsForm, setSettingsForm] = useState({
-    email: '', currentPassword: '', newPassword: '', platformName: ''
+    email: '', currentPassword: '', newPassword: '', platformName: '',
+    shopPhone: '', shopEmail: '', contactAddress: '',
+    contactWebsiteUrl: '', contactWebsiteLabel: '',
+    contactNoteTitle: '', contactNoteSubtitle: ''
   })
 
   const [heroForm, setHeroForm] = useState({
@@ -191,6 +194,7 @@ export default function AdminDashboard() {
     fetchMainShopTown()
     fetchFreeShippingSettings()
     fetchPlatformName()
+    fetchContactInfo()
     fetchHeroSection()
     fetchPaymentAccounts()
     fetchCustomersWithInstallments()
@@ -210,6 +214,24 @@ export default function AdminDashboard() {
       setSettingsForm(prev => ({ ...prev, platformName: response.data.platformName || 'MyShop' }))
     } catch (err) {
       console.error('Failed to fetch platform name:', err)
+    }
+  }
+
+  const fetchContactInfo = async () => {
+    try {
+      const { data } = await axios.get('/api/settings')
+      setSettingsForm(prev => ({
+        ...prev,
+        shopPhone: data.shopPhone || '',
+        shopEmail: data.shopEmail || '',
+        contactAddress: data.contactAddress || '',
+        contactWebsiteUrl: data.contactWebsiteUrl || '',
+        contactWebsiteLabel: data.contactWebsiteLabel || '',
+        contactNoteTitle: data.contactNoteTitle || '',
+        contactNoteSubtitle: data.contactNoteSubtitle || ''
+      }))
+    } catch (err) {
+      console.error('Failed to fetch contact info:', err)
     }
   }
 
@@ -562,7 +584,14 @@ export default function AdminDashboard() {
         {
           email: settingsForm.email || undefined,
           password: settingsForm.newPassword || undefined,
-          platformName: settingsForm.platformName || undefined
+          platformName: settingsForm.platformName || undefined,
+          shopPhone: settingsForm.shopPhone,
+          shopEmail: settingsForm.shopEmail,
+          contactAddress: settingsForm.contactAddress,
+          contactWebsiteUrl: settingsForm.contactWebsiteUrl,
+          contactWebsiteLabel: settingsForm.contactWebsiteLabel,
+          contactNoteTitle: settingsForm.contactNoteTitle,
+          contactNoteSubtitle: settingsForm.contactNoteSubtitle
         },
         { headers: { Authorization: `Bearer ${token}` } }
       )
@@ -577,12 +606,10 @@ export default function AdminDashboard() {
       if (settingsForm.platformName) {
         setPlatformName(settingsForm.platformName)
       }
-      const changes = []
-      if (settingsForm.email) changes.push('email')
-      if (settingsForm.newPassword) changes.push('password')
-      if (settingsForm.platformName) changes.push('platform name')
-      setMessage({ type: 'success', text: changes.length ? `Updated ${changes.join(', ')} successfully` : 'Settings updated successfully' })
-      setSettingsForm({ email: '', currentPassword: '', newPassword: '', platformName: '' })
+      setMessage({ type: 'success', text: 'Settings updated successfully' })
+      // Clear only the credential fields; keep platform name and contact
+      // details visible so the admin can see the saved values.
+      setSettingsForm(prev => ({ ...prev, email: '', currentPassword: '', newPassword: '' }))
     } catch (err) {
       setMessage({ type: 'error', text: err.response?.data?.error || 'Failed to update settings' })
     } finally {
@@ -1927,8 +1954,48 @@ export default function AdminDashboard() {
                     <input type="text" placeholder="e.g., MyShop, TechStore, etc." value={settingsForm.platformName} onChange={(e) => setSettingsForm({...settingsForm, platformName: e.target.value})} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm" />
                     <p className="text-xs text-gray-600 mt-1">Change your store's name (appears in header, receipts, and emails)</p>
                   </div>
+
+                  {/* Footer Contact Information — shown in the website footer */}
+                  <div className="md:col-span-2 mt-2 pt-5 border-t-2 border-blue-100">
+                    <h4 className="text-base font-bold text-blue-900 flex items-center gap-2 mb-1">📇 Contact Information</h4>
+                    <p className="text-xs text-gray-600 mb-4">These details appear in the website footer for all visitors.</p>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">📍 Address</label>
+                    <textarea rows="2" placeholder="e.g., Cameroon (Nationwide)&#10;Regional representatives across all regions" value={settingsForm.contactAddress} onChange={(e) => setSettingsForm({...settingsForm, contactAddress: e.target.value})} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm" />
+                    <p className="text-xs text-gray-600 mt-1">Each new line shows as a separate line in the footer</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">📞 Phone</label>
+                    <input type="text" placeholder="e.g., +237 6 52 882 753" value={settingsForm.shopPhone} onChange={(e) => setSettingsForm({...settingsForm, shopPhone: e.target.value})} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">✉️ Email</label>
+                    <input type="email" placeholder="e.g., info@yourshop.com" value={settingsForm.shopEmail} onChange={(e) => setSettingsForm({...settingsForm, shopEmail: e.target.value})} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">🌐 Website Link Text</label>
+                    <input type="text" placeholder="e.g., smartcentrecameroon.com" value={settingsForm.contactWebsiteLabel} onChange={(e) => setSettingsForm({...settingsForm, contactWebsiteLabel: e.target.value})} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm" />
+                    <p className="text-xs text-gray-600 mt-1">Leave empty to hide the website line</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">🔗 Website URL</label>
+                    <input type="url" placeholder="e.g., https://www.smartcentrecameroon.com" value={settingsForm.contactWebsiteUrl} onChange={(e) => setSettingsForm({...settingsForm, contactWebsiteUrl: e.target.value})} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm" />
+                    <p className="text-xs text-gray-600 mt-1">Where the website link points to</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Highlight Title</label>
+                    <input type="text" placeholder="e.g., Serving NGOs, Government" value={settingsForm.contactNoteTitle} onChange={(e) => setSettingsForm({...settingsForm, contactNoteTitle: e.target.value})} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm" />
+                    <p className="text-xs text-gray-600 mt-1">Green highlight box in the footer</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Highlight Subtitle</label>
+                    <input type="text" placeholder="e.g., Contractors & Individuals worldwide" value={settingsForm.contactNoteSubtitle} onChange={(e) => setSettingsForm({...settingsForm, contactNoteSubtitle: e.target.value})} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm" />
+                    <p className="text-xs text-gray-600 mt-1">Leave both empty to hide the box</p>
+                  </div>
+
                   <button type="submit" disabled={loading} className="md:col-span-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white py-3 rounded-lg font-semibold transition disabled:opacity-50 shadow-md">
-                    ✓ Update Credentials
+                    ✓ Save Settings & Contact Info
                   </button>
                 </form>
               </div>

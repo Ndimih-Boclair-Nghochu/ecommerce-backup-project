@@ -345,7 +345,12 @@ async function getSettings() {
     main_shop_town: 'Bamenda',
     free_shipping_threshold: '100000',
     shop_phone: '+237 6 52 882 753',
-    shop_email: 'ndimihboclair4@gmail.com'
+    shop_email: 'ndimihboclair4@gmail.com',
+    contact_address: 'Cameroon (Nationwide)\nRegional representatives across all regions',
+    contact_website_url: 'https://www.smartcentrecameroon.com',
+    contact_website_label: 'smartcentrecameroon.com',
+    contact_note_title: 'Serving NGOs, Government',
+    contact_note_subtitle: 'Contractors & Individuals worldwide'
   };
   for (const row of result.rows) settings[row.key] = row.value;
   return settings;
@@ -564,7 +569,12 @@ app.get('/api/settings', asyncHandler(async (req, res) => {
     mainShopTown: settings.main_shop_town,
     freeShippingThreshold: Number(settings.free_shipping_threshold),
     shopPhone: settings.shop_phone,
-    shopEmail: settings.shop_email
+    shopEmail: settings.shop_email,
+    contactAddress: settings.contact_address,
+    contactWebsiteUrl: settings.contact_website_url,
+    contactWebsiteLabel: settings.contact_website_label,
+    contactNoteTitle: settings.contact_note_title,
+    contactNoteSubtitle: settings.contact_note_subtitle
   });
 }));
 
@@ -1223,6 +1233,30 @@ app.put('/api/admin/settings', requireSuperAdmin, asyncHandler(async (req, res) 
     );
   }
 
+  // Editable footer contact information. Each field is only written when the
+  // request explicitly includes it, so unrelated saves leave it untouched.
+  const contactFieldKeys = {
+    shopPhone: 'shop_phone',
+    shopEmail: 'shop_email',
+    contactAddress: 'contact_address',
+    contactWebsiteUrl: 'contact_website_url',
+    contactWebsiteLabel: 'contact_website_label',
+    contactNoteTitle: 'contact_note_title',
+    contactNoteSubtitle: 'contact_note_subtitle'
+  };
+  const contactChanges = {};
+  for (const [field, key] of Object.entries(contactFieldKeys)) {
+    if (req.body[field] === undefined) continue;
+    const value = String(req.body[field]).trim();
+    await pool.query(
+      `INSERT INTO settings (key, value)
+       VALUES ($1, $2)
+       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`,
+      [key, value]
+    );
+    contactChanges[field] = value;
+  }
+
   let token;
   if (emailChanged) {
     token = jwt.sign(
@@ -1235,7 +1269,8 @@ app.put('/api/admin/settings', requireSuperAdmin, asyncHandler(async (req, res) 
   await logActivity(req, 'update_settings', {
     emailChanged,
     passwordChanged: Boolean(rawPassword),
-    platformName: req.body.platformName || undefined
+    platformName: req.body.platformName || undefined,
+    contactFields: Object.keys(contactChanges).length ? Object.keys(contactChanges) : undefined
   });
 
   res.json({
