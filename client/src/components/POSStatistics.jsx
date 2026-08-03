@@ -48,7 +48,7 @@ export default function POSStatistics({ token }) {
               : 'text-gray-600 hover:text-gray-900'
           }`}
         >
-          📊 Overview
+Overview
         </button>
         <button
           onClick={() => setActiveTab('items')}
@@ -58,7 +58,7 @@ export default function POSStatistics({ token }) {
               : 'text-gray-600 hover:text-gray-900'
           }`}
         >
-          📦 Top Items
+Top Items
         </button>
         <button
           onClick={() => setActiveTab('daily')}
@@ -68,7 +68,7 @@ export default function POSStatistics({ token }) {
               : 'text-gray-600 hover:text-gray-900'
           }`}
         >
-          📅 Daily Sales
+Daily Sales
         </button>
         <button
           onClick={() => setActiveTab('receipts')}
@@ -78,7 +78,7 @@ export default function POSStatistics({ token }) {
               : 'text-gray-600 hover:text-gray-900'
           }`}
         >
-          🧾 Receipts
+Receipts
         </button>
       </div>
 
@@ -114,7 +114,7 @@ export default function POSStatistics({ token }) {
       {/* TOP ITEMS TAB */}
       {activeTab === 'items' && (
         <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">📦 Top Selling Items</h3>
+          <h3 className="text-lg font-bold text-gray-900 mb-4">Top Selling Items</h3>
           {stats.topItems.length === 0 ? (
             <p className="text-gray-500 text-center py-6">No sales data yet</p>
           ) : (
@@ -156,7 +156,7 @@ export default function POSStatistics({ token }) {
       {/* DAILY SALES TAB */}
       {activeTab === 'daily' && (
         <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">📅 Daily Sales Report</h3>
+          <h3 className="text-lg font-bold text-gray-900 mb-4">Daily Sales Report</h3>
           {stats.dailySales.length === 0 ? (
             <p className="text-gray-500 text-center py-6">No sales data yet</p>
           ) : (
@@ -189,7 +189,7 @@ export default function POSStatistics({ token }) {
       {/* RECEIPTS TAB */}
       {activeTab === 'receipts' && (
         <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">🧾 Recent Receipts</h3>
+          <h3 className="text-lg font-bold text-gray-900 mb-4">Recent Receipts</h3>
           {receipts.length === 0 ? (
             <p className="text-gray-500 text-center py-6">No receipts yet</p>
           ) : (

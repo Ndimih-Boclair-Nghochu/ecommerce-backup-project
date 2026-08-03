@@ -67,7 +67,7 @@ export default function CustomerSignup() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-50 to-blue-100 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
-          <div className="text-6xl mb-4 animate-bounce">✅</div>
+
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Welcome!</h2>
           <p className="text-gray-600 mb-4">Your account has been created successfully.</p>
           <p className="text-sm text-gray-500">Redirecting to your dashboard...</p>
@@ -80,7 +80,7 @@ export default function CustomerSignup() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-50 to-blue-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md mx-auto bg-white rounded-2xl shadow-2xl p-8">
         <div className="text-center mb-8">
-          <div className="text-5xl mb-4">👤</div>
+
           <h1 className="text-3xl font-bold text-gray-800">Create Account</h1>
           <p className="text-gray-600 mt-2">Join our community and enjoy exclusive benefits</p>
         </div>

@@ -12,49 +12,49 @@ const INITIAL_HERO_IMAGE = 'https://images.unsplash.com/photo-1504711434969-e338
 
 const SERVICES = [
   {
-    icon: '🔍',
+    icon: '',
     titleKey: 'svcResearchTitle',
     descKey: 'svcResearchDesc',
     color: 'blue',
     img: 'https://images.unsplash.com/photo-1559825481-12a05cc00344?w=800&q=80'
   },
   {
-    icon: '🏗️',
+    icon: '',
     titleKey: 'svcStorageTitle',
     descKey: 'svcStorageDesc',
     color: 'green',
     img: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&q=80'
   },
   {
-    icon: '⛏️',
+    icon: '',
     titleKey: 'svcDrillingTitle',
     descKey: 'svcDrillingDesc',
     color: 'amber',
     img: 'https://images.pexels.com/photos/15391048/pexels-photo-15391048.jpeg?auto=compress&cs=tinysrgb&w=800'
   },
   {
-    icon: '🔧',
+    icon: '',
     titleKey: 'svcWeldingTitle',
     descKey: 'svcWeldingDesc',
     color: 'blue',
     img: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=800&q=80'
   },
   {
-    icon: '☀️',
+    icon: '',
     titleKey: 'svcSolarTitle',
     descKey: 'svcSolarDesc',
     color: 'green',
     img: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=800&q=80'
   },
   {
-    icon: '🚿',
+    icon: '',
     titleKey: 'svcWaterworksTitle',
     descKey: 'svcWaterworksDesc',
     color: 'amber',
     img: 'https://images.unsplash.com/photo-1585421514738-01798e348b17?w=800&q=80'
   },
   {
-    icon: '📚',
+    icon: '',
     titleKey: 'svcTrainingTitle',
     descKey: 'svcTrainingDesc',
     color: 'blue',
@@ -276,7 +276,7 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
               className="rounded-xl px-8 py-4 text-center text-lg font-bold text-white shadow-xl transition hover:scale-105"
               style={{ background: '#0057a8' }}
             >
-              🛒 {t('homeShopCta')}
+{t('homeShopCta')}
             </Link>
           </div>
         </div>
@@ -290,7 +290,7 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
             className="w-full max-w-xs rounded-xl px-8 py-4 text-center text-base font-bold text-white shadow-xl transition hover:scale-105"
             style={{ background: '#0057a8' }}
           >
-            🛒 {t('homeShopCta')}
+{t('homeShopCta')}
           </Link>
         </div>
       </section>
@@ -373,7 +373,6 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
             </>
           ) : (
             <div className="rounded-2xl border-2 border-dashed border-gray-200 bg-white p-12 text-center">
-              <div className="text-4xl mb-4">📦</div>
               <h3 className="text-lg font-bold text-gray-900 mb-2">{products.length ? t('noProductsFound') : t('productsComingSoon')}</h3>
               <p className="text-gray-500">{products.length ? t('tryDifferentSearch') : t('catalogBeingSetUp')}</p>
             </div>
@@ -438,9 +437,6 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
                       onError={(e) => { e.currentTarget.style.display = 'none' }}
                     />
                     <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(15,23,42,0) 35%, rgba(15,23,42,0.55) 100%)' }} />
-                    <div className="absolute top-3 left-3 h-11 w-11 rounded-xl flex items-center justify-center text-2xl shadow-md" style={{ background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(4px)' }}>
-                      {service.icon}
-                    </div>
                     <h3 className="absolute bottom-3 left-4 right-4 text-lg font-black text-white drop-shadow" style={{ fontFamily: "'Sora', sans-serif" }}>{t(service.titleKey)}</h3>
                   </div>
                   {/* Body */}
@@ -475,13 +471,12 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
           <h2 className="text-2xl md:text-3xl font-black mb-10" style={{ fontFamily: "'Sora', sans-serif" }}>{t('reachTitle')}</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
-              { value: '6', suffix: '+', label: t('statServiceAreas'), icon: '🗺️' },
-              { value: '100', suffix: '%', label: t('statCountryCoverage'), icon: '🌍' },
-              { value: products.length || '50', suffix: '+', label: t('statProductsListed'), icon: '📦' },
-              { value: '24', suffix: '/7', label: t('statSupport'), icon: '📞' }
+              { value: '6', suffix: '+', label: t('statServiceAreas'), icon: '' },
+              { value: '100', suffix: '%', label: t('statCountryCoverage'), icon: '' },
+              { value: products.length || '50', suffix: '+', label: t('statProductsListed'), icon: '' },
+              { value: '24', suffix: '/7', label: t('statSupport'), icon: '' }
             ].map((stat, i) => (
               <div key={i} className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)' }}>
-                <div className="text-3xl mb-2">{stat.icon}</div>
                 <div className="text-3xl md:text-4xl font-black counter-num">{stat.value}{stat.suffix}</div>
                 <div className="text-sm opacity-80 mt-1">{stat.label}</div>
               </div>
@@ -504,7 +499,7 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
             {PARTNERS.map((p, i) => (
               <a key={i} href={p.url} target="_blank" rel="noopener noreferrer"
                 className="partner-card block rounded-2xl border-2 border-gray-200 p-5 text-center no-underline">
-                <div className="text-2xl mb-3">🤝</div>
+                <div className="text-2xl mb-3"></div>
                 <div className="font-black text-sm mb-1" style={{ color: '#0057a8' }}>{p.name}</div>
                 <div className="text-xs font-semibold text-gray-500 mb-2">{p.country}</div>
                 <p className="text-xs text-gray-600 leading-relaxed">{t(p.descKey)}</p>
@@ -523,12 +518,11 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             {[
-              { icon: '🏭', titleKey: 'advNationwideTitle', descKey: 'advNationwideDesc' },
-              { icon: '📚', titleKey: 'advTrainingTitle', descKey: 'advTrainingDesc' },
-              { icon: '💰', titleKey: 'advAffordableTitle', descKey: 'advAffordableDesc' }
+              { icon: '', titleKey: 'advNationwideTitle', descKey: 'advNationwideDesc' },
+              { icon: '', titleKey: 'advTrainingTitle', descKey: 'advTrainingDesc' },
+              { icon: '', titleKey: 'advAffordableTitle', descKey: 'advAffordableDesc' }
             ].map((item, i) => (
               <div key={i} className="rounded-2xl border-2 border-gray-100 bg-white p-6 text-center service-card">
-                <div className="text-4xl mb-4">{item.icon}</div>
                 <h3 className="font-black text-base mb-2">{t(item.titleKey)}</h3>
                 <p className="text-sm text-gray-600 leading-relaxed">{t(item.descKey)}</p>
               </div>
@@ -540,7 +534,6 @@ export default function Home({ products, settings, addToCart, toggleWishlist, is
       {/* ── CTA ── */}
       <section className="py-16 px-4" style={{ background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)', color: 'white' }}>
         <div className="max-w-3xl mx-auto text-center">
-          <div className="text-4xl mb-4">💧</div>
           <h2 className="text-3xl md:text-4xl font-black mb-4" style={{ fontFamily: "'Sora', sans-serif" }}>
             {t('ctaTitle')}
           </h2>

@@ -68,14 +68,14 @@ export default function PointOfSale({ token }) {
       properties: []
     }
     setItems([...items, newItem])
-    setMessage({ type: 'success', text: `✅ ${product.name} added to cart!` })
+    setMessage({ type: 'success', text: ` ${product.name} added to cart!` })
     setTimeout(() => setMessage({ type: '', text: '' }), 3000)
   }
 
   // Quick add product and print immediately
   const quickAddAndPrint = async (product) => {
     if (!customerInfo.name) {
-      setMessage({ type: 'error', text: '❌ Please enter customer name first' })
+      setMessage({ type: 'error', text: 'Please enter customer name first' })
       return
     }
 
@@ -141,14 +141,14 @@ export default function PointOfSale({ token }) {
       }, 500)
     } catch (err) {
       console.error('Failed to save receipt:', err)
-      setMessage({ type: 'error', text: '❌ Failed to save receipt' })
+      setMessage({ type: 'error', text: 'Failed to save receipt' })
     }
   }
 
   // Add item manually
   const addItem = () => {
     if (!itemInput.itemName || !itemInput.price) {
-      setMessage({ type: 'error', text: '❌ Please fill in item name and price' })
+      setMessage({ type: 'error', text: 'Please fill in item name and price' })
       return
     }
 
@@ -162,7 +162,7 @@ export default function PointOfSale({ token }) {
 
     setItems([...items, newItem])
     setItemInput({ itemName: '', price: '', quantity: 1 })
-    setMessage({ type: 'success', text: '✅ Item added to cart!' })
+    setMessage({ type: 'success', text: 'Item added to cart!' })
     setTimeout(() => setMessage({ type: '', text: '' }), 3000)
   }
 
@@ -179,12 +179,12 @@ export default function PointOfSale({ token }) {
   // Generate receipt
   const generateReceipt = async () => {
     if (!customerInfo.name) {
-      setMessage({ type: 'error', text: '❌ Please enter customer name' })
+      setMessage({ type: 'error', text: 'Please enter customer name' })
       return
     }
 
     if (items.length === 0) {
-      setMessage({ type: 'error', text: '❌ Please add items to cart' })
+      setMessage({ type: 'error', text: 'Please add items to cart' })
       return
     }
 
@@ -218,11 +218,11 @@ export default function PointOfSale({ token }) {
 
       setGeneratedReceipt(receiptData)
       setShowReceipt(true)
-      setMessage({ type: 'success', text: '✅ Receipt generated and saved!' })
+      setMessage({ type: 'success', text: 'Receipt generated and saved!' })
     } catch (err) {
       console.error('Failed to save receipt:', err.response?.data || err.message)
       const errorMsg = err.response?.data?.error || err.message || 'Failed to generate receipt'
-      setMessage({ type: 'error', text: `❌ ${errorMsg}` })
+      setMessage({ type: 'error', text: ` ${errorMsg}` })
     } finally {
       setLoading(false)
     }
@@ -283,7 +283,7 @@ export default function PointOfSale({ token }) {
                   <div>${item.quantity}x ${item.name}</div>
                   ${item.properties && item.properties.length > 0 ? `
                     <div style="font-size: 11px; color: #666; margin-left: 10px;">
-                      📋 ${item.properties.map(prop => prop.name + ': ' + prop.value).join(', ')}
+${item.properties.map(prop => prop.name + ': ' + prop.value).join(', ')}
                     </div>
                   ` : ''}
                 </div>
@@ -371,7 +371,7 @@ export default function PointOfSale({ token }) {
                   <div>${item.quantity}x ${item.name}</div>
                   ${item.properties && item.properties.length > 0 ? `
                     <div style="font-size: 11px; color: #666; margin-left: 10px;">
-                      📋 ${item.properties.map(prop => prop.name + ': ' + prop.value).join(', ')}
+${item.properties.map(prop => prop.name + ': ' + prop.value).join(', ')}
                     </div>
                   ` : ''}
                 </div>
@@ -457,7 +457,7 @@ export default function PointOfSale({ token }) {
                   </div>
                   {item.properties && item.properties.length > 0 && (
                     <div className="text-xs text-gray-500 ml-2 mt-1">
-                      📋 {item.properties.map((prop, i) => `${prop.name}: ${prop.value}`).join(', ')}
+{item.properties.map((prop, i) => `${prop.name}: ${prop.value}`).join(', ')}
                     </div>
                   )}
                 </div>
@@ -496,7 +496,7 @@ export default function PointOfSale({ token }) {
               onClick={printReceipt}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-bold transition"
             >
-              🖨️ Print Receipt
+Print Receipt
             </button>
             <button
               onClick={resetForm}
@@ -533,7 +533,7 @@ export default function PointOfSale({ token }) {
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
-          ✏️ Write Manually
+Write Manually
         </button>
         <button
           onClick={() => setActiveTab('products')}
@@ -543,7 +543,7 @@ export default function PointOfSale({ token }) {
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
-          🛍️ Select Products
+Select Products
         </button>
       </div>
 
@@ -554,7 +554,7 @@ export default function PointOfSale({ token }) {
           {/* MANUAL ENTRY TAB */}
           {activeTab === 'manual' && (
             <div className="bg-white rounded-xl shadow-md p-6 border-2 border-blue-200">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">✏️ Write Manually</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Write Manually</h3>
               <p className="text-xs text-gray-600 mb-4">Enter item details manually for custom receipts</p>
               
               <div className="space-y-3">
@@ -597,7 +597,7 @@ export default function PointOfSale({ token }) {
                   disabled={!itemInput.itemName || !itemInput.price}
                   className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white py-2 rounded-lg font-bold transition"
                 >
-                  ➕ Add Item
+Add Item
                 </button>
               </div>
             </div>
@@ -606,8 +606,8 @@ export default function PointOfSale({ token }) {
           {/* PRODUCT SELECTION TAB */}
           {activeTab === 'products' && (
             <div className="bg-white rounded-xl shadow-md p-6 border-2 border-green-200">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">🛍️ Select from Catalog</h3>
-              <p className="text-xs text-gray-600 mb-4">Click to add to cart or ⚡ to print immediately</p>
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Select from Catalog</h3>
+              <p className="text-xs text-gray-600 mb-4">Click to add to cart or to print immediately</p>
               
               {/* Search */}
               <div className="mb-4">
@@ -647,14 +647,14 @@ export default function PointOfSale({ token }) {
                             onClick={() => addProductToCart(product)}
                             className="flex-1 bg-green-600 hover:bg-green-700 text-white py-1.5 rounded text-xs font-bold transition"
                           >
-                            ➕ Add
+Add
                           </button>
                           <button
                             onClick={() => quickAddAndPrint(product)}
                             className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded text-xs font-bold transition"
                             title="Add and print immediately"
                           >
-                            ⚡ Print
+Print
                           </button>
                         </div>
                       </div>
@@ -667,7 +667,7 @@ export default function PointOfSale({ token }) {
           {/* Items in Cart */}
           {items.length > 0 && (
             <div className="bg-white rounded-xl shadow-md p-6 border-2 border-purple-200">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">🛒 Cart Items ({items.length})</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Cart Items ({items.length})</h3>
               <div className="space-y-2 max-h-40 overflow-y-auto">
                 {items.map((item) => (
                   <div key={item.id} className="flex items-center justify-between bg-purple-50 p-2 rounded border border-purple-200">
@@ -692,7 +692,7 @@ export default function PointOfSale({ token }) {
         <div className="space-y-6">
           {/* Customer Info */}
           <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl shadow-md p-6 border-2 border-purple-200">
-            <h3 className="text-lg font-bold text-purple-900 mb-4">👤 Customer</h3>
+            <h3 className="text-lg font-bold text-purple-900 mb-4">Customer</h3>
             
             <div className="space-y-3">
               <div>
@@ -721,7 +721,7 @@ export default function PointOfSale({ token }) {
 
           {/* Discount & Totals */}
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl shadow-md p-6 border-2 border-green-200">
-            <h3 className="text-lg font-bold text-green-900 mb-4">💰 Totals</h3>
+            <h3 className="text-lg font-bold text-green-900 mb-4">Totals</h3>
             
             <div className="space-y-3 mb-4">
               <div>
@@ -760,7 +760,7 @@ export default function PointOfSale({ token }) {
               disabled={loading || items.length === 0}
               className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 text-white py-3 rounded-lg font-bold transition shadow-lg"
             >
-              {loading ? '⏳ Generating...' : '✓ Generate Receipt'}
+              {loading ? 'Generating...' : '✓ Generate Receipt'}
             </button>
           </div>
         </div>

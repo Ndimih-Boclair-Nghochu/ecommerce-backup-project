@@ -257,7 +257,7 @@ export default function AdminMessaging({ token }) {
         {/* Header */}
         <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 text-white p-4 sm:p-6 shadow-md">
           <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
-            <span>💬</span> Conversations
+ Conversations
           </h2>
           <p className="text-purple-100 text-sm mt-2 flex items-center gap-1">
             <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
@@ -269,7 +269,7 @@ export default function AdminMessaging({ token }) {
         <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 border-b-2 border-purple-200">
           <input
             type="text"
-            placeholder="🔍 Search by name, ID, or message..."
+            placeholder="Search by name, ID, or message..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full px-4 py-2.5 border-2 border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm transition"
@@ -280,7 +280,7 @@ export default function AdminMessaging({ token }) {
         <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-purple-400 scrollbar-track-purple-100">
           {filteredConversations.length === 0 ? (
             <div className="p-6 text-center text-gray-500">
-              <p className="text-5xl mb-2 animate-bounce">💭</p>
+
               <p className="font-semibold">No conversations</p>
               <p className="text-xs mt-1">Waiting for customers...</p>
             </div>
@@ -301,10 +301,10 @@ export default function AdminMessaging({ token }) {
                       {conv.userName?.[0]?.toUpperCase() || 'G'}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold text-gray-900 truncate">{conv.userName || '👤 Guest'}</p>
+                      <p className="font-bold text-gray-900 truncate">{conv.userName || 'Guest'}</p>
                       <p className="text-sm text-gray-600 truncate">{getLastMessage(conv.deviceId)}</p>
                       <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                        🕐 {conv.lastMessage ? new Date(conv.lastMessage.timestamp).toLocaleString() : 'No messages'}
+{conv.lastMessage ? new Date(conv.lastMessage.timestamp).toLocaleString() : 'No messages'}
                       </p>
                     </div>
                   </div>
@@ -338,7 +338,7 @@ export default function AdminMessaging({ token }) {
                       Chat with {conversations.find(c => c.deviceId === selectedConversation)?.userName || 'Customer'}
                     </span>
                   </h3>
-                  <p className="hidden sm:block text-purple-100 text-sm mt-1 font-mono truncate">📱 {selectedConversation.substring(0, 20)}...</p>
+                  <p className="hidden sm:block text-purple-100 text-sm mt-1 font-mono truncate">{selectedConversation.substring(0, 20)}...</p>
                 </div>
                 <div className="flex gap-1.5 sm:gap-2 relative shrink-0">
                   <button
@@ -346,7 +346,7 @@ export default function AdminMessaging({ token }) {
                     className={`p-2 sm:p-3 rounded-lg transition-all ${animationsEnabled ? 'bg-blue-500 hover:bg-blue-400' : 'bg-gray-600 hover:bg-gray-500'}`}
                     title="Toggle animations"
                   >
-                    {animationsEnabled ? '✨' : '⏸'}
+                    {animationsEnabled ? '' : ''}
                   </button>
 
                   {/* Action Menu */}
@@ -365,31 +365,31 @@ export default function AdminMessaging({ token }) {
                           onClick={muteChat}
                           className="w-full text-left px-4 py-3 hover:bg-gray-100 transition border-b border-gray-200 flex items-center gap-2 font-semibold text-sm"
                         >
-                          {mutedChats.includes(selectedConversation) ? '🔔' : '🔕'} {mutedChats.includes(selectedConversation) ? 'Unmute' : 'Mute'} Chat
+                          {mutedChats.includes(selectedConversation) ? '' : ''} {mutedChats.includes(selectedConversation) ? 'Unmute' : 'Mute'} Chat
                         </button>
                         <button
                           onClick={blockUser}
                           className="w-full text-left px-4 py-3 hover:bg-gray-100 transition border-b border-gray-200 flex items-center gap-2 font-semibold text-sm"
                         >
-                          {blockedUsers.includes(selectedConversation) ? '✅' : '🚫'} {blockedUsers.includes(selectedConversation) ? 'Unblock' : 'Block'} User
+                          {blockedUsers.includes(selectedConversation) ? '' : ''} {blockedUsers.includes(selectedConversation) ? 'Unblock' : 'Block'} User
                         </button>
                         <button
                           onClick={clearChat}
                           className="w-full text-left px-4 py-3 hover:bg-yellow-50 transition border-b border-gray-200 flex items-center gap-2 font-semibold text-sm text-orange-600"
                         >
-                          🗑️ Clear Chat
+Clear Chat
                         </button>
                         <button
                           onClick={exportChat}
                           className="w-full text-left px-4 py-3 hover:bg-blue-50 transition border-b border-gray-200 flex items-center gap-2 font-semibold text-sm text-blue-600"
                         >
-                          📥 Export Chat
+Export Chat
                         </button>
                         <button
                           onClick={deleteChat}
                           className="w-full text-left px-4 py-3 hover:bg-red-50 transition flex items-center gap-2 font-semibold text-sm text-red-600"
                         >
-                          ❌ Delete Chat
+Delete Chat
                         </button>
                       </div>
                     )}
@@ -401,7 +401,7 @@ export default function AdminMessaging({ token }) {
             {/* Filter and Sort Controls */}
             <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-b-2 border-purple-200 p-2.5 sm:p-4 flex gap-2 sm:gap-3 items-center flex-wrap">
               <div className="flex gap-2 items-center">
-                <span className="text-sm font-semibold text-gray-700">📊 Filter:</span>
+                <span className="text-sm font-semibold text-gray-700">Filter:</span>
                 {['all', 'admin', 'customer'].map(opt => (
                   <button
                     key={opt}
@@ -412,12 +412,12 @@ export default function AdminMessaging({ token }) {
                         : 'bg-white border-2 border-purple-300 text-gray-700 hover:border-purple-500'
                     }`}
                   >
-                    {opt === 'all' ? '📝 All' : opt === 'admin' ? '👨‍💼 Admin' : '👤 Customer'}
+                    {opt === 'all' ? 'All' : opt === 'admin' ? 'Admin' : 'Customer'}
                   </button>
                 ))}
               </div>
               <div className="flex gap-2 items-center">
-                <span className="text-sm font-semibold text-gray-700">⏳ Sort:</span>
+                <span className="text-sm font-semibold text-gray-700">Sort:</span>
                 {['recent', 'oldest'].map(opt => (
                   <button
                     key={opt}
@@ -428,7 +428,7 @@ export default function AdminMessaging({ token }) {
                         : 'bg-white border-2 border-blue-300 text-gray-700 hover:border-blue-500'
                     }`}
                   >
-                    {opt === 'recent' ? '🔄 Recent' : '🔙 Oldest'}
+                    {opt === 'recent' ? 'Recent' : 'Oldest'}
                   </button>
                 ))}
               </div>
@@ -438,7 +438,7 @@ export default function AdminMessaging({ token }) {
             <div className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-6 bg-gradient-to-b from-white via-gray-50 to-blue-50 space-y-3 sm:space-y-4 scrollbar-thin scrollbar-thumb-purple-400 scrollbar-track-gray-100">
               {filteredMessages.length === 0 ? (
                 <div className="text-center text-gray-500 py-12">
-                  <p className="text-5xl mb-3 animate-bounce">👋</p>
+
                   <p className="text-lg font-semibold">No messages in this conversation</p>
                 </div>
               ) : (
@@ -465,7 +465,7 @@ export default function AdminMessaging({ token }) {
                               className="inline-flex items-center gap-2 bg-red-100 hover:bg-red-200 px-3 py-2 rounded-lg border-2 border-red-500 transition cursor-pointer mb-2 shadow-md"
                               title="Click to open PDF"
                             >
-                              <span className="text-2xl">📄</span>
+
                               <span className="text-sm font-semibold text-red-700">PDF Receipt</span>
                             </a>
                           ) : (
@@ -489,7 +489,7 @@ export default function AdminMessaging({ token }) {
                           ? 'text-purple-100'
                           : 'text-gray-600'
                       }`}>
-                        🕐 {new Date(msg.timestamp).toLocaleTimeString()} {msg.sender === 'admin' && '✓✓'}
+{new Date(msg.timestamp).toLocaleTimeString()} {msg.sender === 'admin' && '✓✓'}
                       </p>
                     </div>
                   </div>
@@ -504,7 +504,7 @@ export default function AdminMessaging({ token }) {
                 <div className="mb-3 relative inline-block">
                   {imagePreview === 'pdf' ? (
                     <div className="w-24 h-24 bg-gradient-to-br from-red-50 to-red-100 rounded-lg border-2 border-red-500 flex items-center justify-center text-3xl shadow-md">
-                      📄
+
                     </div>
                   ) : (
                     <img src={imagePreview} alt="Preview" className="w-24 h-24 object-cover rounded-lg border-2 border-purple-500 shadow-md" />
@@ -545,14 +545,14 @@ export default function AdminMessaging({ token }) {
                   title="Attach image or PDF"
                   className="shrink-0 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg transition disabled:opacity-50 shadow-md"
                 >
-                  📎
+
                 </button>
                 <button
                   onClick={handleSendMessage}
                   disabled={loading || uploading || (!inputValue.trim() && !selectedImage)}
                   className="shrink-0 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-4 sm:px-8 py-2.5 sm:py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed font-bold shadow-md hover:shadow-lg"
                 >
-                  {loading || uploading ? '⏳' : <><span className="sm:hidden">📤</span><span className="hidden sm:inline">📤 Send</span></>}
+                  {loading || uploading ? '' : <><span className="sm:hidden"></span><span className="hidden sm:inline">Send</span></>}
                 </button>
               </div>
             </div>
@@ -560,7 +560,7 @@ export default function AdminMessaging({ token }) {
         ) : (
           <div className="flex-1 flex items-center justify-center text-gray-500">
             <div className="text-center">
-              <p className="text-7xl mb-4 animate-bounce" style={{ animationDuration: '2s' }}>💬</p>
+
               <p className="text-xl font-bold">Select a conversation</p>
               <p className="text-sm mt-2">Choose a chat from the left to start messaging</p>
             </div>

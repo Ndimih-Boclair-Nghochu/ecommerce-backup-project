@@ -90,7 +90,7 @@ export default function CustomerDashboard() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-50 to-blue-100 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-6xl mb-4">⏳</div>
+
           <p className="text-gray-600 font-semibold">Loading your dashboard...</p>
         </div>
       </div>
@@ -104,7 +104,7 @@ export default function CustomerDashboard() {
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
           <div className="flex justify-between items-start sm:items-center gap-4 flex-col sm:flex-row mb-4">
             <div>
-              <h1 className="text-4xl font-bold text-gray-800 mb-2">👤 My Dashboard</h1>
+              <h1 className="text-4xl font-bold text-gray-800 mb-2">My Dashboard</h1>
               <p className="text-gray-600">Welcome back, <span className="font-bold text-blue-600">{customerData?.name}</span>!</p>
             </div>
             <button
@@ -117,10 +117,10 @@ export default function CustomerDashboard() {
           
           <div className="flex gap-4 items-center flex-wrap">
             <div className="bg-gradient-to-r from-amber-400 to-amber-500 text-white px-4 py-2 rounded-full font-bold">
-              ⭐ {customerData?.memberTier} Member
+{customerData?.memberTier} Member
             </div>
             <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full font-bold">
-              🎁 {customerData?.loyaltyPoints} Loyalty Points
+{customerData?.loyaltyPoints} Loyalty Points
             </div>
           </div>
         </div>
@@ -137,12 +137,12 @@ export default function CustomerDashboard() {
                   : 'bg-white text-gray-700 hover:bg-gray-50 shadow'
               }`}
             >
-              {tab === 'overview' && '📊 Overview'}
-              {tab === 'orders' && '📦 Orders'}
-              {tab === 'installments' && '💳 Installments'}
-              {tab === 'addresses' && '📍 Addresses'}
-              {tab === 'profile' && '👤 Profile'}
-              {tab === 'settings' && '⚙️ Settings'}
+              {tab === 'overview' && 'Overview'}
+              {tab === 'orders' && 'Orders'}
+              {tab === 'installments' && 'Installments'}
+              {tab === 'addresses' && 'Addresses'}
+              {tab === 'profile' && 'Profile'}
+              {tab === 'settings' && 'Settings'}
             </button>
           ))}
         </div>
@@ -152,40 +152,40 @@ export default function CustomerDashboard() {
           <div className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-2xl shadow-lg p-6">
-                <div className="text-4xl mb-2">📦</div>
+
                 <p className="text-blue-100">Total Orders</p>
                 <p className="text-5xl font-bold mt-2">{orders.length}</p>
               </div>
               <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-2xl shadow-lg p-6">
-                <div className="text-4xl mb-2">✅</div>
+
                 <p className="text-green-100">Completed Orders</p>
                 <p className="text-5xl font-bold mt-2">{orders.filter(o => o.status === 'delivered').length}</p>
               </div>
               <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-2xl shadow-lg p-6">
-                <div className="text-4xl mb-2">💰</div>
+
                 <p className="text-orange-100">Total Spent</p>
                 <p className="text-5xl font-bold mt-2">{orders.reduce((sum, o) => sum + (o.total || 0), 0).toLocaleString()} XAF</p>
               </div>
               <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-2xl shadow-lg p-6">
-                <div className="text-4xl mb-2">💳</div>
+
                 <p className="text-purple-100">Active Plans</p>
                 <p className="text-5xl font-bold mt-2">{installmentPlans.filter(p => p.status === 'active').length}</p>
               </div>
             </div>
 
             <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">🚀 Quick Actions</h2>
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">Quick Actions</h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <Link to="/products" className="bg-blue-50 hover:bg-blue-100 border-2 border-blue-300 rounded-lg p-4 text-center transition">
-                  <div className="text-4xl mb-2">🛍️</div>
+
                   <p className="font-bold text-gray-800">Continue Shopping</p>
                 </Link>
                 <Link to="/cart" className="bg-orange-50 hover:bg-orange-100 border-2 border-orange-300 rounded-lg p-4 text-center transition">
-                  <div className="text-4xl mb-2">🛒</div>
+
                   <p className="font-bold text-gray-800">View Cart</p>
                 </Link>
                 <Link to="/track-order" className="bg-green-50 hover:bg-green-100 border-2 border-green-300 rounded-lg p-4 text-center transition">
-                  <div className="text-4xl mb-2">📍</div>
+
                   <p className="font-bold text-gray-800">Track Orders</p>
                 </Link>
               </div>
@@ -196,10 +196,10 @@ export default function CustomerDashboard() {
         {/* Orders Tab */}
         {activeTab === 'orders' && (
           <div className="bg-white rounded-2xl shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">📦 Your Orders</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">Your Orders</h2>
             {orders.length === 0 ? (
               <div className="text-center py-12">
-                <div className="text-6xl mb-4">📭</div>
+
                 <p className="text-gray-600 text-lg">No orders yet</p>
                 <p className="text-gray-500 mt-2">Start shopping to create your first order</p>
                 <Link to="/products" className="mt-4 inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 transition">
@@ -248,10 +248,10 @@ export default function CustomerDashboard() {
         {/* Installment Plans Tab */}
         {activeTab === 'installments' && (
           <div className="bg-white rounded-2xl shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">💳 Installment Plans</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">Installment Plans</h2>
             {installmentPlans.length === 0 ? (
               <div className="text-center py-12">
-                <div className="text-6xl mb-4">📋</div>
+
                 <p className="text-gray-600 text-lg">No active installment plans</p>
                 <p className="text-gray-500 mt-2">Buy items in installments when you checkout</p>
                 <Link to="/products" className="mt-4 inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 transition">
@@ -300,7 +300,7 @@ export default function CustomerDashboard() {
             )}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-6">
               <p className="text-sm text-gray-700">
-                <strong>💡 Installment Tips:</strong> Spread payments over 3, 6, or 12 months. First month is 1.5x, others are equal.
+                <strong>Installment Tips:</strong> Spread payments over 3, 6, or 12 months. First month is 1.5x, others are equal.
               </p>
             </div>
           </div>
@@ -310,7 +310,7 @@ export default function CustomerDashboard() {
         {activeTab === 'addresses' && (
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">📍 Delivery Addresses</h2>
+              <h2 className="text-2xl font-bold text-gray-800">Delivery Addresses</h2>
               <button
                 onClick={() => setShowAddressForm(!showAddressForm)}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold transition"
@@ -363,16 +363,16 @@ export default function CustomerDashboard() {
 
             {addresses.length === 0 ? (
               <div className="text-center py-12">
-                <div className="text-6xl mb-4">📭</div>
+
                 <p className="text-gray-600 text-lg">No saved addresses</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {addresses.map(addr => (
                   <div key={addr.id} className="border-2 border-gray-200 rounded-lg p-4">
-                    <p className="font-bold text-gray-800 mb-2">📍 {addr.city}</p>
+                    <p className="font-bold text-gray-800 mb-2">{addr.city}</p>
                     <p className="text-gray-600 text-sm mb-2">{addr.street}</p>
-                    <p className="text-gray-600 text-sm mb-4">📞 {addr.phone}</p>
+                    <p className="text-gray-600 text-sm mb-4">{addr.phone}</p>
                     <button
                       onClick={() => handleDeleteAddress(addr.id)}
                       className="bg-red-100 hover:bg-red-200 text-red-600 px-3 py-1 rounded font-bold text-sm transition"
@@ -389,7 +389,7 @@ export default function CustomerDashboard() {
         {/* Profile Tab */}
         {activeTab === 'profile' && (
           <div className="bg-white rounded-2xl shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">👤 Profile Information</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">Profile Information</h2>
             <div className="space-y-4">
               <div className="border-b pb-4">
                 <p className="text-sm text-gray-500 uppercase mb-1">Name</p>
@@ -405,11 +405,11 @@ export default function CustomerDashboard() {
               </div>
               <div className="border-b pb-4">
                 <p className="text-sm text-gray-500 uppercase mb-1">Member Tier</p>
-                <p className="text-lg font-bold text-amber-600">⭐ {customerData?.memberTier}</p>
+                <p className="text-lg font-bold text-amber-600">{customerData?.memberTier}</p>
               </div>
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-6">
                 <p className="text-sm text-gray-700">
-                  <strong>🎯 Next Tier:</strong> Gold tier unlocks at 5000 points with exclusive discounts and priority support.
+                  <strong>Next Tier:</strong> Gold tier unlocks at 5000 points with exclusive discounts and priority support.
                 </p>
               </div>
             </div>
@@ -419,7 +419,7 @@ export default function CustomerDashboard() {
         {/* Settings Tab */}
         {activeTab === 'settings' && (
           <div className="bg-white rounded-2xl shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">⚙️ Account Settings</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">Account Settings</h2>
             <div className="space-y-4">
               <div className="border-b pb-4">
                 <div className="flex justify-between items-center">
@@ -450,7 +450,7 @@ export default function CustomerDashboard() {
               </div>
               <div className="pt-4">
                 <button className="bg-red-100 hover:bg-red-200 text-red-600 px-6 py-2 rounded-lg font-bold transition">
-                  🔒 Change Password
+Change Password
                 </button>
               </div>
             </div>

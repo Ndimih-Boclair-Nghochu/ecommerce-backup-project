@@ -347,11 +347,11 @@ export default function AdminDashboard() {
       }, {
         headers: { Authorization: `Bearer ${token}` }
       })
-      setMessage({ type: 'success', text: '✅ Free shipping settings saved successfully!' })
+      setMessage({ type: 'success', text: 'Free shipping settings saved successfully!' })
       setTimeout(() => setMessage({ type: '', text: '' }), 3000)
     } catch (err) {
       console.error('Failed to save free shipping settings:', err)
-      setMessage({ type: 'error', text: '❌ Failed to save free shipping settings' })
+      setMessage({ type: 'error', text: 'Failed to save free shipping settings' })
     }
   }
 
@@ -390,7 +390,7 @@ export default function AdminDashboard() {
 
   const handleBulkOrderUpdate = async () => {
     if (!bulkOrderStatus || selectedOrders.length === 0) {
-      setMessage({ type: 'error', text: '❌ Please select orders and a status' })
+      setMessage({ type: 'error', text: 'Please select orders and a status' })
       return
     }
     try {
@@ -400,13 +400,13 @@ export default function AdminDashboard() {
           { headers: { Authorization: `Bearer ${token}` } }
         )
       }
-      setMessage({ type: 'success', text: `✅ Updated ${selectedOrders.length} order(s) to ${bulkOrderStatus}` })
+      setMessage({ type: 'success', text: ` Updated ${selectedOrders.length} order(s) to ${bulkOrderStatus}` })
       setSelectedOrders([])
       setBulkOrderStatus('')
       fetchOrders()
       setTimeout(() => setMessage({ type: '', text: '' }), 3000)
     } catch (err) {
-      setMessage({ type: 'error', text: '❌ Failed to update orders' })
+      setMessage({ type: 'error', text: 'Failed to update orders' })
       console.error('Bulk update error:', err)
     }
   }
@@ -418,10 +418,10 @@ export default function AdminDashboard() {
         { headers: { Authorization: `Bearer ${token}` } }
       )
       setOrders(orders.map(o => o.id === order.id ? {...o, status: newStatus} : o))
-      setMessage({ type: 'success', text: `✅ Order status updated to ${newStatus}` })
+      setMessage({ type: 'success', text: ` Order status updated to ${newStatus}` })
       setTimeout(() => setMessage({ type: '', text: '' }), 2000)
     } catch (err) {
-      setMessage({ type: 'error', text: '❌ Failed to update status' })
+      setMessage({ type: 'error', text: 'Failed to update status' })
     }
   }
 
@@ -720,9 +720,9 @@ export default function AdminDashboard() {
       await axios.put('/api/admin/site-content', payload, { headers: { Authorization: `Bearer ${token}` } })
       setContentOverrides({ en: { ...(payload.en || {}) }, fr: { ...(payload.fr || {}) } })
       try { localStorage.setItem('siteContentCache', JSON.stringify(payload)) } catch {}
-      setMessage({ type: 'success', text: '✅ Website text saved. Public pages will show the new text.' })
+      setMessage({ type: 'success', text: 'Website text saved. Public pages will show the new text.' })
     } catch (err) {
-      setMessage({ type: 'error', text: err.response?.data?.error || '❌ Failed to save website text' })
+      setMessage({ type: 'error', text: err.response?.data?.error || 'Failed to save website text' })
     } finally {
       setContentSaving(false)
       setTimeout(() => setMessage({ type: '', text: '' }), 3500)
@@ -735,7 +735,7 @@ export default function AdminDashboard() {
       const response = await axios.post('/api/admin/reset-platform', {}, {
         headers: { Authorization: `Bearer ${token}` }
       })
-      setMessage({ type: 'success', text: '✅ Platform reset initiated! Data will be permanently deleted in 48 hours.' })
+      setMessage({ type: 'success', text: 'Platform reset initiated! Data will be permanently deleted in 48 hours.' })
       setShowResetConfirm(false)
       // Clear all data immediately on frontend
       setProducts([])
@@ -755,7 +755,7 @@ export default function AdminDashboard() {
     } catch (err) {
       const errorMsg = err.response?.data?.error || err.message || 'Failed to reset platform'
       console.error('Reset platform error:', errorMsg)
-      setMessage({ type: 'error', text: `❌ Reset failed: ${errorMsg}` })
+      setMessage({ type: 'error', text: ` Reset failed: ${errorMsg}` })
       setResetLoading(false)
     }
   }
@@ -768,13 +768,13 @@ export default function AdminDashboard() {
       const response = await axios.post('/api/admin/extend-recovery-window', {}, {
         headers: { Authorization: `Bearer ${token}` }
       })
-      setMessage({ type: 'success', text: '✅ Recovery window extended by 48 hours!' })
+      setMessage({ type: 'success', text: 'Recovery window extended by 48 hours!' })
       fetchResetStatus()
       setTimeout(() => setMessage({ type: '', text: '' }), 3000)
     } catch (err) {
       const errorMsg = err.response?.data?.error || err.message || 'Failed to extend recovery window'
       console.error('Extend recovery error:', errorMsg)
-      setMessage({ type: 'error', text: `❌ Extension failed: ${errorMsg}` })
+      setMessage({ type: 'error', text: ` Extension failed: ${errorMsg}` })
       setTimeout(() => setMessage({ type: '', text: '' }), 4000)
     }
   }
@@ -787,7 +787,7 @@ export default function AdminDashboard() {
       const response = await axios.post('/api/admin/restore-platform', {}, {
         headers: { Authorization: `Bearer ${token}` }
       })
-      setMessage({ type: 'success', text: '✅ Platform restored successfully! Refreshing data...' })
+      setMessage({ type: 'success', text: 'Platform restored successfully! Refreshing data...' })
       // Notify all other pages about restore
       sessionStorage.removeItem('platformReset')
       window.dispatchEvent(new Event('platformRestored'))
@@ -797,13 +797,13 @@ export default function AdminDashboard() {
     } catch (err) {
       const errorMsg = err.response?.data?.error || err.message || 'Failed to restore platform'
       console.error('Restore platform error:', errorMsg)
-      setMessage({ type: 'error', text: `❌ ${errorMsg}` })
+      setMessage({ type: 'error', text: ` ${errorMsg}` })
       setTimeout(() => setMessage({ type: '', text: '' }), 4000)
     }
   }
 
   const handlePermanentlyDeleteData = async () => {
-    if (!window.confirm('⚠️  FINAL WARNING: This will PERMANENTLY delete all your data. The 48-hour recovery window will expire. Are you absolutely certain? Type CONFIRM in the next step to proceed.')) {
+    if (!window.confirm('FINAL WARNING: This will PERMANENTLY delete all your data. The 48-hour recovery window will expire. Are you absolutely certain? Type CONFIRM in the next step to proceed.')) {
       return
     }
     const confirmation = window.prompt('Type "CONFIRM" to permanently delete all data:')
@@ -811,12 +811,12 @@ export default function AdminDashboard() {
       try {
         // Just clear the reset status - data is already gone
         setResetStatus(null)
-        setMessage({ type: 'success', text: '✅ All data has been permanently deleted.' })
+        setMessage({ type: 'success', text: 'All data has been permanently deleted.' })
       } catch (err) {
-        setMessage({ type: 'error', text: '❌ Failed to complete deletion' })
+        setMessage({ type: 'error', text: 'Failed to complete deletion' })
       }
     } else {
-      setMessage({ type: 'error', text: '❌ Permanent deletion cancelled' })
+      setMessage({ type: 'error', text: 'Permanent deletion cancelled' })
     }
     setTimeout(() => setMessage({ type: '', text: '' }), 3000)
   }
@@ -898,16 +898,16 @@ export default function AdminDashboard() {
   }
 
   const adminTabs = [
-    { key: 'overview', label: 'Overview', icon: '📊' },
-    { key: 'products', label: 'Products', icon: '📦' },
-    { key: 'pos', label: 'POS', icon: '🏪' },
-    { key: 'orders', label: 'Orders', icon: '🧾' },
-    { key: 'sub-admins', label: 'Team', icon: '👥' },
-    { key: 'locations', label: 'Locations', icon: '📍' },
-    { key: 'statistics', label: 'Stats', icon: '📈' },
-    { key: 'chat', label: 'Chat', icon: '💬' },
-    { key: 'content', label: 'Website Text', icon: '📝' },
-    { key: 'settings', label: 'Settings', icon: '⚙' }
+    { key: 'overview', label: 'Overview', icon: '' },
+    { key: 'products', label: 'Products', icon: '' },
+    { key: 'pos', label: 'POS', icon: '' },
+    { key: 'orders', label: 'Orders', icon: '' },
+    { key: 'sub-admins', label: 'Team', icon: '' },
+    { key: 'locations', label: 'Locations', icon: '' },
+    { key: 'statistics', label: 'Stats', icon: '' },
+    { key: 'chat', label: 'Chat', icon: '' },
+    { key: 'content', label: 'Website Text', icon: '' },
+    { key: 'settings', label: 'Settings', icon: '' }
   ]
   const mobilePrimaryTabs = adminTabs.slice(0, 4)
   const mobileMoreTabs = adminTabs.slice(4)
@@ -1027,7 +1027,7 @@ export default function AdminDashboard() {
         <div className="mx-4 sm:mx-6 mt-3 sm:mt-4 p-4 sm:p-6 rounded-lg border-2 border-orange-400 bg-gradient-to-r from-orange-50 to-yellow-50 shadow-md">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <p className="text-lg sm:text-xl font-bold text-orange-900">🔄 Platform in Reset Mode</p>
+              <p className="text-lg sm:text-xl font-bold text-orange-900">Platform in Reset Mode</p>
               <p className="text-sm text-orange-800 mt-1">All data has been temporarily deleted. You have <span className={`font-bold ${resetStatus.isExpired ? 'text-red-600' : 'text-green-600'}`}>{resetStatus.isExpired ? '0 hours' : `${resetStatus.hoursRemaining} hours`}</span> to restore your data.</p>
             </div>
             {!resetStatus.isExpired && (
@@ -1074,7 +1074,7 @@ export default function AdminDashboard() {
               {!showProductForm && (
                 <button onClick={() => { setShowProductForm(true); setEditingProductId(null); setProductForm({ name: '', price: '', description: '', stock: '', category: '', image: '', mostOrdered: false, isNew: false, availableRegions: ['ALL'], images: [{ color: 'default', url: '' }], sku: '', weight: '', dimensions: '', storeAvailability: {}, specifications: [], warranty: '', barcode: '', tax: 0 }); }} 
                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold text-sm sm:text-base transition shadow-md">
-                  ➕ Add Product
+Add Product
                 </button>
               )}
             </div>
@@ -1082,7 +1082,7 @@ export default function AdminDashboard() {
             {showProductForm && (
               <div className="bg-white rounded-xl shadow-md p-4 sm:p-6 lg:p-8 mb-6 sm:mb-8">
                 <div className="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-200">
-                  <h3 className="text-lg sm:text-xl font-bold text-gray-900">{editingProductId ? '✏️ Edit Product' : '➕ Add New Product'}</h3>
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-900">{editingProductId ? 'Edit Product' : 'Add New Product'}</h3>
                   <div className="text-sm text-gray-500">
                     {editingProductId ? 'Updating existing product' : 'Creating new product'}
                   </div>
@@ -1091,7 +1091,7 @@ export default function AdminDashboard() {
                 <form onSubmit={handleProductSubmit} className="space-y-6 sm:space-y-8">
                   {/* SECTION 1: Basic Information */}
                   <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg p-4 sm:p-6 border border-blue-200">
-                    <h4 className="text-base font-bold text-blue-900 mb-4 flex items-center gap-2">📝 Basic Information</h4>
+                    <h4 className="text-base font-bold text-blue-900 mb-4 flex items-center gap-2">Basic Information</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                       <div>
                         <label className="block text-xs font-semibold text-gray-700 mb-1">Product Name *</label>
@@ -1108,7 +1108,7 @@ export default function AdminDashboard() {
                             ))}
                           </select>
                           <button type="button" onClick={() => setShowCategoryForm(!showCategoryForm)} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg font-semibold text-sm transition">
-                            ➕
+
                           </button>
                         </div>
                         {showCategoryForm && (
@@ -1142,7 +1142,7 @@ export default function AdminDashboard() {
 
                   {/* SECTION 2: Pricing & Inventory */}
                   <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 sm:p-6 border border-green-200">
-                    <h4 className="text-base font-bold text-green-900 mb-4 flex items-center gap-2">💰 Pricing & Inventory</h4>
+                    <h4 className="text-base font-bold text-green-900 mb-4 flex items-center gap-2">Pricing & Inventory</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                       <div>
                         <label className="block text-xs font-semibold text-gray-700 mb-1">Price (XAF) *</label>
@@ -1172,19 +1172,19 @@ export default function AdminDashboard() {
 
                   {/* SECTION 3: Visibility & Features */}
                   <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 sm:p-6 border border-purple-200">
-                    <h4 className="text-base font-bold text-purple-900 mb-4 flex items-center gap-2">👁️ Visibility & Features</h4>
+                    <h4 className="text-base font-bold text-purple-900 mb-4 flex items-center gap-2">Visibility & Features</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <label className="flex items-center gap-3 cursor-pointer p-3 bg-white rounded-lg border-2 border-purple-200 hover:border-purple-400 transition">
                         <input type="checkbox" checked={productForm.mostOrdered} onChange={(e) => setProductForm({...productForm, mostOrdered: e.target.checked})} className="w-6 h-6 cursor-pointer" />
                         <div>
-                          <div className="font-semibold text-gray-900">🔥 Most Ordered</div>
+                          <div className="font-semibold text-gray-900">Most Ordered</div>
                           <div className="text-xs text-gray-600">Highlight as popular item</div>
                         </div>
                       </label>
                       <label className="flex items-center gap-3 cursor-pointer p-3 bg-white rounded-lg border-2 border-purple-200 hover:border-purple-400 transition">
                         <input type="checkbox" checked={productForm.isNew} onChange={(e) => setProductForm({...productForm, isNew: e.target.checked})} className="w-6 h-6 cursor-pointer" />
                         <div>
-                          <div className="font-semibold text-gray-900">🆕 New Product</div>
+                          <div className="font-semibold text-gray-900">New Product</div>
                           <div className="text-xs text-gray-600">Show new product badge</div>
                         </div>
                       </label>
@@ -1193,7 +1193,7 @@ export default function AdminDashboard() {
 
                   {/* SECTION 5: Product Images */}
                   <div className="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-lg p-4 sm:p-6 border border-indigo-200">
-                    <h4 className="text-base font-bold text-indigo-900 mb-4 flex items-center gap-2">🖼️ Product Images</h4>
+                    <h4 className="text-base font-bold text-indigo-900 mb-4 flex items-center gap-2">Product Images</h4>
                     
                     {/* Main Product Image */}
                     <div className="mb-6 p-4 bg-white rounded-lg border-2 border-indigo-300">
@@ -1201,7 +1201,7 @@ export default function AdminDashboard() {
                       <div className="flex flex-col gap-3">
                         <div className="flex flex-col sm:flex-row gap-4">
                           <div className="flex-1">
-                            <label className="block text-xs text-gray-600 mb-2">📥 Upload or paste URL:</label>
+                            <label className="block text-xs text-gray-600 mb-2">Upload or paste URL:</label>
                             <input type="text" placeholder="https://example.com/product.jpg or /uploads/product.jpg" value={productForm.image} onChange={(e) => setProductForm({...productForm, image: e.target.value})} required={!productForm.image} className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm transition" />
                             <p className="text-xs text-gray-500 mt-1">High-quality image for product listing</p>
                           </div>
@@ -1211,7 +1211,7 @@ export default function AdminDashboard() {
                         </div>
                         <div className="border-t border-gray-200 pt-3">
                           <label className="block bg-indigo-50 px-4 py-3 rounded-lg font-semibold cursor-pointer border-2 border-dashed border-indigo-300 hover:bg-indigo-100 transition text-center">
-                            📤 Choose File to Upload
+Choose File to Upload
                             <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
                               const file = e.target.files?.[0]
                               if (!file) return
@@ -1231,7 +1231,7 @@ export default function AdminDashboard() {
                               }
                             }} disabled={uploadingImage} />
                           </label>
-                          <p className="text-xs text-gray-500 mt-2 text-center">{uploadingImage ? '⏳ Uploading...' : 'JPG, PNG up to 5MB'}</p>
+                          <p className="text-xs text-gray-500 mt-2 text-center">{uploadingImage ? 'Uploading...' : 'JPG, PNG up to 5MB'}</p>
                         </div>
                       </div>
                     </div>
@@ -1262,7 +1262,7 @@ export default function AdminDashboard() {
                             </div>
                             <div className="flex gap-2">
                               <label className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg font-semibold cursor-pointer text-sm transition">
-                                📤
+
                                 <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
                                   const file = e.target.files?.[0]
                                   if (!file) return
@@ -1283,7 +1283,7 @@ export default function AdminDashboard() {
                               {productForm.images.length > 1 && (
                                 <button type="button" onClick={() => {
                                   const arr = [...productForm.images]; arr.splice(idx, 1); setProductForm({ ...productForm, images: arr })
-                                }} className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg font-semibold text-sm transition">🗑️</button>
+                                }} className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg font-semibold text-sm transition"></button>
                               )}
                             </div>
                           </div>
@@ -1299,7 +1299,7 @@ export default function AdminDashboard() {
 
                   {/* SECTION 6: Advanced Product Details */}
                   <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-lg p-4 sm:p-6 border border-cyan-200">
-                    <h4 className="text-base font-bold text-cyan-900 mb-4 flex items-center gap-2">🔧 Advanced Details</h4>
+                    <h4 className="text-base font-bold text-cyan-900 mb-4 flex items-center gap-2">Advanced Details</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                       <div>
                         <label className="block text-xs font-semibold text-gray-700 mb-1">Barcode/EAN</label>
@@ -1321,7 +1321,7 @@ export default function AdminDashboard() {
 
                   {/* SECTION 7: Product Specifications */}
                   <div className="bg-gradient-to-r from-rose-50 to-pink-50 rounded-lg p-4 sm:p-6 border border-rose-200">
-                    <h4 className="text-base font-bold text-rose-900 mb-4 flex items-center gap-2">📋 Specifications</h4>
+                    <h4 className="text-base font-bold text-rose-900 mb-4 flex items-center gap-2">Specifications</h4>
                     <div className="space-y-3">
                       {productForm.specifications && productForm.specifications.length > 0 && (
                         <div className="space-y-2">
@@ -1337,7 +1337,7 @@ export default function AdminDashboard() {
                               </div>
                               <button type="button" onClick={() => {
                                 const arr = productForm.specifications.filter((_, i) => i !== idx); setProductForm({...productForm, specifications: arr})
-                              }} className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs">🗑️</button>
+                              }} className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs"></button>
                             </div>
                           ))}
                         </div>
@@ -1354,12 +1354,12 @@ export default function AdminDashboard() {
                   {/* SECTION 8: Store Availability */}
                   {locations && locations.length > 0 && (
                     <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-4 sm:p-6 border border-yellow-200">
-                      <h4 className="text-base font-bold text-yellow-900 mb-4 flex items-center gap-2">🏪 Store Availability</h4>
+                      <h4 className="text-base font-bold text-yellow-900 mb-4 flex items-center gap-2">Store Availability</h4>
                       <p className="text-xs text-gray-600 mb-3">Set product quantity available at each store (customers can pick up from their preferred location)</p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {locations.map(location => (
                           <div key={location.id} className="bg-white p-3 rounded-lg border border-yellow-200">
-                            <label className="block text-xs font-semibold text-gray-700 mb-2">{location.name} {location.isMainStore ? '⭐' : ''}</label>
+                            <label className="block text-xs font-semibold text-gray-700 mb-2">{location.name} {location.isMainStore ? '' : ''}</label>
                             <input type="number" placeholder="0" min="0" value={productForm.storeAvailability[location.id] || 0} onChange={(e) => {
                               setProductForm({...productForm, storeAvailability: {...productForm.storeAvailability, [location.id]: parseInt(e.target.value) || 0}})
                             }} className="w-full px-3 py-2 border border-gray-300 rounded text-sm" />
@@ -1373,10 +1373,10 @@ export default function AdminDashboard() {
                   {/* Form Actions */}
                   <div className="flex gap-3 pt-4 border-t-2 border-gray-200">
                     <button type="submit" disabled={loading} className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 rounded-lg font-semibold transition disabled:opacity-50 shadow-md text-base">
-                      {editingProductId ? '✅ Update Product' : '✅ Create Product'}
+                      {editingProductId ? 'Update Product' : 'Create Product'}
                     </button>
                     <button type="button" onClick={() => { setShowProductForm(false); setEditingProductId(null); }} className="flex-1 bg-gray-400 hover:bg-gray-500 text-white py-3 rounded-lg font-semibold transition shadow-md text-base">
-                      ❌ Cancel
+Cancel
                     </button>
                   </div>
                 </form>
@@ -1420,7 +1420,7 @@ export default function AdminDashboard() {
                         onChange={(e) => setShowLowStockOnly(e.target.checked)}
                         className="w-5 h-5"
                       />
-                      <span className="text-sm font-semibold text-gray-700">⚠️ Low Stock Only</span>
+                      <span className="text-sm font-semibold text-gray-700">Low Stock Only</span>
                     </label>
                   </div>
                   <div className="text-sm font-semibold text-gray-700 flex items-end">
@@ -1435,7 +1435,7 @@ export default function AdminDashboard() {
               <div>
                 {resetStatus?.isReset && (
                   <div className="bg-orange-100 border-l-4 border-orange-600 p-4 rounded-lg mb-6">
-                    <p className="font-bold text-orange-900">🔄 Platform Reset Active</p>
+                    <p className="font-bold text-orange-900">Platform Reset Active</p>
                     <p className="text-sm text-orange-800 mt-1">All products are temporarily hidden. Restore your data to display them again.</p>
                   </div>
                 )}
@@ -1476,18 +1476,18 @@ export default function AdminDashboard() {
                     <div key={product.id} className={`bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition ${parseInt(product.stock) <= 10 ? 'border-2 border-orange-300' : ''}`}>
                       <div className="relative">
                         <img src={getProductImage(product)} alt={product.name} className="w-full h-48 object-cover" />
-                        <div className="absolute top-3 right-3 bg-white rounded-full px-3 py-1 text-sm font-bold text-yellow-500">⭐ {product.rating || 4.5}</div>
+                        <div className="absolute top-3 right-3 bg-white rounded-full px-3 py-1 text-sm font-bold text-yellow-500">{product.rating || 4.5}</div>
                       </div>
                       <div className="p-4">
                         <div className="flex gap-2 mb-2 flex-wrap">
-                          {product.mostOrdered && <span className="bg-orange-100 text-orange-800 text-xs font-bold px-2 py-1 rounded">🔥 Popular</span>}
-                          {product.isNew && <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded">🆕 New</span>}
-                          {parseInt(product.stock) <= 10 && <span className="bg-red-100 text-red-800 text-xs font-bold px-2 py-1 rounded">⚠️ Low</span>}
-                          {product.warranty && <span className="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded">✅ {product.warranty}</span>}
+                          {product.mostOrdered && <span className="bg-orange-100 text-orange-800 text-xs font-bold px-2 py-1 rounded">Popular</span>}
+                          {product.isNew && <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded">New</span>}
+                          {parseInt(product.stock) <= 10 && <span className="bg-red-100 text-red-800 text-xs font-bold px-2 py-1 rounded">Low</span>}
+                          {product.warranty && <span className="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded">{product.warranty}</span>}
                         </div>
                         <h3 className="font-bold text-gray-900 text-sm">{product.name}</h3>
                         {product.sku && <p className="text-xs text-gray-500">SKU: {product.sku}</p>}
-                        {product.barcode && <p className="text-xs text-gray-500">📦 {product.barcode}</p>}
+                        {product.barcode && <p className="text-xs text-gray-500">{product.barcode}</p>}
                         <p className="text-xs text-gray-600 truncate">{product.description}</p>
                         <p className="text-lg font-bold text-blue-600 mt-2">XAF {(product.price || 0).toLocaleString()}</p>
                         
@@ -1504,22 +1504,22 @@ export default function AdminDashboard() {
                         {/* Store Availability */}
                         {product.storeAvailability && Object.keys(product.storeAvailability).length > 0 && (
                           <div className="text-xs text-gray-600 mt-2 py-2 border-t border-b">
-                            🏪 Available at {Object.values(product.storeAvailability).filter(v => v > 0).length} location(s)
+Available at {Object.values(product.storeAvailability).filter(v => v > 0).length} location(s)
                           </div>
                         )}
 
                         <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 mt-2 py-2 border-b">
-                          <div>📦 Stock: <span className={parseInt(product.stock) <= 10 ? 'text-red-600 font-bold' : ''}>{product.stock}</span></div>
-                          <div>📂 {product.category}</div>
-                          {product.weight && <div>⚖️ {product.weight}</div>}
-                          {product.dimensions && <div>📏 {product.dimensions}</div>}
+                          <div>Stock: <span className={parseInt(product.stock) <= 10 ? 'text-red-600 font-bold' : ''}>{product.stock}</span></div>
+                          <div>{product.category}</div>
+                          {product.weight && <div>{product.weight}</div>}
+                          {product.dimensions && <div>{product.dimensions}</div>}
                         </div>
                         <div className="flex gap-2 mt-4">
                           <button onClick={() => handleEditProduct(product)} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-semibold transition">
-                            ✏️ Edit
+Edit
                           </button>
                           <button onClick={() => handleDeleteProduct(product.id)} className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg text-sm font-semibold transition">
-                            🗑️ Delete
+Delete
                           </button>
                         </div>
                       </div>
@@ -1528,14 +1528,14 @@ export default function AdminDashboard() {
                 })()}
                 {products.length === 0 && resetStatus?.isReset && (
                   <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
-                    <p className="text-6xl mb-4">🔄</p>
+
                     <p className="text-lg font-bold text-gray-600">All Products Temporarily Deleted</p>
                     <p className="text-sm text-gray-500 mt-2">Your products will reappear when you restore the platform data.</p>
                   </div>
                 )}
                 {products.length === 0 && !resetStatus?.isReset && (
                   <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
-                    <p className="text-6xl mb-4">📦</p>
+
                     <p className="text-lg font-bold text-gray-600">No Products Yet</p>
                     <p className="text-sm text-gray-500 mt-2">Start by adding your first product to the catalog.</p>
                   </div>
@@ -1717,10 +1717,10 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                   <div className="p-4 space-y-2 text-sm text-gray-700">
-                    <p><span className="font-semibold">📍</span> {location.address}</p>
-                    {location.phone && <p><span className="font-semibold">📱</span> {location.phone}</p>}
-                    {location.email && <p><span className="font-semibold">✉️</span> {location.email}</p>}
-                    {location.hours && <p><span className="font-semibold">🕐</span> {location.hours}</p>}
+                    <p><span className="font-semibold"></span> {location.address}</p>
+                    {location.phone && <p><span className="font-semibold"></span> {location.phone}</p>}
+                    {location.email && <p><span className="font-semibold"></span> {location.email}</p>}
+                    {location.hours && <p><span className="font-semibold"></span> {location.hours}</p>}
                     {location.description && <p className="italic text-gray-600">{location.description}</p>}
                   </div>
                   <div className="bg-gray-50 px-4 py-3 flex gap-2">
@@ -1749,14 +1749,14 @@ export default function AdminDashboard() {
         {/* PAYMENTS TAB */}
         {activeTab === 'payments' && (
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-8">💳 Payment Account Configuration</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-8">Payment Account Configuration</h2>
             <p className="text-gray-600 mb-8">Configure your payment receiving accounts for each payment method customers can use</p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* CARD PAYMENT CONFIG */}
               <div className="bg-white rounded-xl shadow-md overflow-hidden border-2 border-blue-200">
                 <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-white">
-                  <h3 className="text-xl font-bold flex items-center gap-3">💳 Card Payment</h3>
+                  <h3 className="text-xl font-bold flex items-center gap-3">Card Payment</h3>
                   <p className="text-blue-100 text-sm mt-2">Visa & Mastercard</p>
                 </div>
                 <div className="p-6">
@@ -1820,7 +1820,7 @@ export default function AdminDashboard() {
               {/* MTN MOBILE MONEY CONFIG */}
               <div className="bg-white rounded-xl shadow-md overflow-hidden border-2 border-yellow-300">
                 <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 p-6 text-white">
-                  <h3 className="text-xl font-bold flex items-center gap-3">🟡 MTN Mobile Money</h3>
+                  <h3 className="text-xl font-bold flex items-center gap-3">MTN Mobile Money</h3>
                   <p className="text-yellow-100 text-sm mt-2">MTN Payment Account</p>
                 </div>
                 <div className="p-6">
@@ -1876,7 +1876,7 @@ export default function AdminDashboard() {
               {/* ORANGE MONEY CONFIG */}
               <div className="bg-white rounded-xl shadow-md overflow-hidden border-2 border-orange-300">
                 <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6 text-white">
-                  <h3 className="text-xl font-bold flex items-center gap-3">🟠 Orange Money</h3>
+                  <h3 className="text-xl font-bold flex items-center gap-3">Orange Money</h3>
                   <p className="text-orange-100 text-sm mt-2">Orange Payment Account</p>
                 </div>
                 <div className="p-6">
@@ -1932,7 +1932,7 @@ export default function AdminDashboard() {
               {/* CASH PAYMENT CONFIG */}
               <div className="bg-white rounded-xl shadow-md overflow-hidden border-2 border-green-300">
                 <div className="bg-gradient-to-r from-green-600 to-green-700 p-6 text-white">
-                  <h3 className="text-xl font-bold flex items-center gap-3">💰 Cash at Pickup</h3>
+                  <h3 className="text-xl font-bold flex items-center gap-3">Cash at Pickup</h3>
                   <p className="text-green-100 text-sm mt-2">Collect cash when customer picks up order</p>
                 </div>
                 <div className="p-6">
@@ -1951,7 +1951,7 @@ export default function AdminDashboard() {
 
             {/* Payment Account Instructions */}
             <div className="mt-8 bg-blue-50 border-l-4 border-blue-600 p-6 rounded-lg">
-              <h3 className="font-bold text-blue-900 mb-3">📋 How Payment Accounts Work</h3>
+              <h3 className="font-bold text-blue-900 mb-3">How Payment Accounts Work</h3>
               <ul className="space-y-2 text-sm text-blue-800">
                 <li>✓ Configure your payment receiving accounts for each payment method</li>
                 <li>✓ Only active payment methods will be available to customers during checkout</li>
@@ -1980,7 +1980,7 @@ export default function AdminDashboard() {
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
-                  📊 Platform Analytics
+Platform Analytics
                 </button>
                 <button
                   onClick={() => setStatisticsTab('pos')}
@@ -1990,7 +1990,7 @@ export default function AdminDashboard() {
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
-                  🏪 POS Sales Analytics
+POS Sales Analytics
                 </button>
               </div>
             </div>
@@ -2013,7 +2013,7 @@ export default function AdminDashboard() {
           <div>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
               <div>
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">📝 Website Text</h2>
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Website Text</h2>
                 <p className="text-sm text-gray-600 mt-1">Edit every heading, label and paragraph shown on the public website. Leave a field blank to use the built-in default.</p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -2022,7 +2022,7 @@ export default function AdminDashboard() {
                   <option value="fr">Français</option>
                 </select>
                 <button onClick={handleSaveSiteContent} disabled={contentSaving} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-semibold text-sm transition disabled:opacity-50 shadow-sm">
-                  {contentSaving ? 'Saving…' : '💾 Save changes'}
+                  {contentSaving ? 'Saving…' : 'Save changes'}
                 </button>
               </div>
             </div>
@@ -2094,7 +2094,7 @@ export default function AdminDashboard() {
 
             <div className="flex justify-end sticky bottom-4">
               <button onClick={handleSaveSiteContent} disabled={contentSaving} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold text-sm transition disabled:opacity-50 shadow-lg">
-                {contentSaving ? 'Saving…' : '💾 Save changes'}
+                {contentSaving ? 'Saving…' : 'Save changes'}
               </button>
             </div>
           </div>
@@ -2108,7 +2108,7 @@ export default function AdminDashboard() {
             <div className="space-y-8">
               {/* SECTION 1: Account Credentials */}
               <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl shadow-md p-6 lg:p-8 border-2 border-blue-200">
-                <h3 className="text-xl font-bold text-blue-900 mb-6 flex items-center gap-2">🔐 Account Credentials</h3>
+                <h3 className="text-xl font-bold text-blue-900 mb-6 flex items-center gap-2">Account Credentials</h3>
                 <form onSubmit={handleUpdateSettings} className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Current Email</label>
@@ -2133,29 +2133,29 @@ export default function AdminDashboard() {
 
                   {/* Footer Contact Information — shown in the website footer */}
                   <div className="md:col-span-2 mt-2 pt-5 border-t-2 border-blue-100">
-                    <h4 className="text-base font-bold text-blue-900 flex items-center gap-2 mb-1">📇 Contact Information</h4>
+                    <h4 className="text-base font-bold text-blue-900 flex items-center gap-2 mb-1">Contact Information</h4>
                     <p className="text-xs text-gray-600 mb-4">These details appear in the website footer for all visitors.</p>
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">📍 Address</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Address</label>
                     <textarea rows="2" placeholder="e.g., Cameroon (Nationwide)&#10;Regional representatives across all regions" value={settingsForm.contactAddress} onChange={(e) => setSettingsForm({...settingsForm, contactAddress: e.target.value})} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm" />
                     <p className="text-xs text-gray-600 mt-1">Each new line shows as a separate line in the footer</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">📞 Phone</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Phone</label>
                     <input type="text" placeholder="e.g., +237 6 52 882 753" value={settingsForm.shopPhone} onChange={(e) => setSettingsForm({...settingsForm, shopPhone: e.target.value})} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm" />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">✉️ Email</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
                     <input type="email" placeholder="e.g., info@yourshop.com" value={settingsForm.shopEmail} onChange={(e) => setSettingsForm({...settingsForm, shopEmail: e.target.value})} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm" />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">🌐 Website Link Text</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Website Link Text</label>
                     <input type="text" placeholder="e.g., smartcentrecameroon.com" value={settingsForm.contactWebsiteLabel} onChange={(e) => setSettingsForm({...settingsForm, contactWebsiteLabel: e.target.value})} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm" />
                     <p className="text-xs text-gray-600 mt-1">Leave empty to hide the website line</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">🔗 Website URL</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Website URL</label>
                     <input type="url" placeholder="e.g., https://www.smartcentrecameroon.com" value={settingsForm.contactWebsiteUrl} onChange={(e) => setSettingsForm({...settingsForm, contactWebsiteUrl: e.target.value})} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm" />
                     <p className="text-xs text-gray-600 mt-1">Where the website link points to</p>
                   </div>
@@ -2178,11 +2178,11 @@ export default function AdminDashboard() {
 
               {/* SECTION 1.5: Hero Section Editor */}
               <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl shadow-md p-6 lg:p-8 border-2 border-amber-200">
-                <h3 className="text-xl font-bold text-amber-900 mb-6 flex items-center gap-2">🎨 Hero Section Content</h3>
+                <h3 className="text-xl font-bold text-amber-900 mb-6 flex items-center gap-2">Hero Section Content</h3>
                 <form onSubmit={handleHeroSectionUpdate} className="space-y-6">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Badge Text</label>
-                    <input type="text" placeholder="e.g., ✨ Special Offers This Season" value={heroForm.badge} onChange={(e) => setHeroForm({...heroForm, badge: e.target.value})} className="w-full px-4 py-3 border-2 border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600 focus:border-transparent text-sm" />
+                    <input type="text" placeholder="e.g., Special Offers This Season" value={heroForm.badge} onChange={(e) => setHeroForm({...heroForm, badge: e.target.value})} className="w-full px-4 py-3 border-2 border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600 focus:border-transparent text-sm" />
                     <p className="text-xs text-gray-600 mt-1">Small badge/tagline above the main title</p>
                   </div>
                   <div>
@@ -2223,31 +2223,31 @@ export default function AdminDashboard() {
 
               {/* SECTION 2: Security & Access Control */}
               <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl shadow-md p-6 lg:p-8 border-2 border-purple-200">
-                <h3 className="text-xl font-bold text-purple-900 mb-6 flex items-center gap-2">🔒 Security & Access Control</h3>
+                <h3 className="text-xl font-bold text-purple-900 mb-6 flex items-center gap-2">Security & Access Control</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="bg-white rounded-lg p-4 border-2 border-purple-200">
-                    <p className="text-sm font-bold text-gray-800 mb-3">👤 Your Account Status</p>
+                    <p className="text-sm font-bold text-gray-800 mb-3">Your Account Status</p>
                     <div className="space-y-2 text-sm">
                       <div className="flex items-center gap-2">
-                        <span className="text-lg">✅</span>
+
                         <span className="text-gray-700"><span className="font-semibold">Email:</span> {adminEmail}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-lg">👑</span>
+
                         <span className="text-gray-700"><span className="font-semibold">Role:</span> Super Admin</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-lg">🔓</span>
+
                         <span className="text-gray-700"><span className="font-semibold">Access Level:</span> Full</span>
                       </div>
                       <div className="mt-3 p-3 bg-blue-50 rounded border-l-4 border-blue-600">
-                        <p className="text-xs font-semibold text-blue-900">💡 As Super Admin, you have unrestricted access to all platform features including financial data, settings, and team management.</p>
+                        <p className="text-xs font-semibold text-blue-900">As Super Admin, you have unrestricted access to all platform features including financial data, settings, and team management.</p>
                       </div>
                     </div>
                   </div>
 
                   <div className="bg-white rounded-lg p-4 border-2 border-yellow-200">
-                    <p className="text-sm font-bold text-gray-800 mb-3">📋 Sub-Admin Restrictions</p>
+                    <p className="text-sm font-bold text-gray-800 mb-3">Sub-Admin Restrictions</p>
                     <div className="space-y-2 text-xs text-gray-700">
                       <div className="flex items-center gap-2">
                         <span className="text-red-500 font-bold">✗</span>
@@ -2279,22 +2279,22 @@ export default function AdminDashboard() {
 
               {/* SECTION 3: Store Configuration */}
               <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl shadow-md p-6 lg:p-8 border-2 border-green-200">
-                <h3 className="text-xl font-bold text-green-900 mb-6 flex items-center gap-2">🏪 Store Configuration</h3>
+                <h3 className="text-xl font-bold text-green-900 mb-6 flex items-center gap-2">Store Configuration</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="bg-white rounded-lg p-4 border-2 border-green-200 text-center">
-                    <p className="text-3xl mb-2">📦</p>
+                    <p className="text-3xl mb-2"></p>
                     <p className="text-sm font-bold text-gray-800">Total Products</p>
                     <p className="text-2xl font-bold text-green-600">{stats.totalProducts}</p>
                     <p className="text-xs text-gray-600 mt-1">Active items in catalog</p>
                   </div>
                   <div className="bg-white rounded-lg p-4 border-2 border-green-200 text-center">
-                    <p className="text-3xl mb-2">💰</p>
+                    <p className="text-3xl mb-2"></p>
                     <p className="text-sm font-bold text-gray-800">Total Inventory Value</p>
                     <p className="text-2xl font-bold text-green-600">XAF {(stats.totalValue).toLocaleString()}</p>
                     <p className="text-xs text-gray-600 mt-1">Stock × Price total</p>
                   </div>
                   <div className="bg-white rounded-lg p-4 border-2 border-green-200 text-center">
-                    <p className="text-3xl mb-2">👥</p>
+                    <p className="text-3xl mb-2"></p>
                     <p className="text-sm font-bold text-gray-800">Sub-Admins</p>
                     <p className="text-2xl font-bold text-green-600">{stats.totalSubAdmins}</p>
                     <p className="text-xs text-gray-600 mt-1">Team members</p>
@@ -2304,10 +2304,10 @@ export default function AdminDashboard() {
 
               {/* SECTION 4: Platform Features Status */}
               <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl shadow-md p-6 lg:p-8 border-2 border-orange-200">
-                <h3 className="text-xl font-bold text-orange-900 mb-6 flex items-center gap-2">✨ Active Platform Features</h3>
+                <h3 className="text-xl font-bold text-orange-900 mb-6 flex items-center gap-2">Active Platform Features</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div className="bg-white rounded-lg p-4 border-2 border-orange-200 flex items-start gap-3">
-                    <span className="text-2xl">📊</span>
+
                     <div>
                       <p className="font-bold text-gray-800">Real-Time Analytics</p>
                       <p className="text-xs text-gray-600">Live dashboard with period-based statistics</p>
@@ -2315,7 +2315,7 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                   <div className="bg-white rounded-lg p-4 border-2 border-orange-200 flex items-start gap-3">
-                    <span className="text-2xl">💬</span>
+
                     <div>
                       <p className="font-bold text-gray-800">Chat Management</p>
                       <p className="text-xs text-gray-600">Manage customer conversations & support</p>
@@ -2323,7 +2323,7 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                   <div className="bg-white rounded-lg p-4 border-2 border-orange-200 flex items-start gap-3">
-                    <span className="text-2xl">📦</span>
+
                     <div>
                       <p className="font-bold text-gray-800">Order Management</p>
                       <p className="text-xs text-gray-600">Track orders, manage shipments</p>
@@ -2331,7 +2331,7 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                   <div className="bg-white rounded-lg p-4 border-2 border-orange-200 flex items-start gap-3">
-                    <span className="text-2xl">🚚</span>
+
                     <div>
                       <p className="font-bold text-gray-800">Shipping Management</p>
                       <p className="text-xs text-gray-600">Regional rates & free shipping thresholds</p>
@@ -2339,7 +2339,7 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                   <div className="bg-white rounded-lg p-4 border-2 border-orange-200 flex items-start gap-3">
-                    <span className="text-2xl">🏪</span>
+
                     <div>
                       <p className="font-bold text-gray-800">Multi-Location Support</p>
                       <p className="text-xs text-gray-600">Manage multiple store locations</p>
@@ -2347,7 +2347,7 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                   <div className="bg-white rounded-lg p-4 border-2 border-orange-200 flex items-start gap-3">
-                    <span className="text-2xl">👥</span>
+
                     <div>
                       <p className="font-bold text-gray-800">Team Management</p>
                       <p className="text-xs text-gray-600">Create and manage sub-admin accounts</p>
@@ -2359,7 +2359,7 @@ export default function AdminDashboard() {
 
               {/* SECTION 5: System Information */}
               <div className="bg-gradient-to-r from-gray-50 to-gray-50 rounded-xl shadow-md p-6 lg:p-8 border-2 border-gray-200">
-                <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">ℹ️ System Information</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">System Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="bg-white rounded-lg p-4 border border-gray-200">
                     <p className="text-xs text-gray-600 font-semibold mb-2">Platform Name</p>
@@ -2379,20 +2379,20 @@ export default function AdminDashboard() {
                   </div>
                 </div>
                 <div className="mt-4 p-4 bg-blue-50 border-l-4 border-blue-600 rounded">
-                  <p className="text-sm font-semibold text-blue-900">💡 Need Help?</p>
+                  <p className="text-sm font-semibold text-blue-900">Need Help?</p>
                   <p className="text-xs text-blue-800 mt-2">For technical support or to report issues, contact the development team. All platform features are designed for optimal performance and security.</p>
                 </div>
               </div>
 
               {/* SECTION 5.5: Platform Reset & Recovery */}
               <div className="bg-gradient-to-r from-red-50 to-rose-50 rounded-xl shadow-md p-6 lg:p-8 border-2 border-red-200">
-                <h3 className="text-xl font-bold text-red-900 mb-6 flex items-center gap-2">🔄 Reset Platform & Data Recovery</h3>
+                <h3 className="text-xl font-bold text-red-900 mb-6 flex items-center gap-2">Reset Platform & Data Recovery</h3>
                 
                 {!resetStatus?.isReset ? (
                   <div>
                     <p className="text-gray-700 mb-4">Reset your entire platform to start fresh. Perfect when changing business direction or reselling the platform.</p>
                     <div className="bg-red-100 border-l-4 border-red-600 p-4 rounded mb-4">
-                      <p className="text-sm font-bold text-red-900">⚠️  IMPORTANT NOTICE:</p>
+                      <p className="text-sm font-bold text-red-900">IMPORTANT NOTICE:</p>
                       <ul className="text-xs text-red-800 mt-2 space-y-1">
                         <li>✓ All products, orders, chat messages, and history will be cleared</li>
                         <li>✓ Data will be recoverable for 48 hours after reset</li>
@@ -2407,12 +2407,12 @@ export default function AdminDashboard() {
                       disabled={resetLoading}
                       className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-bold transition disabled:opacity-50"
                     >
-                      🔄 Reset Platform Now
+Reset Platform Now
                     </button>
 
                     {showResetConfirm && (
                       <div className="mt-4 p-4 bg-white border-2 border-red-400 rounded-lg">
-                        <p className="font-bold text-red-900 mb-3">⚠️  Final Confirmation Required</p>
+                        <p className="font-bold text-red-900 mb-3">Final Confirmation Required</p>
                         <p className="text-sm text-gray-700 mb-4">This action will delete all platform data. You have 48 hours to restore it using the backup.</p>
                         <div className="flex gap-2">
                           <button
@@ -2420,7 +2420,7 @@ export default function AdminDashboard() {
                             disabled={resetLoading}
                             className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded font-bold transition disabled:opacity-50"
                           >
-                            {resetLoading ? '⏳ Resetting...' : '✓ Yes, Reset Platform'}
+                            {resetLoading ? 'Resetting...' : '✓ Yes, Reset Platform'}
                           </button>
                           <button
                             onClick={() => setShowResetConfirm(false)}
@@ -2435,7 +2435,7 @@ export default function AdminDashboard() {
                 ) : (
                   <div>
                     <div className="bg-orange-100 border-l-4 border-orange-600 p-4 rounded mb-4">
-                      <p className="font-bold text-orange-900">🔄 Platform Reset Active - Recovery Window Open</p>
+                      <p className="font-bold text-orange-900">Platform Reset Active - Recovery Window Open</p>
                       <p className="text-sm text-orange-800 mt-2">Your data is backed up and can be restored within the recovery window below.</p>
                     </div>
 
@@ -2449,13 +2449,13 @@ export default function AdminDashboard() {
                       <div className={`bg-white p-4 rounded border-2 ${resetStatus.isExpired ? 'border-red-300' : 'border-green-300'}`}>
                         <p className="text-xs text-gray-600 font-bold mb-1">Recovery Time Remaining</p>
                         <p className={`text-lg font-bold ${resetStatus.isExpired ? 'text-red-600' : 'text-green-600'}`}>
-                          {resetStatus.isExpired ? '⏰ EXPIRED' : `${resetStatus.hoursRemaining}h remaining`}
+                          {resetStatus.isExpired ? 'EXPIRED' : `${resetStatus.hoursRemaining}h remaining`}
                         </p>
                       </div>
                     </div>
 
                     <div className="bg-white p-4 rounded border-2 border-orange-300 mb-4">
-                      <p className="text-sm font-bold text-gray-800 mb-3">📦 Data Available in Backup:</p>
+                      <p className="text-sm font-bold text-gray-800 mb-3">Data Available in Backup:</p>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
                         <div className="text-center">
                           <p className="text-lg font-bold text-gray-900">{resetStatus.itemsInBackup.products}</p>
@@ -2492,7 +2492,7 @@ export default function AdminDashboard() {
                           onClick={handleExtendRecoveryWindow}
                           className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold transition"
                         >
-                          ⏱️ Extend 48 Hours
+Extend 48 Hours
                         </button>
                       </div>
                     )}
@@ -2500,14 +2500,14 @@ export default function AdminDashboard() {
                     {resetStatus.isExpired && (
                       <div>
                         <div className="p-4 bg-red-100 border-2 border-red-400 rounded mb-2">
-                          <p className="text-sm font-bold text-red-900">❌ Recovery Window Expired</p>
+                          <p className="text-sm font-bold text-red-900">Recovery Window Expired</p>
                           <p className="text-xs text-red-800 mt-1">Your data backup has expired. However, you can extend the recovery window below to restore your data.</p>
                         </div>
                         <button
                           onClick={handleExtendRecoveryWindow}
                           className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold transition mb-2"
                         >
-                          ⏱️ Extend Recovery Window (+48 Hours)
+Extend Recovery Window (+48 Hours)
                         </button>
                       </div>
                     )}
@@ -2517,7 +2517,7 @@ export default function AdminDashboard() {
                       disabled={!resetStatus.isExpired}
                       className="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg font-bold transition disabled:opacity-50"
                     >
-                      🗑️  Permanently Delete Data
+Permanently Delete Data
                     </button>
                   </div>
                 )}
@@ -2525,25 +2525,25 @@ export default function AdminDashboard() {
 
               {/* SECTION 6: Quick Actions */}
               <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl shadow-md p-6 lg:p-8 border-2 border-indigo-200">
-                <h3 className="text-xl font-bold text-indigo-900 mb-6 flex items-center gap-2">⚡ Quick Actions</h3>
+                <h3 className="text-xl font-bold text-indigo-900 mb-6 flex items-center gap-2">Quick Actions</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <button onClick={() => setActiveTab('products')} className="bg-white hover:bg-blue-50 border-2 border-indigo-300 rounded-lg p-4 text-left transition font-semibold text-gray-900">
-                    📦 Manage Products
+Manage Products
                   </button>
                   <button onClick={() => setActiveTab('orders')} className="bg-white hover:bg-blue-50 border-2 border-indigo-300 rounded-lg p-4 text-left transition font-semibold text-gray-900">
-                    🧾 View Orders
+View Orders
                   </button>
                   <button onClick={() => setActiveTab('chat')} className="bg-white hover:bg-blue-50 border-2 border-indigo-300 rounded-lg p-4 text-left transition font-semibold text-gray-900">
-                    💬 Customer Messages
+Customer Messages
                   </button>
                   <button onClick={() => setActiveTab('statistics')} className="bg-white hover:bg-blue-50 border-2 border-indigo-300 rounded-lg p-4 text-left transition font-semibold text-gray-900">
-                    📊 Analytics Dashboard
+Analytics Dashboard
                   </button>
                   <button onClick={() => setActiveTab('shipping')} className="bg-white hover:bg-blue-50 border-2 border-indigo-300 rounded-lg p-4 text-left transition font-semibold text-gray-900">
-                    🚚 Shipping Settings
+Shipping Settings
                   </button>
                   <button onClick={() => setActiveTab('locations')} className="bg-white hover:bg-blue-50 border-2 border-indigo-300 rounded-lg p-4 text-left transition font-semibold text-gray-900">
-                    🏪 Store Locations
+Store Locations
                   </button>
                 </div>
               </div>

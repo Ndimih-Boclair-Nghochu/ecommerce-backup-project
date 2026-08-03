@@ -34,14 +34,14 @@ const SubAdminManagement = ({ token }) => {
 
   // Available permissions
   const PERMISSIONS = [
-    { key: 'manageProducts', label: '📦 Manage Products', description: 'Add, edit, delete products and inventory' },
-    { key: 'manageOrders', label: '📋 Manage Orders', description: 'View orders, update status, manage shipments' },
-    { key: 'manageLocations', label: '📍 Manage Locations', description: 'Add, edit, delete store locations' },
-    { key: 'viewReports', label: '📊 View Reports', description: 'View sales reports and analytics' },
-    { key: 'viewAnalytics', label: '📈 View Analytics', description: 'View detailed analytics and insights' },
-    { key: 'manageCustomerService', label: '💬 Customer Service', description: 'Handle customer support tickets, inquiries, and issues' },
-    { key: 'managePOS', label: '🏪 Manage POS', description: 'Generate receipts and process walk-in sales' },
-    { key: 'viewPOSAnalytics', label: '📊 View POS Analytics', description: 'View POS sales, revenue, and transaction reports' }
+    { key: 'manageProducts', label: 'Manage Products', description: 'Add, edit, delete products and inventory' },
+    { key: 'manageOrders', label: 'Manage Orders', description: 'View orders, update status, manage shipments' },
+    { key: 'manageLocations', label: 'Manage Locations', description: 'Add, edit, delete store locations' },
+    { key: 'viewReports', label: 'View Reports', description: 'View sales reports and analytics' },
+    { key: 'viewAnalytics', label: 'View Analytics', description: 'View detailed analytics and insights' },
+    { key: 'manageCustomerService', label: 'Customer Service', description: 'Handle customer support tickets, inquiries, and issues' },
+    { key: 'managePOS', label: 'Manage POS', description: 'Generate receipts and process walk-in sales' },
+    { key: 'viewPOSAnalytics', label: 'View POS Analytics', description: 'View POS sales, revenue, and transaction reports' }
   ]
 
   // Fetch subadmins first, then activities
@@ -84,7 +84,7 @@ const SubAdminManagement = ({ token }) => {
       // Also fetch admin info from settings or use hardcoded values
       setAdminInfo({
         id: 'admin',
-        name: '🏪 SHOP OWNER',
+        name: 'SHOP OWNER',
         email: 'ndimihboclair4@gmail.com'
       })
     } catch (err) {
@@ -202,19 +202,19 @@ const SubAdminManagement = ({ token }) => {
 
   const getActivityIcon = (action) => {
     const icons = {
-      'create_product': '✨',
-      'update_product': '📝',
-      'delete_product': '🗑️',
-      'view_orders': '👁️',
-      'update_order': '📋',
-      'view_report': '📊',
-      'login': '🔐',
-      'logout': '🚪',
-      'create_location': '📍',
-      'update_location': '✏️',
-      'delete_location': '❌'
+      'create_product': '',
+      'update_product': '',
+      'delete_product': '',
+      'view_orders': '',
+      'update_order': '',
+      'view_report': '',
+      'login': '',
+      'logout': '',
+      'create_location': '',
+      'update_location': '',
+      'delete_location': ''
     }
-    return icons[action] || '📌'
+    return icons[action] || ''
   }
 
   const getActivityColor = (action) => {
@@ -258,7 +258,7 @@ const SubAdminManagement = ({ token }) => {
         if (normalizedId === 'admin' || subAdminId === null) {
           return {
             subAdminId: 'admin',
-            subAdminName: '🏪 SHOP OWNER',
+            subAdminName: 'SHOP OWNER',
             subAdminEmail: 'ndimihboclair4@gmail.com',
             activities: count
           }
@@ -372,7 +372,7 @@ const SubAdminManagement = ({ token }) => {
               : 'border-transparent text-gray-600 hover:text-gray-900'
           }`}
         >
-          📊 Analytics
+Analytics
         </button>
         <button
           onClick={() => setActiveView('subadmins')}
@@ -382,7 +382,7 @@ const SubAdminManagement = ({ token }) => {
               : 'border-transparent text-gray-600 hover:text-gray-900'
           }`}
         >
-          👥 Sub-Admins
+Sub-Admins
         </button>
         <button
           onClick={() => setActiveView('activities')}
@@ -392,7 +392,7 @@ const SubAdminManagement = ({ token }) => {
               : 'border-transparent text-gray-600 hover:text-gray-900'
           }`}
         >
-          📋 Activity Log
+Activity Log
         </button>
       </div>
 
@@ -402,7 +402,7 @@ const SubAdminManagement = ({ token }) => {
           {/* Header with Refresh */}
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">📊 Analytics Dashboard</h2>
+              <h2 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h2>
               <div className="flex items-center gap-3 mt-1">
                 <p className="text-sm text-gray-600">Real-time sub-admin performance tracking</p>
                 <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold ${
@@ -428,7 +428,7 @@ const SubAdminManagement = ({ token }) => {
                 }`}
                 title={enableRealTime ? 'Disable real-time updates' : 'Enable real-time updates'}
               >
-                {enableRealTime ? '⚡ Live' : '⏸ Paused'}
+                {enableRealTime ? 'Live' : 'Paused'}
               </button>
               <button
                 onClick={() => {
@@ -437,7 +437,7 @@ const SubAdminManagement = ({ token }) => {
                 }}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition shadow-md"
               >
-                🔄 Refresh Data
+Refresh Data
               </button>
             </div>
           </div>
@@ -447,22 +447,22 @@ const SubAdminManagement = ({ token }) => {
             <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-md p-6 text-white">
               <p className="text-blue-100 text-sm font-semibold">Total Sub-Admins</p>
               <p className="text-4xl font-bold mt-2">{subAdmins.length}</p>
-              <p className="text-blue-100 text-xs mt-2">👥 Team Members</p>
+              <p className="text-blue-100 text-xs mt-2">Team Members</p>
             </div>
             <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-md p-6 text-white">
               <p className="text-purple-100 text-sm font-semibold">Total Activities</p>
               <p className="text-4xl font-bold mt-2">{activities.length}</p>
-              <p className="text-purple-100 text-xs mt-2">📊 All Time</p>
+              <p className="text-purple-100 text-xs mt-2">All Time</p>
             </div>
             <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-md p-6 text-white">
               <p className="text-green-100 text-sm font-semibold">Today's Activities</p>
               <p className="text-4xl font-bold mt-2">{getActivitiesInTimeRange(1).length}</p>
-              <p className="text-green-100 text-xs mt-2">📈 Current Day</p>
+              <p className="text-green-100 text-xs mt-2">Current Day</p>
             </div>
             <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-md p-6 text-white">
               <p className="text-orange-100 text-sm font-semibold">This Week</p>
               <p className="text-4xl font-bold mt-2">{getActivitiesInTimeRange(7).length}</p>
-              <p className="text-orange-100 text-xs mt-2">📅 7 Days</p>
+              <p className="text-orange-100 text-xs mt-2">7 Days</p>
             </div>
           </div>
 
@@ -470,7 +470,7 @@ const SubAdminManagement = ({ token }) => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Most Active Today */}
             <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">🌅 Most Active Today</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Most Active Today</h3>
               <div className="space-y-3">
                 {getMostActiveSubAdminByPeriod(1).slice(0, 5).map((item, idx) => (
                   <div key={idx} className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200">
@@ -492,7 +492,7 @@ const SubAdminManagement = ({ token }) => {
 
             {/* Most Active This Week */}
             <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">📅 Most Active This Week</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Most Active This Week</h3>
               <div className="space-y-3">
                 {getMostActiveSubAdminByPeriod(7).slice(0, 5).map((item, idx) => (
                   <div key={idx} className="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-green-100 rounded-lg border border-green-200">
@@ -514,7 +514,7 @@ const SubAdminManagement = ({ token }) => {
 
             {/* Most Active This Month */}
             <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">📊 Most Active This Month</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Most Active This Month</h3>
               <div className="space-y-3">
                 {getMostActiveSubAdminByPeriod(30).slice(0, 5).map((item, idx) => (
                   <div key={idx} className="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg border border-purple-200">
@@ -536,7 +536,7 @@ const SubAdminManagement = ({ token }) => {
 
             {/* Most Active This Year */}
             <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">🏆 Most Active This Year</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Most Active This Year</h3>
               <div className="space-y-3">
                 {getMostActiveSubAdminByPeriod(365).slice(0, 5).map((item, idx) => (
                   <div key={idx} className="flex items-center justify-between p-3 bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-lg border border-yellow-200">
@@ -560,7 +560,7 @@ const SubAdminManagement = ({ token }) => {
           {/* Detailed Stats Table */}
           <div className="bg-white rounded-xl shadow-md overflow-hidden">
             <div className="p-6 border-b border-gray-200">
-              <h3 className="text-lg font-bold text-gray-900">📈 Detailed Sub-Admin Statistics</h3>
+              <h3 className="text-lg font-bold text-gray-900">Detailed Sub-Admin Statistics</h3>
             </div>
             {getSubAdminStats().length === 0 ? (
               <div className="p-8 text-center text-gray-600">
@@ -572,12 +572,12 @@ const SubAdminManagement = ({ token }) => {
                   <thead className="bg-gray-100 border-b border-gray-200">
                     <tr>
                       <th className="px-6 py-4 text-left font-bold text-gray-900">Sub-Admin Name</th>
-                      <th className="px-6 py-4 text-center font-bold text-gray-900">🌅 Today</th>
-                      <th className="px-6 py-4 text-center font-bold text-gray-900">📅 Week</th>
-                      <th className="px-6 py-4 text-center font-bold text-gray-900">📊 Month</th>
-                      <th className="px-6 py-4 text-center font-bold text-gray-900">🏆 Year</th>
-                      <th className="px-6 py-4 text-center font-bold text-gray-900">💬 Total</th>
-                      <th className="px-6 py-4 text-left font-bold text-gray-900">⏰ Last Activity</th>
+                      <th className="px-6 py-4 text-center font-bold text-gray-900">Today</th>
+                      <th className="px-6 py-4 text-center font-bold text-gray-900">Week</th>
+                      <th className="px-6 py-4 text-center font-bold text-gray-900">Month</th>
+                      <th className="px-6 py-4 text-center font-bold text-gray-900">Year</th>
+                      <th className="px-6 py-4 text-center font-bold text-gray-900">Total</th>
+                      <th className="px-6 py-4 text-left font-bold text-gray-900">Last Activity</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -636,7 +636,7 @@ const SubAdminManagement = ({ token }) => {
           {/* Header */}
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">👥 Sub-Admin Management</h2>
+              <h2 className="text-2xl font-bold text-gray-900">Sub-Admin Management</h2>
               <p className="text-sm text-gray-600 mt-1">Manage team members, permissions, and monitor their activities</p>
             </div>
             {!showForm && (
@@ -644,7 +644,7 @@ const SubAdminManagement = ({ token }) => {
                 onClick={() => setShowForm(true)}
                 className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition shadow-md"
               >
-                ➕ Add Sub-Admin
+Add Sub-Admin
               </button>
             )}
           </div>
@@ -653,7 +653,7 @@ const SubAdminManagement = ({ token }) => {
           {showForm && (
             <div className="bg-white rounded-xl shadow-md p-8">
               <h3 className="text-xl font-bold text-gray-900 mb-6">
-                {editingId ? '✏️ Edit Sub-Admin' : '➕ Add New Sub-Admin'}
+                {editingId ? 'Edit Sub-Admin' : 'Add New Sub-Admin'}
               </h3>
 
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -726,7 +726,7 @@ const SubAdminManagement = ({ token }) => {
                 {/* Restrictions Note */}
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                   <p className="text-sm font-semibold text-yellow-800">
-                    🔒 Restricted Information (Owner Only)
+Restricted Information (Owner Only)
                   </p>
                   <ul className="text-sm text-yellow-700 mt-2 space-y-1">
                     <li>✗ Financial data and revenue reports</li>
@@ -840,7 +840,7 @@ const SubAdminManagement = ({ token }) => {
           {/* Header & Filters */}
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">📋 Activity Log</h2>
+              <h2 className="text-2xl font-bold text-gray-900">Activity Log</h2>
               <div className="flex items-center gap-3 mt-1">
                 <p className="text-sm text-gray-600">Track all sub-admin activities and actions in the system</p>
                 <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold ${
@@ -857,7 +857,7 @@ const SubAdminManagement = ({ token }) => {
               onClick={fetchActivities}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition shadow-md"
             >
-              🔄 Refresh
+Refresh
             </button>
           </div>
 
@@ -898,7 +898,7 @@ const SubAdminManagement = ({ token }) => {
               <option value="">All Users</option>
               {adminInfo && (
                 <option value="admin">
-                  🏪 SHOP OWNER
+SHOP OWNER
                 </option>
               )}
               {subAdmins.map(subAdmin => (
@@ -935,7 +935,7 @@ const SubAdminManagement = ({ token }) => {
                         <tr key={idx} className="border-b border-gray-200 hover:bg-gray-50">
                           <td className="px-6 py-4">
                             <div className="font-semibold text-gray-900">
-                              {isShopOwner ? '🏪 SHOP OWNER' : (subAdmin?.name || 'Unknown')}
+                              {isShopOwner ? 'SHOP OWNER' : (subAdmin?.name || 'Unknown')}
                             </div>
                             <div className="text-sm text-gray-600">
                               {isShopOwner ? 'ndimihboclair4@gmail.com' : (subAdmin?.email || '-')}

@@ -35,9 +35,9 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
 
   // Status colors and icons
   const statusConfig = {
-    pending: { color: 'yellow', icon: '⏳', label: 'Pending', bg: 'bg-yellow-50', badge: 'bg-yellow-100 text-yellow-800' },
-    processing: { color: 'blue', icon: '⚙️', label: 'Processing', bg: 'bg-blue-50', badge: 'bg-blue-100 text-blue-800' },
-    shipped: { color: 'purple', icon: '📦', label: 'Shipped', bg: 'bg-purple-50', badge: 'bg-purple-100 text-purple-800' },
+    pending: { color: 'yellow', icon: '', label: 'Pending', bg: 'bg-yellow-50', badge: 'bg-yellow-100 text-yellow-800' },
+    processing: { color: 'blue', icon: '', label: 'Processing', bg: 'bg-blue-50', badge: 'bg-blue-100 text-blue-800' },
+    shipped: { color: 'purple', icon: '', label: 'Shipped', bg: 'bg-purple-50', badge: 'bg-purple-100 text-purple-800' },
     delivered: { color: 'green', icon: '✓', label: 'Delivered', bg: 'bg-green-50', badge: 'bg-green-100 text-green-800' },
     cancelled: { color: 'red', icon: '✕', label: 'Cancelled', bg: 'bg-red-50', badge: 'bg-red-100 text-red-800' }
   }
@@ -143,7 +143,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
   // Handle payment status update
   const handlePaymentStatusUpdate = async (orderId, isPaid, paidAmount) => {
     try {
-      console.debug('💳 Payment status update initiated', { orderId, isPaid, paidAmount })
+      console.debug('Payment status update initiated', { orderId, isPaid, paidAmount })
       
       const updateData = {
         isPaid,
@@ -158,7 +158,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
       onOrderUpdate(orderId, resp.data, false)
       showMessage('success', `Payment status updated to ${isPaid ? 'Paid' : 'Pending'}`)
     } catch (err) {
-      console.error('❌ Payment update error:', err)
+      console.error('Payment update error:', err)
       showMessage('error', err.response?.data?.error || 'Failed to update payment status')
     }
   }
@@ -229,7 +229,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
       {/* Platform Reset Notice */}
       {resetStatus?.isReset && (
         <div className="bg-orange-100 border-l-4 border-orange-600 p-4 rounded-lg">
-          <p className="font-bold text-orange-900">🔄 Platform Reset Active</p>
+          <p className="font-bold text-orange-900">Platform Reset Active</p>
           <p className="text-sm text-orange-800 mt-1">All orders are temporarily hidden. Restore your data to display them again.</p>
         </div>
       )}
@@ -250,7 +250,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
         <div className="flex items-center gap-3">
           <div className={`w-3 h-3 rounded-full ${isRealTimeActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
           <span className="text-sm font-semibold text-gray-700">
-            {isRealTimeActive ? '🟢 Live Orders' : '⊙ Paused'}
+            {isRealTimeActive ? 'Live Orders' : '⊙ Paused'}
           </span>
           <span className="text-xs text-gray-500">Updated: {lastUpdate.toLocaleTimeString()}</span>
         </div>
@@ -262,7 +262,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
-          {isRealTimeActive ? '⏸ Pause' : '▶ Live'}
+          {isRealTimeActive ? 'Pause' : 'Live'}
         </button>
       </div>
 
@@ -271,7 +271,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
         <StatCard
           label="Total Orders"
           value={stats.total}
-          icon="📊"
+          icon=""
           color="blue"
           onClick={() => setActiveFilter('all')}
           active={activeFilter === 'all'}
@@ -279,7 +279,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
         <StatCard
           label="Pending"
           value={stats.pending}
-          icon="⏳"
+          icon=""
           color="yellow"
           onClick={() => setActiveFilter('pending')}
           active={activeFilter === 'pending'}
@@ -287,7 +287,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
         <StatCard
           label="Processing"
           value={stats.processing}
-          icon="⚙️"
+          icon=""
           color="blue"
           onClick={() => setActiveFilter('processing')}
           active={activeFilter === 'processing'}
@@ -295,7 +295,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
         <StatCard
           label="Shipped"
           value={stats.shipped}
-          icon="📦"
+          icon=""
           color="purple"
           onClick={() => setActiveFilter('shipped')}
           active={activeFilter === 'shipped'}
@@ -320,10 +320,10 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
 
       {/* Revenue & Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <MetricBox label="Total Revenue" value={`XAF ${stats.totalRevenue.toLocaleString()}`} color="blue" icon="💰" />
-        <MetricBox label="Avg Order Value" value={`XAF ${stats.averageOrderValue.toLocaleString()}`} color="green" icon="💵" />
-        <MetricBox label="New Orders (24h)" value={stats.newOrders} color="orange" icon="🆕" highlight={stats.newOrders > 0} />
-        <MetricBox label="Total Items" value={stats.totalItems} color="purple" icon="📦" />
+        <MetricBox label="Total Revenue" value={`XAF ${stats.totalRevenue.toLocaleString()}`} color="blue" icon="" />
+        <MetricBox label="Avg Order Value" value={`XAF ${stats.averageOrderValue.toLocaleString()}`} color="green" icon="" />
+        <MetricBox label="New Orders (24h)" value={stats.newOrders} color="orange" icon="" highlight={stats.newOrders > 0} />
+        <MetricBox label="Total Items" value={stats.totalItems} color="purple" icon="" />
       </div>
 
       {/* Filters & Search */}
@@ -405,7 +405,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
       <div className="bg-white rounded-xl shadow-md overflow-hidden">
         {filteredOrders.length === 0 ? (
           <div className="p-12 text-center">
-            <div className="text-6xl mb-4">{resetStatus?.isReset ? '🔄' : '📭'}</div>
+            <div className="text-6xl mb-4">{resetStatus?.isReset ? '' : ''}</div>
             <p className="text-gray-600 text-lg font-semibold">
               {resetStatus?.isReset ? 'All Orders Temporarily Deleted' : (searchQuery || activeFilter !== 'all' ? 'No orders match your filters' : 'No orders yet')}
             </p>
@@ -474,7 +474,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
                             ? 'bg-purple-100 text-purple-800' 
                             : 'bg-orange-100 text-orange-800'
                         }`}>
-                          {order.deliveryOption === 'pickup' ? '🏪 Pickup' : '🚚 Delivery'}
+                          {order.deliveryOption === 'pickup' ? 'Pickup' : 'Delivery'}
                         </span>
                         {order.region && <div className="text-xs text-gray-600 mt-1">{order.region}</div>}
                       </td>
@@ -484,7 +484,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
                             ? 'bg-green-100 text-green-800'
                             : 'bg-yellow-100 text-yellow-800'
                         }`}>
-                          {order.isPaid ? '✅ Paid' : '⏳ Pending'}
+                          {order.isPaid ? 'Paid' : 'Pending'}
                         </span>
                         {order.paymentMethod && <div className="text-xs text-gray-600 mt-1">{order.paymentMethod.toUpperCase()}</div>}
                       </td>
@@ -492,7 +492,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
                         <select
                           value={order.status}
                           onChange={(e) => {
-                            console.debug('📌 Status dropdown changed for order', order.id, 'from', order.status, 'to', e.target.value)
+                            console.debug('Status dropdown changed for order', order.id, 'from', order.status, 'to', e.target.value)
                             handleStatusChange(order.id, e.target.value, order)
                           }}
                           className={`px-3 py-2 rounded-lg font-semibold text-sm border-2 ${statusConfig[order.status]?.badge}`}
@@ -534,7 +534,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
                                   onClick={() => onViewReceipt(order)}
                                   className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold transition"
                                 >
-                                  🧾 View Receipt
+View Receipt
                                 </button>
                                 <span className="text-3xl">{statusConfig[order.status]?.icon}</span>
                               </div>
@@ -543,7 +543,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
                             {/* Buyer Information */}
                             <div className="grid grid-cols-2 gap-6">
                               <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg p-4 border border-blue-200">
-                                <h5 className="font-bold text-blue-900 mb-3 flex items-center gap-2">👤 Buyer Information</h5>
+                                <h5 className="font-bold text-blue-900 mb-3 flex items-center gap-2">Buyer Information</h5>
                                 <div className="space-y-2 text-sm text-gray-700">
                                   <div><span className="font-semibold">Name:</span> {order.buyer?.name}</div>
                                   <div><span className="font-semibold">Email:</span> {order.buyer?.email}</div>
@@ -551,13 +551,13 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
                                   <div><span className="font-semibold">Address:</span> {order.buyer?.address || 'N/A'}</div>
                                   <div className="pt-2 border-t border-blue-200">
                                     <span className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">
-                                      📧 {order.buyer?.email ? 'Email Available' : 'No Email'}
+{order.buyer?.email ? 'Email Available' : 'No Email'}
                                     </span>
                                   </div>
                                 </div>
                               </div>
                               <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200">
-                                <h5 className="font-bold text-green-900 mb-3 flex items-center gap-2">📦 Delivery Information</h5>
+                                <h5 className="font-bold text-green-900 mb-3 flex items-center gap-2">Delivery Information</h5>
                                 <div className="space-y-2 text-sm text-gray-700">
                                   <div className="flex items-center gap-2">
                                     <span className="font-semibold">Delivery Method:</span>
@@ -566,7 +566,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
                                         ? 'bg-purple-100 text-purple-800' 
                                         : 'bg-orange-100 text-orange-800'
                                     }`}>
-                                      {order.deliveryOption === 'pickup' ? '🏪 Pickup in Store' : '🚚 Delivery'}
+                                      {order.deliveryOption === 'pickup' ? 'Pickup in Store' : 'Delivery'}
                                     </span>
                                   </div>
                                   {order.region && <div><span className="font-semibold">Delivery to:</span> {order.region}</div>}
@@ -586,7 +586,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
                             {/* Special Instructions */}
                             {order.specialInstructions && (
                               <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-lg p-4 border-2 border-violet-300">
-                                <h5 className="font-bold text-violet-900 mb-3 flex items-center gap-2">📝 Special Instructions</h5>
+                                <h5 className="font-bold text-violet-900 mb-3 flex items-center gap-2">Special Instructions</h5>
                                 <div className="text-sm text-gray-700 bg-white rounded-lg p-3 border border-violet-200 italic">
                                   {order.specialInstructions}
                                 </div>
@@ -596,11 +596,11 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
                             {/* Payment & Status Information */}
                             <div className="grid grid-cols-3 gap-4">
                               <div className="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-lg p-4 border border-yellow-200">
-                                <h5 className="font-bold text-yellow-900 mb-3 flex items-center gap-2">💳 Payment Status</h5>
+                                <h5 className="font-bold text-yellow-900 mb-3 flex items-center gap-2">Payment Status</h5>
                                 <div className="space-y-3 text-sm">
                                   <div className="flex items-center gap-2">
                                     <span className={`inline-block w-3 h-3 rounded-full ${order.isPaid ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                                    <span className="font-bold">{order.isPaid ? '✅ Payment Received' : '⏳ Awaiting Payment'}</span>
+                                    <span className="font-bold">{order.isPaid ? 'Payment Received' : 'Awaiting Payment'}</span>
                                   </div>
                                   <div><span className="font-semibold">Payment Method:</span> {order.paymentMethod ? order.paymentMethod.toUpperCase() : 'Cash on Delivery'}</div>
                                   {order.paidAmount > 0 && (
@@ -610,20 +610,20 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
                                   {/* Payment Update Controls for Pickup Orders */}
                                   {order.deliveryOption === 'pickup' && order.paymentMethod?.toLowerCase() === 'cash' && (
                                     <div className="pt-2 border-t border-yellow-300 space-y-2">
-                                      <p className="text-xs text-yellow-900 font-semibold">💰 Update Payment:</p>
+                                      <p className="text-xs text-yellow-900 font-semibold">Update Payment:</p>
                                       {!order.isPaid ? (
                                         <button
                                           onClick={() => handlePaymentStatusUpdate(order.id, true, order.totals?.total || 0)}
                                           className="w-full bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg font-semibold text-xs transition"
                                         >
-                                          ✅ Mark as Paid
+Mark as Paid
                                         </button>
                                       ) : (
                                         <button
                                           onClick={() => handlePaymentStatusUpdate(order.id, false, 0)}
                                           className="w-full bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded-lg font-semibold text-xs transition"
                                         >
-                                          ⏳ Mark as Pending
+Mark as Pending
                                         </button>
                                       )}
                                     </div>
@@ -632,7 +632,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
                               </div>
 
                               <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-lg p-4 border border-indigo-200">
-                                <h5 className="font-bold text-indigo-900 mb-3 flex items-center gap-2">📊 Order Status</h5>
+                                <h5 className="font-bold text-indigo-900 mb-3 flex items-center gap-2">Order Status</h5>
                                 <div className="space-y-3 text-sm">
                                   {/* For pickup orders, show payment focus instead of delivery status */}
                                   {order.deliveryOption === 'pickup' ? (
@@ -645,7 +645,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
                                             ? 'bg-green-100 text-green-800'
                                             : 'bg-red-100 text-red-800'
                                         }`}>
-                                          {order.isPaid ? '✅ PAID' : '🔴 NOT PAID'}
+                                          {order.isPaid ? 'PAID' : 'NOT PAID'}
                                         </span>
                                       </div>
                                     </div>
@@ -663,7 +663,7 @@ export default function OrderManagement({ orders = [], onOrderUpdate, token, onV
                               </div>
 
                               <div className="bg-gradient-to-br from-rose-50 to-pink-50 rounded-lg p-4 border border-rose-200">
-                                <h5 className="font-bold text-rose-900 mb-3 flex items-center gap-2">💰 Financial Summary</h5>
+                                <h5 className="font-bold text-rose-900 mb-3 flex items-center gap-2">Financial Summary</h5>
                                 <div className="space-y-2 text-sm">
                                   <div><span className="font-semibold">Subtotal:</span> XAF {(order.totals?.subtotal || 0).toLocaleString()}</div>
                                   {order.totals?.discount > 0 && (

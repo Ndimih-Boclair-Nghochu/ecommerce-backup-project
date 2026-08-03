@@ -35,7 +35,7 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
       const response = await axios.get(`/api/admin/real-time-stats?period=month&t=${Date.now()}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
-      console.debug('📊 Dashboard Stats Fetched:', response.data)
+      console.debug('Dashboard Stats Fetched:', response.data)
       setDashboardStats(response.data)
       setLoading(false)
     } catch (err) {
@@ -287,7 +287,7 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
       {/* Platform Reset Notice */}
       {resetStatus?.isReset && (
         <div className="bg-orange-100 border-l-4 border-orange-600 p-4 rounded-lg">
-          <p className="font-bold text-orange-900">🔄 Platform Reset Active</p>
+          <p className="font-bold text-orange-900">Platform Reset Active</p>
           <p className="text-sm text-orange-800 mt-1">All data is temporarily hidden. Statistics, products, and orders will reappear when you restore the platform data.</p>
         </div>
       )}
@@ -296,10 +296,10 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
       <div className="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 rounded-2xl shadow-lg p-6 sm:p-8 text-white">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-bold mb-2">Welcome to Your Dashboard 👋</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-2">Welcome to Your Dashboard </h2>
             <p className="text-blue-100">Real-time insights into your e-commerce platform performance</p>
           </div>
-          <div className="text-5xl">📊</div>
+
         </div>
       </div>
 
@@ -308,7 +308,7 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
         <div className="flex items-center gap-3">
           <div className={`w-3 h-3 rounded-full ${isRealTimeActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
           <span className="text-sm font-semibold text-gray-700">
-            {isRealTimeActive ? '🟢 Live Updates Active' : '⊙ Live Updates Paused'}
+            {isRealTimeActive ? 'Live Updates Active' : '⊙ Live Updates Paused'}
           </span>
           <span className="text-xs text-gray-500">Last update: {lastUpdate.toLocaleTimeString()}</span>
         </div>
@@ -320,7 +320,7 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
-          {isRealTimeActive ? '⏸ Pause' : '▶ Live'}
+          {isRealTimeActive ? 'Pause' : 'Live'}
         </button>
       </div>
 
@@ -329,13 +329,13 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg sm:text-xl font-bold text-gray-900">Key Performance Indicators</h3>
           <div className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2">
-            <span>📅 THIS MONTH</span>
+            <span>THIS MONTH</span>
             <span className="text-xs text-blue-600">({new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })})</span>
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           <MetricCard
-            icon="💰"
+            icon=""
             label="Total Revenue"
             value={resetStatus?.isReset ? formatCurrency(0) : formatCurrency(stats.totalRevenue)}
             subtext={resetStatus?.isReset ? '0 orders' : `${stats.totalOrders} orders • This Month`}
@@ -343,7 +343,7 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
             trend={resetStatus?.isReset ? 0 : stats.revenueTrend}
           />
           <MetricCard
-            icon="📦"
+            icon=""
             label="Orders"
             value={resetStatus?.isReset ? formatNumber(0) : formatNumber(stats.totalOrders)}
             subtext={resetStatus?.isReset ? '0 items sold' : `${formatNumber(stats.totalItemsSold)} items • This Month`}
@@ -351,14 +351,14 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
             trend={resetStatus?.isReset ? 0 : stats.ordersTrend}
           />
           <MetricCard
-            icon="💵"
+            icon=""
             label="Avg Order Value"
             value={resetStatus?.isReset ? formatCurrency(0) : formatCurrency(stats.averageOrderValue)}
             subtext="Per transaction"
             color="purple"
           />
           <MetricCard
-            icon="👥"
+            icon=""
             label="Sub-Admins"
             value={resetStatus?.isReset ? 0 : subAdmins.length}
             subtext="Active managers"
@@ -372,33 +372,33 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg sm:text-xl font-bold text-gray-900">Customer Analytics</h3>
           <div className="bg-pink-100 text-pink-700 px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2">
-            <span>👥 REGISTERED USERS</span>
+            <span>REGISTERED USERS</span>
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           <MetricCard
-            icon="👥"
+            icon=""
             label="Total Customers"
             value={resetStatus?.isReset ? formatNumber(0) : formatNumber(customers?.length || 0)}
             subtext={`Registered on platform`}
             color="pink"
           />
           <MetricCard
-            icon="💳"
+            icon=""
             label="Active Installments"
             value={resetStatus?.isReset ? formatNumber(0) : formatNumber(installmentStats?.activeInstallments || 0)}
             subtext={`Payment plans in progress`}
             color="purple"
           />
           <MetricCard
-            icon="💰"
+            icon=""
             label="Total Installment Value"
             value={resetStatus?.isReset ? formatCurrency(0) : formatCurrency(installmentStats?.totalInstallmentAmount || 0)}
             subtext={`Combined plan amounts`}
             color="green"
           />
           <MetricCard
-            icon="📊"
+            icon=""
             label="Installment Conversion"
             value={resetStatus?.isReset ? '0%' : `${installmentStats?.conversionRate || 0}%`}
             subtext={`Of customers using plans`}
@@ -412,28 +412,28 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
         <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">Inventory Status</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           <MetricCard
-            icon="📊"
+            icon=""
             label="Total Products"
             value={resetStatus?.isReset ? formatNumber(0) : formatNumber(products.length)}
             subtext={resetStatus?.isReset ? '0 items in stock' : `${formatNumber(totalStock)} items in stock`}
             color="indigo"
           />
           <MetricCard
-            icon="💎"
+            icon=""
             label="Inventory Value"
             value={resetStatus?.isReset ? formatCurrency(0) : formatCurrency(totalInventoryValue)}
             subtext="Total stock value"
             color="cyan"
           />
           <MetricCard
-            icon="⚠️"
+            icon=""
             label="Low Stock"
             value={resetStatus?.isReset ? 0 : lowStockProducts}
             subtext={`Less than 10 units`}
             color="orange"
           />
           <MetricCard
-            icon="🚨"
+            icon=""
             label="Out of Stock"
             value={resetStatus?.isReset ? 0 : outOfStockProducts}
             subtext="Need replenishment"
@@ -450,7 +450,7 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
             const categoryProducts = products.filter(p => p.category === category)
             const categoryValue = categoryProducts.reduce((sum, p) => sum + (p.price * (p.stock || 0)), 0)
             const categoryStock = categoryProducts.reduce((sum, p) => sum + (p.stock || 0), 0)
-            const icons = ['🖥️', '🎯']
+            const icons = ['', '']
             const colors = ['blue', 'purple']
 
             return (
@@ -493,7 +493,7 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg sm:text-xl font-bold text-gray-900">Active Installment Plans</h3>
             <div className="bg-purple-100 text-purple-700 px-4 py-2 rounded-full font-bold text-sm">
-              💳 {installmentStats?.activeInstallments || 0} Active Plans
+{installmentStats?.activeInstallments || 0} Active Plans
             </div>
           </div>
           
@@ -561,7 +561,7 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
                                     ? 'bg-blue-100 text-blue-700'
                                     : 'bg-yellow-100 text-yellow-700'
                                 }`}>
-                                  {progress === 100 ? '✅ Complete' : progress > 50 ? '📊 Mid-way' : '⏳ Started'}
+                                  {progress === 100 ? 'Complete' : progress > 50 ? 'Mid-way' : 'Started'}
                                 </span>
                               </td>
                             </tr>
@@ -574,7 +574,7 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
             
             {customers.filter(c => c.activeInstallments > 0).length === 0 && (
               <div className="p-8 text-center">
-                <div className="text-4xl mb-2">💳</div>
+
                 <p className="text-gray-600 font-semibold">No active installment plans yet</p>
                 <p className="text-sm text-gray-500 mt-1">Installment plans will appear here once customers start using them</p>
               </div>
@@ -588,7 +588,7 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
         {/* System Health */}
         <div className="bg-white rounded-xl shadow-md p-6">
           <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <span className="text-2xl">⚡</span> System Health
+ System Health
           </h3>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -618,7 +618,7 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
         {/* Top Performing Products */}
         <div className="bg-white rounded-xl shadow-md p-6">
           <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <span className="text-2xl">🔥</span> Top Products
+ Top Products
           </h3>
           <div className="space-y-3">
             {products
@@ -639,7 +639,7 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
         {/* New Products */}
         <div className="bg-white rounded-xl shadow-md p-6">
           <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <span className="text-2xl">🆕</span> New Arrivals
+ New Arrivals
           </h3>
           <div className="space-y-3">
             {products
@@ -662,13 +662,13 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
       {dashboardStats?.recentOrders && dashboardStats.recentOrders.length > 0 && (
         <div className="bg-white rounded-xl shadow-md p-6">
           <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <span className="text-2xl">📋</span> Recent Orders
+ Recent Orders
           </h3>
           <div className="space-y-2">
             {dashboardStats.recentOrders.slice(0, 8).map((order, idx) => (
               <ActivityItem
                 key={idx}
-                icon={['🛒', '📦', '🚚', '✅'][idx % 4]}
+                icon={['', '', '', ''][idx % 4]}
                 title={order.buyerName}
                 value={formatCurrency(order.total)}
                 time={order.region}
@@ -683,13 +683,13 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
       <div className="bg-white rounded-xl shadow-md p-6">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-            <span className="text-2xl">🗑️</span> Data Management
+ Data Management
           </h3>
           <button
             onClick={() => setShowDataMgmt(!showDataMgmt)}
             className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold hover:bg-blue-200 transition"
           >
-            {showDataMgmt ? '▼ Hide' : '▶ Show'}
+            {showDataMgmt ? '▼ Hide' : 'Show'}
           </button>
         </div>
 
@@ -718,7 +718,7 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
           <div className="space-y-6 border-t pt-6">
             {/* Clear Old Data */}
             <div>
-              <h4 className="font-semibold text-gray-900 mb-3">📅 Clear Old Data</h4>
+              <h4 className="font-semibold text-gray-900 mb-3">Clear Old Data</h4>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {['week', 'month', 'year'].map(period => (
                   <div key={period} className="bg-gray-50 rounded-lg p-4">
@@ -728,19 +728,19 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
                         onClick={() => handleClearPeriodData('products', period)}
                         className="w-full text-left px-3 py-2 bg-red-50 text-red-700 text-xs font-semibold rounded hover:bg-red-100 transition"
                       >
-                        🗑️ Products
+Products
                       </button>
                       <button
                         onClick={() => handleClearPeriodData('orders', period)}
                         className="w-full text-left px-3 py-2 bg-red-50 text-red-700 text-xs font-semibold rounded hover:bg-red-100 transition"
                       >
-                        📦 Orders
+Orders
                       </button>
                       <button
                         onClick={() => handleClearPeriodData('activities', period)}
                         className="w-full text-left px-3 py-2 bg-red-50 text-red-700 text-xs font-semibold rounded hover:bg-red-100 transition"
                       >
-                        📋 Activities
+Activities
                       </button>
                     </div>
                   </div>
@@ -752,7 +752,7 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
             {deletedItems.length > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-semibold text-gray-900">♻️ Recover Deleted Items (48h Window)</h4>
+                  <h4 className="font-semibold text-gray-900">Recover Deleted Items (48h Window)</h4>
                   <div className="text-sm text-gray-600">
                     {selectedRestoreItems.size > 0 && (
                       <span className="font-semibold text-blue-600">{selectedRestoreItems.size} selected</span>
@@ -772,7 +772,7 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
                       onClick={handleBulkPermanentDelete}
                       className="px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded hover:bg-red-700 transition"
                     >
-                      🗑️ Delete {selectedRestoreItems.size} Forever
+Delete {selectedRestoreItems.size} Forever
                     </button>
                     <button
                       onClick={() => setSelectedRestoreItems(new Set())}
@@ -852,7 +852,7 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
       {(installmentStats?.activeInstallments || 0) > 0 && (
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg sm:text-xl font-bold text-gray-900">💳 Active Installment Plans</h3>
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900">Active Installment Plans</h3>
             <div className="bg-purple-100 text-purple-700 px-4 py-2 rounded-full font-bold text-sm">
               {installmentStats?.activeInstallments || 0} Active Plans
             </div>
@@ -936,22 +936,22 @@ const DashboardOverview = ({ token, products, orders, subAdmins, customers, inst
           <button 
             onClick={onAddProduct}
             className="bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-semibold transition shadow-md hover:shadow-lg transform hover:scale-105">
-            ➕ Add Product
+Add Product
           </button>
           <button 
             onClick={onViewAnalytics}
             className="bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-semibold transition shadow-md hover:shadow-lg transform hover:scale-105">
-            📊 View Analytics
+View Analytics
           </button>
           <button 
             onClick={onManageTeam}
             className="bg-purple-600 hover:bg-purple-700 text-white py-3 px-4 rounded-lg font-semibold transition shadow-md hover:shadow-lg transform hover:scale-105">
-            👥 Manage Team
+Manage Team
           </button>
           <button 
             onClick={onSettings}
             className="bg-orange-600 hover:bg-orange-700 text-white py-3 px-4 rounded-lg font-semibold transition shadow-md hover:shadow-lg transform hover:scale-105">
-            ⚙️ Settings
+Settings
           </button>
         </div>
       </div>

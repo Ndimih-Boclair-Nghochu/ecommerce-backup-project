@@ -320,7 +320,7 @@ export default function App() {
 
               <div className="flex items-center gap-2">
                 <label className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs font-bold text-gray-700">
-                  <span aria-hidden="true" className="text-base leading-none">🌐</span>
+
                   <span className="hidden sm:inline">{t('language')}</span>
                   <select
                     value={language}
@@ -380,7 +380,7 @@ export default function App() {
             </div>
             <nav className="p-5 space-y-2">
               <label className="mb-3 flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3 text-sm font-bold text-gray-700">
-                <span className="flex items-center gap-2"><span aria-hidden="true">🌐</span>{t('language')}</span>
+                <span className="flex items-center gap-2">{t('language')}</span>
                 <select
                   value={language}
                   onChange={(event) => setLanguage(event.target.value)}
@@ -458,7 +458,7 @@ export default function App() {
                 <li><Link to="/track-order" className="hover:opacity-100 transition">{t('track')}</Link></li>
                 <li><Link to="/wishlist" className="hover:opacity-100 transition">{t('wishlist')}</Link></li>
                 <li><Link to="/customer-login" className="hover:opacity-100 transition">{t('myAccount')}</Link></li>
-                <li><a href="https://smartcentregroup.com" target="_blank" rel="noopener noreferrer" className="hover:opacity-100 transition">SMART Centre Group ↗</a></li>
+                <li><a href="https://smartcentregroup.com" target="_blank" rel="noopener noreferrer" className="hover:opacity-100 transition">SMART Centre Group </a></li>
               </ul>
             </div>
 
@@ -467,25 +467,25 @@ export default function App() {
               <ul className="space-y-3 text-sm opacity-70">
                 {settings.contactAddress && (
                   <li className="flex items-start gap-2">
-                    <span>📍</span>
+
                     <span className="whitespace-pre-line">{settings.contactAddress}</span>
                   </li>
                 )}
                 {settings.shopPhone && (
                   <li className="flex items-center gap-2">
-                    <span>📞</span>
+
                     <a href={`tel:${settings.shopPhone.replace(/\s+/g, '')}`} className="hover:opacity-100 transition">{settings.shopPhone}</a>
                   </li>
                 )}
                 {settings.shopEmail && (
                   <li className="flex items-center gap-2">
-                    <span>✉️</span>
+
                     <a href={`mailto:${settings.shopEmail}`} className="hover:opacity-100 transition break-all">{settings.shopEmail}</a>
                   </li>
                 )}
                 {settings.contactWebsiteLabel && (
                   <li className="flex items-center gap-2">
-                    <span>🌐</span>
+
                     <a href={settings.contactWebsiteUrl || '#'} target="_blank" rel="noopener noreferrer" className="hover:opacity-100 transition break-all">{settings.contactWebsiteLabel}</a>
                   </li>
                 )}
