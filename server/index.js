@@ -561,9 +561,10 @@ const productReviewValidation = validate([
 app.get('/api/health', (req, res) => res.json({ ok: true, database: 'postgresql' }));
 
 app.get('/api/settings', asyncHandler(async (req, res) => {
-  setPublicCache(res, 120);
   const settings = await getSettings();
-  res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
+  // Never cache shop settings so admin edits (shop name, contact details, etc.)
+  // appear on the public site immediately on the next load.
+  res.setHeader('Cache-Control', 'no-store');
   res.json({
     shopName: settings.shop_name,
     mainShopTown: settings.main_shop_town,

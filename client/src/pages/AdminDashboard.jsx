@@ -630,10 +630,28 @@ export default function AdminDashboard() {
       if (settingsForm.platformName) {
         setPlatformName(settingsForm.platformName)
       }
+      // Update the cached public settings so the storefront shows the new
+      // contact details immediately (App reads this cache on next load).
+      try {
+        const cached = JSON.parse(localStorage.getItem('shopSettingsCache') || '{}')
+        localStorage.setItem('shopSettingsCache', JSON.stringify({
+          ...cached,
+          shopPhone: settingsForm.shopPhone,
+          shopEmail: settingsForm.shopEmail,
+          contactAddress: settingsForm.contactAddress,
+          contactWebsiteUrl: settingsForm.contactWebsiteUrl,
+          contactWebsiteLabel: settingsForm.contactWebsiteLabel,
+          contactNoteTitle: settingsForm.contactNoteTitle,
+          contactNoteSubtitle: settingsForm.contactNoteSubtitle,
+          ...(settingsForm.platformName ? { shopName: settingsForm.platformName } : {})
+        }))
+      } catch {}
       setMessage({ type: 'success', text: 'Settings updated successfully' })
       // Clear only the credential fields; keep platform name and contact
       // details visible so the admin can see the saved values.
       setSettingsForm(prev => ({ ...prev, email: '', currentPassword: '', newPassword: '' }))
+      // Pull the authoritative saved values back into the form.
+      fetchContactInfo()
     } catch (err) {
       setMessage({ type: 'error', text: err.response?.data?.error || 'Failed to update settings' })
     } finally {

@@ -121,7 +121,11 @@ export default function App() {
   const [chatReady, setChatReady] = useState(false)
   const drawerRef = useRef(null)
 
+  // Re-fetch settings whenever the user lands on a public page. This keeps the
+  // header/footer (shop name, contact details, etc.) in sync right after an admin
+  // saves changes and returns to the site, without needing a hard reload.
   useEffect(() => {
+    if (location.pathname.startsWith('/admin')) return
     let active = true
     axios.get('/api/settings')
       .then((settingsRes) => {
@@ -134,7 +138,7 @@ export default function App() {
     return () => {
       active = false
     }
-  }, [])
+  }, [location.pathname])
 
   useEffect(() => {
     if (location.pathname !== '/') return
