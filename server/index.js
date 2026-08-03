@@ -594,6 +594,19 @@ app.get('/api/hero-section', asyncHandler(async (req, res) => {
   res.json({ ...hero, title: hero.title === 'MyShop' ? settings.shop_name : hero.title });
 }));
 
+// Public site text overrides ({ en: {...}, fr: {...} }). Empty by default so the
+// front end falls back to its built-in copy until the admin customises text.
+app.get('/api/site-content', asyncHandler(async (req, res) => {
+  setPublicCache(res, 60);
+  const result = await pool.query("SELECT value FROM settings WHERE key = 'site_content'");
+  let content = {};
+  if (result.rowCount) {
+    try { content = JSON.parse(result.rows[0].value) || {}; } catch { content = {}; }
+  }
+  res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+  res.json(content);
+}));
+
 app.get('/api/stats', asyncHandler(async (req, res) => {
   setPublicCache(res, 60);
   const productStats = await pool.query(`
@@ -1358,6 +1371,36 @@ app.put('/api/admin/hero-section', requireSuperAdmin, asyncHandler(async (req, r
   );
   await logActivity(req, 'update_hero_section', {});
   res.json(hero);
+}));
+
+// Save admin-customised public site text. Stores a compact overrides map
+// ({ en: {...}, fr: {...} }) — only keys the admin actually changed.
+app.put('/api/admin/site-content', requireSuperAdmin, asyncHandler(async (req, res) => {
+  const body = req.body && typeof req.body === 'object' ? req.body : {};
+  const cleaned = {};
+  const MAX_LEN = 5000;
+  for (const lang of Object.keys(body)) {
+    const entries = body[lang];
+    if (!entries || typeof entries !== 'object') continue;
+    const langMap = {};
+    for (const key of Object.keys(entries)) {
+      const value = entries[key];
+      if (typeof value !== 'string') continue;
+      const trimmed = value.trim();
+      if (!trimmed) continue; // empty = fall back to the built-in default
+      langMap[key] = trimmed.slice(0, MAX_LEN);
+    }
+    if (Object.keys(langMap).length) cleaned[lang] = langMap;
+  }
+
+  await pool.query(
+    `INSERT INTO settings (key, value)
+     VALUES ('site_content', $1)
+     ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`,
+    [JSON.stringify(cleaned)]
+  );
+  await logActivity(req, 'update_site_content', { languages: Object.keys(cleaned) });
+  res.json(cleaned);
 }));
 
 app.post('/api/admin/upload', checkPermission('manageProducts'), adminProductUpload, sendUploadResponse);

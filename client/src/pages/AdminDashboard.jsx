@@ -10,6 +10,23 @@ import OrderManagement from '../components/OrderManagement'
 import SubAdminManagement from '../components/SubAdminManagement'
 import PointOfSale from '../components/PointOfSale'
 import { getProductImage, resolveAssetUrl } from '../utils/format'
+import { dictionaries } from '../i18n/LanguageContext'
+
+// Groups of editable public-site text keys, in a friendly order. Any dictionary
+// key not listed here is collected into an "Other text" group automatically, so
+// every string on the public site is editable.
+const CONTENT_GROUPS = [
+  { title: 'Navigation & buttons', keys: ['home', 'products', 'track', 'wishlist', 'admin', 'cart', 'menu', 'close', 'searchProducts', 'viewAll', 'allCategories', 'language', 'shopNow', 'learnMore', 'addToCart', 'browseProducts'] },
+  { title: 'Hero & shop section', keys: ['homeShopCta', 'shopChip', 'productsEquipment', 'productsIntro'] },
+  { title: 'Services & Training', keys: ['servicesChip', 'whatWe', 'offer', 'servicesIntro', 'servicesQuote', 'viewAllProductsServices', 'svcResearchTitle', 'svcResearchDesc', 'svcStorageTitle', 'svcStorageDesc', 'svcDrillingTitle', 'svcDrillingDesc', 'svcWeldingTitle', 'svcWeldingDesc', 'svcSolarTitle', 'svcSolarDesc', 'svcWaterworksTitle', 'svcWaterworksDesc', 'svcTrainingTitle', 'svcTrainingDesc'] },
+  { title: 'Our Reach (stats)', keys: ['reachTitle', 'statServiceAreas', 'statCountryCoverage', 'statProductsListed', 'statSupport'] },
+  { title: 'Partners', keys: ['networkChip', 'partnersTitle', 'partnersIntro', 'partnerScgDesc', 'partnerEmasDesc', 'partnerTadehDesc', 'partnerMetametaDesc'] },
+  { title: 'Why choose us', keys: ['whySccChip', 'sccAdvantage', 'advNationwideTitle', 'advNationwideDesc', 'advTrainingTitle', 'advTrainingDesc', 'advAffordableTitle', 'advAffordableDesc'] },
+  { title: 'Call to action', keys: ['ctaTitle', 'ctaDesc', 'trackYourOrder'] },
+  { title: 'Store locations', keys: ['storeLocationsChip', 'visitOurStore', 'findUsNearYou', 'mainStore', 'branchLocations', 'address', 'phoneLabel', 'emailLabel', 'hoursLabel', 'openInMaps', 'noLocations'] },
+  { title: 'Footer', keys: ['footerTagline', 'franchiseOf', 'servicesHeading', 'quickLinks', 'contactHeading', 'myAccount', 'footerAddressLine1', 'footerAddressLine2', 'servingNgosGov', 'contractorsIndividuals', 'rights'] },
+  { title: 'Products & catalog', keys: ['productsComingSoon', 'catalogBeingSetUp', 'noProductsFound', 'tryDifferentSearch', 'showingPage', 'description', 'noDescription', 'related', 'noRelated', 'new', 'popular', 'outOfStock', 'inStockCount', 'variant', 'option', 'backProducts', 'productNotFound', 'featured', 'featuredTitle', 'emptyWishlist', 'saveProducts', 'filters', 'clearFilters', 'category', 'priceRange', 'inStockOnly', 'newest'] }
+]
 
 export default function AdminDashboard() {
   const navigate = useNavigate()
@@ -136,6 +153,12 @@ export default function AdminDashboard() {
     return Array.from(set).sort((a, b) => a.localeCompare(b))
   }, [products, extraCategories, productForm.category])
 
+  // Website Text (public content overrides)
+  const [contentLang, setContentLang] = useState('en')
+  const [contentOverrides, setContentOverrides] = useState({ en: {}, fr: {} })
+  const [contentSearch, setContentSearch] = useState('')
+  const [contentSaving, setContentSaving] = useState(false)
+
   // Store Availability & Features
   const [productSpecifications, setProductSpecifications] = useState({ key: '', value: '' })
   const [uploadingImage, setUploadingImage] = useState(false)
@@ -199,6 +222,7 @@ export default function AdminDashboard() {
     fetchPaymentAccounts()
     fetchCustomersWithInstallments()
     fetchInstallmentStats()
+    fetchSiteContent()
   }, [token, navigate])
 
   useEffect(() => {
@@ -646,6 +670,47 @@ export default function AdminDashboard() {
     }
   }
 
+  const fetchSiteContent = async () => {
+    try {
+      const response = await axios.get('/api/site-content')
+      const data = response.data && typeof response.data === 'object' ? response.data : {}
+      setContentOverrides({ en: { ...(data.en || {}) }, fr: { ...(data.fr || {}) } })
+    } catch (err) {
+      console.error('Failed to fetch site content:', err)
+    }
+  }
+
+  const handleContentChange = (lang, key, value) => {
+    setContentOverrides((current) => ({
+      ...current,
+      [lang]: { ...(current[lang] || {}), [key]: value }
+    }))
+  }
+
+  const handleSaveSiteContent = async () => {
+    setContentSaving(true)
+    try {
+      // Drop empty overrides so those strings fall back to the built-in default.
+      const payload = {}
+      for (const lang of Object.keys(contentOverrides)) {
+        const langMap = {}
+        for (const [key, value] of Object.entries(contentOverrides[lang] || {})) {
+          if (typeof value === 'string' && value.trim()) langMap[key] = value.trim()
+        }
+        payload[lang] = langMap
+      }
+      await axios.put('/api/admin/site-content', payload, { headers: { Authorization: `Bearer ${token}` } })
+      setContentOverrides({ en: { ...(payload.en || {}) }, fr: { ...(payload.fr || {}) } })
+      try { localStorage.setItem('siteContentCache', JSON.stringify(payload)) } catch {}
+      setMessage({ type: 'success', text: '✅ Website text saved. Public pages will show the new text.' })
+    } catch (err) {
+      setMessage({ type: 'error', text: err.response?.data?.error || '❌ Failed to save website text' })
+    } finally {
+      setContentSaving(false)
+      setTimeout(() => setMessage({ type: '', text: '' }), 3500)
+    }
+  }
+
   const handlePlatformReset = async () => {
     setResetLoading(true)
     try {
@@ -823,6 +888,7 @@ export default function AdminDashboard() {
     { key: 'locations', label: 'Locations', icon: '📍' },
     { key: 'statistics', label: 'Stats', icon: '📈' },
     { key: 'chat', label: 'Chat', icon: '💬' },
+    { key: 'content', label: 'Website Text', icon: '📝' },
     { key: 'settings', label: 'Settings', icon: '⚙' }
   ]
   const mobilePrimaryTabs = adminTabs.slice(0, 4)
@@ -1921,6 +1987,98 @@ export default function AdminDashboard() {
           <div>
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">Customer Messages</h2>
             <AdminMessaging token={token} />
+          </div>
+        )}
+
+        {/* WEBSITE TEXT TAB */}
+        {activeTab === 'content' && (
+          <div>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">📝 Website Text</h2>
+                <p className="text-sm text-gray-600 mt-1">Edit every heading, label and paragraph shown on the public website. Leave a field blank to use the built-in default.</p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <select value={contentLang} onChange={(e) => setContentLang(e.target.value)} className="px-3 py-2 border-2 border-gray-300 rounded-lg text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-600">
+                  <option value="en">English</option>
+                  <option value="fr">Français</option>
+                </select>
+                <button onClick={handleSaveSiteContent} disabled={contentSaving} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-semibold text-sm transition disabled:opacity-50 shadow-sm">
+                  {contentSaving ? 'Saving…' : '💾 Save changes'}
+                </button>
+              </div>
+            </div>
+
+            <div className="mb-5 rounded-lg bg-blue-50 border border-blue-200 px-4 py-3 text-xs text-blue-900">
+              Tip: placeholders like <span className="font-mono">{'{count}'}</span> or <span className="font-mono">{'{phone}'}</span> are filled in automatically — keep them in your text.
+            </div>
+
+            <input
+              type="search"
+              value={contentSearch}
+              onChange={(e) => setContentSearch(e.target.value)}
+              placeholder="Search the text you want to edit…"
+              className="w-full mb-6 px-4 py-3 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
+            />
+
+            {(() => {
+              const dict = dictionaries[contentLang] || dictionaries.en
+              const grouped = new Set()
+              CONTENT_GROUPS.forEach((g) => g.keys.forEach((k) => grouped.add(k)))
+              const otherKeys = Object.keys(dict).filter((k) => !grouped.has(k))
+              const groups = otherKeys.length ? [...CONTENT_GROUPS, { title: 'Other text', keys: otherKeys }] : CONTENT_GROUPS
+              const q = contentSearch.trim().toLowerCase()
+              const matches = (key) => {
+                if (!q) return true
+                const def = String(dict[key] || '')
+                const val = String(contentOverrides[contentLang]?.[key] || '')
+                return key.toLowerCase().includes(q) || def.toLowerCase().includes(q) || val.toLowerCase().includes(q)
+              }
+              let visible = 0
+              const rendered = groups.map((group) => {
+                const keys = group.keys.filter((k) => dict[k] !== undefined && matches(k))
+                if (!keys.length) return null
+                visible += keys.length
+                return (
+                  <div key={group.title} className="mb-6 bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">{group.title}
+                      <span className="text-xs font-semibold text-gray-400">({keys.length})</span>
+                    </h3>
+                    <div className="space-y-4">
+                      {keys.map((key) => {
+                        const def = String(dict[key] || '')
+                        const val = contentOverrides[contentLang]?.[key] ?? ''
+                        const long = def.length > 60
+                        return (
+                          <div key={key} className="grid gap-1">
+                            <label className="text-sm font-semibold text-gray-800">{def || key}</label>
+                            {long ? (
+                              <textarea value={val} placeholder={def} onChange={(e) => handleContentChange(contentLang, key, e.target.value)} rows={3} className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-600" />
+                            ) : (
+                              <input value={val} placeholder={def} onChange={(e) => handleContentChange(contentLang, key, e.target.value)} className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-600" />
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })
+              return (
+                <>
+                  {rendered}
+                  {visible === 0 && (
+                    <div className="rounded-xl border-2 border-dashed border-gray-200 bg-white p-10 text-center text-gray-500">No text matches “{contentSearch}”.</div>
+                  )}
+                </>
+              )
+            })()}
+
+            <div className="flex justify-end sticky bottom-4">
+              <button onClick={handleSaveSiteContent} disabled={contentSaving} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold text-sm transition disabled:opacity-50 shadow-lg">
+                {contentSaving ? 'Saving…' : '💾 Save changes'}
+              </button>
+            </div>
           </div>
         )}
 

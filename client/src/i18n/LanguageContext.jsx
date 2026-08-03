@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useMemo, useState } from 'react'
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import api from '../lib/api'
 
 const LanguageContext = createContext(null)
 
-const dictionaries = {
+export const dictionaries = {
   en: {
     home: 'Home', products: 'All Products', track: 'Track Order', wishlist: 'Wishlist', admin: 'Admin',
     cart: 'Cart', menu: 'Menu', close: 'Close', addToCart: 'Add to Cart', addedToCart: 'Added to cart', outOfStock: 'Out of Stock',
@@ -183,11 +184,45 @@ function interpolate(template, values = {}) {
   return String(template).replace(/\{(\w+)\}/g, (_, key) => values[key] ?? '')
 }
 
+function readCachedContent() {
+  try {
+    const stored = localStorage.getItem('siteContentCache')
+    const parsed = stored ? JSON.parse(stored) : {}
+    return parsed && typeof parsed === 'object' ? parsed : {}
+  } catch {
+    return {}
+  }
+}
+
 export function LanguageProvider({ children }) {
   const [language, setLanguageState] = useState(() => localStorage.getItem('language') || 'en')
+  // Admin-customisable text overrides: { en: { key: text }, fr: { key: text } }
+  const [content, setContent] = useState(readCachedContent)
+
+  useEffect(() => {
+    let active = true
+    api.get('/api/site-content')
+      .then((res) => {
+        if (!active) return
+        const data = res.data && typeof res.data === 'object' ? res.data : {}
+        setContent(data)
+        try { localStorage.setItem('siteContentCache', JSON.stringify(data)) } catch {}
+      })
+      .catch(() => {})
+    return () => { active = false }
+  }, [])
 
   const value = useMemo(() => {
-    const t = (key, values) => interpolate(dictionaries[language]?.[key] || dictionaries.en[key] || key, values)
+    const t = (key, values) => {
+      // Precedence: this language's admin override → this language's built-in text
+      // → English override → English built-in → the raw key.
+      const base = content?.[language]?.[key]
+        || dictionaries[language]?.[key]
+        || content?.en?.[key]
+        || dictionaries.en[key]
+        || key
+      return interpolate(base, values)
+    }
     const setLanguage = (nextLanguage) => {
       const safeLanguage = dictionaries[nextLanguage] ? nextLanguage : 'en'
       localStorage.setItem('language', safeLanguage)
@@ -209,7 +244,7 @@ export function LanguageProvider({ children }) {
       translateProduct,
       languages: [{ code: 'en', label: 'English' }, { code: 'fr', label: 'Francais' }]
     }
-  }, [language])
+  }, [language, content])
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>
 }
